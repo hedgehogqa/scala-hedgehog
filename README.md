@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/hedgehogqa/scala-hedgehog.svg?branch=master)](https://travis-ci.org/hedgehogqa/scala-hedgehog)
+
 # scala-hedgehog
 
 An alternative property-based testing system for Scala, in the spirit of John
@@ -13,4 +15,3 @@ In Scala there are other property-testing alternatives:
 
 - https://github.com/rickynils/scalacheck
 - https://github.com/scalaprops/scalaprops
-- https://github.com/japgolly/nyaya
