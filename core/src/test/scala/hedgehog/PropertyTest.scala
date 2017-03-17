@@ -1,7 +1,6 @@
 package hedgehog
 
-import hedgehog.GenTree._
-import hedgehog.Property._
+import hedgehog.Gen._
 import hedgehog.Property._
 import org.scalacheck._
 import org.scalacheck.Prop._
@@ -11,18 +10,21 @@ import scalaz.effect._
 object PropertyTest extends Properties("Property") {
 
   property("example1") = {
-    val r = Property.check(5489)(for {
-      x <- Property.forAll(GenTree.char[IO]('a', 'z'))
-      y <- Property.forAll(integral[IO](0, 50))
-      _ <- if (y % 2 == 0) discard[IO] else success[IO]
+    val seed = Seed.fromLong(5489)
+    val r = (for {
+      x <- Gen.char[IO]('a', 'z').log("x")
+      y <- integral[IO, Int](Range.linear(0, 50)).log("y")
+      _ <- if (y % 2 == 0) Property.discard[IO] else success[IO]
       _ <- assert[IO](y < 87 && x <= 'r')
-    } yield ()).unsafePerformIO
-    r ?= Report(4, 2, Failed(Shrinks(7), List("s", "3")))
+    } yield ()).check(seed).unsafePerformIO
+    r ?= Report(SuccessCount(0), DiscardCount(2), Failed(ShrinkCount(1), List(
+        ForAll("x", "s")
+      , ForAll("y", "1"))
+      ))
   }
 
-  case class Name(value: String)
   case class USD(value: Long)
-  case class Item(name: Name, price: USD)
+  case class Item(name: String, price: USD)
   case class Order(items: List[Item]) {
 
     def total: USD =
@@ -32,34 +34,37 @@ object PropertyTest extends Properties("Property") {
   def merge(xs: Order, ys: Order): Order = {
     val extra =
       if (xs.items.exists(_.price.value > 50) || ys.items.exists(_.price.value > 50) )
-        List(Item(Name("processing"), (USD(1))))
+        List(Item("processing", (USD(1))))
       else
         Nil
     Order(xs.items ++ ys.items ++ extra)
   }
 
-  // TODO Use applicative here, but we need to fix the GenTree Applicative type inference
-  def cheap[M[_]: Monad]: GenTree.T[M, Item] =
+  def cheap[M[_]: Monad]: Gen[M, Item] =
     for {
-      n <- element[M, String]("sandwich", List("noodles")).map(Name)
-      p <- integral[M](5, 10).map(USD)
+      n <- element[M, String]("sandwich", List("noodles"))
+      p <- integral[M, Long](Range.constant(5, 10)).map(USD)
     } yield Item(n, p)
 
-  def expensive[M[_]: Monad]: GenTree.T[M, Item] =
+  def expensive[M[_]: Monad]: Gen[M, Item] =
     for {
-      n <- element[M, String]("oculus", List("vive")).map(Name)
-      p <- integral[M](1000, 2000).map(USD)
+      n <- element[M, String]("oculus", List("vive"))
+      p <- integral[M, Long](Range.linear(1000, 2000)).map(USD)
     } yield Item(n, p)
 
-  def order[M[_]: Monad](gen: GenTree.T[M, Item]): GenTree.T[M, Order] =
-    list(0, 50, gen).map(Order)
+  def order[M[_]: Monad](gen: Gen[M, Item]): Gen[M, Order] =
+    gen.list(Range.linear(0, 50)).map(Order)
 
   property("total") = {
-    val r = Property.check(5489)(for {
-      x <- Property.forAll(order(cheap[IO]))
-      y <- Property.forAll(order(expensive[IO]))
+    val seed = Seed.fromLong(5489)
+    val r = (for {
+      x <- order(cheap[IO]).log("cheap")
+      y <- order(expensive[IO]).log("expensive")
       _ <- assert[IO](merge(x, y).total.value == x.total.value + y.total.value)
-    } yield ()).unsafePerformIO
-    r ?= Report(0, 0, Failed(Shrinks(50), List("Order(List())", "Order(List(Item(Name(oculus),USD(1000))))")))
+    } yield ()).check(seed).unsafePerformIO
+    r ?= Report(SuccessCount(3), DiscardCount(0), Failed(ShrinkCount(5), List(
+        ForAll("cheap", "Order(List())")
+      , ForAll("expensive", "Order(List(Item(oculus,USD(1000))))"
+      ))))
   }
 }

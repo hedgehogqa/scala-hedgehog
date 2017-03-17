@@ -31,14 +31,24 @@ case class Seed(seed: MersenneTwister64) {
       }
     (Seed(next._1), next._2)
   }
+
+  // Generates a random Double in the interval [0, 1)
+  def nextDouble: (Seed, Double) = {
+    val x = seed.nextInt
+    val a: Long = (x._2.toLong & 0xffffffffL) >>> 5
+    val y = x._1.nextInt
+    val b: Long = (y._2.toLong & 0xffffffffL) >>> 6
+    val r = (a * 67108864.0 + b) / 9007199254740992.0
+    (Seed(y._1), r)
+  }
 }
 
 object Seed {
 
   def fromTime: IO[Seed] =
-    IO(System.nanoTime).map(fromSeed(_))
+    IO(System.nanoTime).map(fromLong(_))
 
-  def fromSeed(seed: Long): Seed =
+  def fromLong(seed: Long): Seed =
     Seed(MersenneTwister64.fromSeed(seed))
 }
 
