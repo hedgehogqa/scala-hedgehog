@@ -15,3 +15,4 @@ In Scala there are other property-testing alternatives:
 
 - https://github.com/rickynils/scalacheck
 - https://github.com/scalaprops/scalaprops
+- https://github.com/japgolly/nyaya
