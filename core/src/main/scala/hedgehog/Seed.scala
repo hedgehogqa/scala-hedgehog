@@ -4,7 +4,7 @@ import scalaz.effect._
 
 case class Seed(seed: MersenneTwister64) {
 
-  def nextLong(from: Long, to: Long): (Seed, Long) = {
+  def chooseLong(from: Long, to: Long): (Seed, Long) = {
     val next =
       if(from == to) {
         (seed.nextLong._1, from)
@@ -32,14 +32,9 @@ case class Seed(seed: MersenneTwister64) {
     (Seed(next._1), next._2)
   }
 
-  // Generates a random Double in the interval [0, 1)
-  def nextDouble: (Seed, Double) = {
-    val x = seed.nextInt
-    val a: Long = (x._2.toLong & 0xffffffffL) >>> 5
-    val y = x._1.nextInt
-    val b: Long = (y._2.toLong & 0xffffffffL) >>> 6
-    val r = (a * 67108864.0 + b) / 9007199254740992.0
-    (Seed(y._1), r)
+  def chooseDouble(from: Double, to: Double): (Seed, Double) = {
+    val (s2, next) = seed.nextDouble
+    (Seed(s2), next * (to - from) + from)
   }
 }
 

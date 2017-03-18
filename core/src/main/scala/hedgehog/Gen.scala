@@ -163,13 +163,29 @@ object Gen extends GenImplicits2 {
   def integral_[M[_], A](range: Range[A])(implicit F: Monad[M], I: Integral[A]): Gen[M, A] =
     Gen((size, seed) => {
       val (x, y) = range.bounds(size)
-      val (s2, a) = seed.nextLong(I.toLong(x), I.toLong(y))
+      val (s2, a) = seed.chooseLong(I.toLong(x), I.toLong(y))
       // TODO Integral doesn't support Long, can we only use int seeds? :(
       I.fromInt(a.toInt).point[Gen[M, ?]].run(size, s2)
     })
 
   def char[M[_] : Monad](lo: Char, hi: Char): Gen[M, Char] =
     integral[M, Long](Range.constant(lo.toLong, hi.toLong)).map(_.toChar)
+
+  /**********************************************************************/
+  // Combinators - Fractional
+
+  def double[M[_] : Monad](range: Range[Double]): Gen[M, Double] =
+    double_[M](range).shrink(Shrink.towardsFloat(range.origin, _))
+
+  def double_[M[_]](range: Range[Double])(implicit F: Monad[M]): Gen[M, Double] =
+    Gen((size, seed) => {
+      val (x, y) = range.bounds(size)
+      val (s2, a) = seed.chooseDouble(x, y)
+      a.point[Gen[M, ?]].run(size, s2)
+    })
+
+  /**********************************************************************/
+  // Combinators - Choice
 
   /**
    * Randomly selects one of the elements in the list.

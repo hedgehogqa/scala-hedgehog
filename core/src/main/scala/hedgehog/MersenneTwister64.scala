@@ -121,6 +121,15 @@ final class MersenneTwister64 private(private val mt0: Array[Long], private val 
     (r, (n >>> 32).toInt)
   }
 
+  // Generates a random Double in the interval [0, 1)
+  def nextDouble: (MersenneTwister64, Double) = {
+    val x = nextInt
+    val a: Long = (x._2.toLong & 0xffffffffL) >>> 5
+    val y = x._1.nextInt
+    val b: Long = (y._2.toLong & 0xffffffffL) >>> 6
+    val r = (a * 67108864.0 + b) / 9007199254740992.0
+    (y._1, r)
+  }
   override def toString: String = {
     mt0.mkString("MersenneTwister64(Array(", ",", s"), ${mti0})")
   }
