@@ -4,7 +4,17 @@ package hedgehog
  * Tests are parameterized by the size of the randomly-generated data, the
  * meaning of which depends on the particular generator used.
  */
-case class Size(value: Int)
+case class Size(value: Int) {
+
+  def inc: Size =
+    Size(value + 1)
+
+  /**
+   * Scale a size using the golden ratio.
+   */
+  def golden: Size =
+    Size((value * 0.61803398875).toInt)
+}
 
 /**
  * A range describes the bounds of a number to generate, which may or may not

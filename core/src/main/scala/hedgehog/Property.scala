@@ -3,52 +3,37 @@ package hedgehog
 import scalaz._, Scalaz._
 import scalaz.effect._
 
-sealed trait Break
-case object Failure extends Break
-case object Discard extends Break
+case class Name(value: String)
 
-case class Shrinks(value: Int)
+object Name {
 
-sealed trait Status
-case class Failed(shrinks: Shrinks, errors: List[String]) extends Status
-case object GaveUp extends Status
-case object OK extends Status
-
-object Status {
-
-  def failed(s: Shrinks, e: List[String]): Status =
-    Failed(s, e)
-
-  val gaveUp: Status =
-    GaveUp
-
-  val ok: Status =
-    OK
+  // Yes, ugly, but makes for a nicer API
+  implicit def Name2String(s: String): Name =
+    Name(s)
 }
 
-case class Report(tests: Int, discards: Int, status: Status)
+sealed trait Log
+case class ForAll(name: Name, value: String) extends Log
+case class Info(value: String) extends Log
 
-/**
- * NOTE: Type inference goes to shit when we do the proper transformer encoding.
- *
- *   case class Property[M[_], A](run: Gen[EitherT[WriterT[Tree[M, ?], List[String], ?], Break, ?], A]) {
- */
-case class Property[M[_], A](run: Gen[Tree[M, ?], (List[String], Break \/ A)]) {
-
-  def runTree(implicit F: Functor[M]): Gen[M, Node[M, (List[String], Break \/ A)]] =
-    Gen(s => run.run(s).run.map(n =>
-      // TODO Discard seeds here, can never be good
-      (n.value._1, Node(n.value._2, n.children.map(_.map(_._2))))
-    ))
+case class Property[M[_], A](run: Gen[M, (List[Log], Option[A])]) {
 
   def map[B](f: A => B)(implicit F: Functor[M]): Property[M, B] =
     Property(run.map(_.map(_.map(f))))
 
   def flatMap[B](f: A => Property[M, B])(implicit F: Monad[M]): Property[M, B] =
-    Property(run.flatMap(x => x._2.fold(l =>
-        GenTree.applicative(F).point((x._1, l.left[B]))
-      , w => f(w).run.map(y => (x._1 ++ y._1, y._2))
-    )))
+    Property(run.flatMap(x =>
+      x._2.cata(
+        a => f(a).run.map(y => (x._1 ++ y._1, y._2))
+      , Gen.GenApplicative(F).point((x._1, None))
+      )
+    ))
+
+  def check(seed: Seed)(implicit F: Monad[M]): M[Report] =
+    Property.report(SuccessCount(100), Size(0), seed, this)
+
+  def checkRandom(p: Property[M, Unit])(implicit F: MonadIO[M]): M[Report] =
+    Seed.fromTime.liftIO.flatMap(s => check(s))
 }
 
 object Property {
@@ -58,88 +43,134 @@ object Property {
       override def map[A, B](fa: Property[M, A])(f: A => B): Property[M, B] =
         fa.map(f)
       override def point[A](a: => A): Property[M, A] =
-        hoist((Nil, a.right))
+        hoist((Nil, a))
       override def bind[A, B](fa: Property[M, A])(f: A => Property[M, B]): Property[M, B] =
         fa.flatMap(f)
     }
 
-  def fromGenTree[M[_] : Monad, A](gen: Gen[Tree[M, ?], A]): Property[M, A] =
-    Property(gen.map(x => (Nil, x.right)))
+  def fromGen[M[_] : Monad, A](gen: Gen[M, A]): Property[M, A] =
+    Property(gen.map(x => (Nil, Some(x))))
 
-  def hoist[M[_] : Monad, A](a: (List[String], Break \/ A))(implicit F: Monad[M]): Property[M, A] =
-    Property(GenTree.applicative(F).point(a))
+  def hoist[M[_], A](a: (List[Log], A))(implicit F: Monad[M]): Property[M, A] =
+    Property(Gen.GenApplicative(F).point(a.map(some)))
 
-  def forAll[M[_] : Monad, A](gen: Gen[Tree[M, ?], A]): Property[M, A] =
-    for {
-      x <- fromGenTree(gen)
-      // TODO Add better render, although I don't really like Show
-      _ <- counterexample[M](x.toString)
-    } yield x
+  def writeLog[M[_] : Monad](log: Log): Property[M, Unit] =
+    hoist((List(log), ()))
 
-  def counterexample[M[_] : Monad](value: String): Property[M, Unit] =
-    hoist((List(value), ().right))
+  def info[M[_] : Monad](log: String): Property[M, Unit] =
+    writeLog(Info(log))
 
   def discard[M[_] : Monad]: Property[M, Unit] =
-    hoist((Nil, Discard.left))
+    fromGen(Gen.discard)
 
-  def failure[M[_] : Monad, A]: Property[M, A] =
-    hoist((Nil, Failure.left))
+  def failure[M[_], A](implicit F: Monad[M]): Property[M, A] =
+    Property(Gen.GenApplicative(F).point((Nil, None)))
 
   def success[M[_] : Monad]: Property[M, Unit] =
-    hoist((Nil, ().right))
+    hoist((Nil, ()))
 
   def assert[M[_] : Monad](b: Boolean): Property[M, Unit] =
     if (b) success else failure
 
-  def isFailure[M[_], A, B](n: Node[M, (B, Break \/ A)]): Boolean =
-    n.value._2 == Failure.left
+  /**********************************************************************/
+  // Reporting
 
-  def takeSmallest[M[_] : Monad](s: Shrinks, n: Node[M, (List[String], Break \/ Unit)]): M[Status] =
-    n.value._2 match {
-      case -\/(Failure) =>
-        implicitly[Foldable[List]]
-          .findMapM[M, Tree[M, (List[String], Break \/ Unit)], Status](n.children)(m =>
+  def isFailure[M[_], A, B](n: Node[M, Option[(B, Option[A])]]): Boolean =
+    n.value.map(_._2) == Some(None)
+
+  def takeSmallest[M[_] : Monad, A](n: ShrinkCount, t: Node[M, Option[(List[Log], Option[A])]]): M[Status] =
+    t.value match {
+      case None =>
+        Status.gaveUp.point[M]
+
+      case Some((w, None)) =>
+        t.children.findMapM[M, Status](m =>
             m.run.flatMap(node =>
               if(isFailure(node))
-                takeSmallest(Shrinks(s.value + 1), node).map(some)
+                takeSmallest(n.inc, node).map(some)
               else
                 none.point[M]
             )
           )
-          .map(_.getOrElse(Status.failed(s, n.value._1)))
+          .map(_.getOrElse(Status.failed(n, w)))
 
-      case -\/(Discard) =>
-        Status.gaveUp.point[M]
-
-      case \/-(()) =>
+      case Some((_, Some(_))) =>
         Status.ok.point[M]
     }
 
-  def report[M[_] : Monad](n : Int, p: Property[M, Unit]): Gen[M, Report] = {
-    def loop(tests: Int, discards: Int): Gen[M, Report] =
-      if (tests == n)
-        Report(tests, discards, OK).point[Gen[M, ?]]
-      else if (tests >= 100)
-        Report(tests, discards, GaveUp).point[Gen[M, ?]]
+  def report[M[_] : Monad, A](n : SuccessCount, size0: Size, seed0: Seed, p: Property[M, A]): M[Report] = {
+    def loop(successes: SuccessCount, discards: DiscardCount, size: Size, seed: Seed): M[Report] =
+      if (size.value > 99)
+        loop(successes, discards, Size(0), seed)
+      else if (successes == n)
+        Report(successes, discards, OK).point[M]
+      else if (discards.value >= 100)
+        Report(successes, discards, GaveUp).point[M]
       else
-        p.runTree.flatMap(x => x.value._2 match {
-          case -\/(Failure) =>
-            Gen.lift(takeSmallest(Shrinks(0), x).map(y => Report(tests, discards, y)))
+        p.run.run(size, seed).run.flatMap(x =>
+          x.value._2 match {
+            case None =>
+              loop(successes, discards.inc, size.inc, x.value._1)
 
-          case -\/(Discard) =>
-            loop(tests, discards + 1)
+            case Some((_, None)) =>
+              takeSmallest(ShrinkCount(0), x.map(_._2)).map(y => Report(successes, discards, y))
 
-          case \/-(_) =>
-            loop(tests + 1, discards)
-        })
-    loop(0, 0)
+            case Some((m, Some(_))) =>
+              loop(successes.inc, discards, size.inc, x.value._1)
+          }
+        )
+    loop(SuccessCount(0), DiscardCount(0), size0, seed0)
   }
 
-  def check[M[_] : Monad](seed: Long)(p: Property[M, Unit]): M[Report] =
-    report(100, p).run(Seed.fromSeed(seed)).map(_._2)
-
-  def checkRandom[M[_] : MonadIO](p: Property[M, Unit]): M[Report] =
-    Seed.fromTime.liftIO.flatMap(s =>
-      report(100, p).run(s).map(_._2)
-    )
+  def recheck[M[_] : Monad](size: Size, seed: Seed)(p: Property[M, Unit]): M[Report] =
+    report(SuccessCount(1), Size(0), seed, p)
 }
+
+/**********************************************************************/
+// Reporting
+
+/** The numbers of times a property was able to shrink after a failing test. */
+case class ShrinkCount(value: Int) {
+
+  def inc: ShrinkCount =
+    ShrinkCount(value + 1)
+}
+
+/** The number of tests a property ran successfully. */
+case class SuccessCount(value: Int) {
+
+  def inc: SuccessCount =
+    SuccessCount(value + 1)
+}
+
+/** The number of tests a property had to discard. */
+case class DiscardCount(value: Int) {
+
+  def inc: DiscardCount =
+    DiscardCount(value + 1)
+}
+
+/**
+ * The status of a property test run.
+ *
+ * In the case of a failure it provides the seed used for the test, the
+ * number of shrinks, and the execution log.
+ */
+sealed trait Status
+case class Failed(shrinks: ShrinkCount, log: List[Log]) extends Status
+case object GaveUp extends Status
+case object OK extends Status
+
+object Status {
+
+  def failed(count: ShrinkCount, log: List[Log]): Status =
+    Failed(count, log)
+
+  val gaveUp: Status =
+    GaveUp
+
+  val ok: Status =
+    OK
+}
+
+case class Report(tests: SuccessCount, discards: DiscardCount, status: Status)
