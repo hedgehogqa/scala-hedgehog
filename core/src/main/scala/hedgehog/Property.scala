@@ -16,7 +16,7 @@ sealed trait Log
 case class ForAll(name: Name, value: String) extends Log
 case class Info(value: String) extends Log
 
-case class Property[M[_], A](run: Gen[M, (List[Log], Option[A])]) {
+case class Property[M[_], A](run: GenT[M, (List[Log], Option[A])]) {
 
   def map[B](f: A => B)(implicit F: Functor[M]): Property[M, B] =
     Property(run.map(_.map(_.map(f))))
@@ -25,7 +25,7 @@ case class Property[M[_], A](run: Gen[M, (List[Log], Option[A])]) {
     Property(run.flatMap(x =>
       x._2.cata(
         a => f(a).run.map(y => (x._1 ++ y._1, y._2))
-      , Gen.GenApplicative(F).point((x._1, None))
+      , GenT.GenApplicative(F).point((x._1, None))
       )
     ))
 
@@ -48,11 +48,11 @@ object Property {
         fa.flatMap(f)
     }
 
-  def fromGen[M[_] : Monad, A](gen: Gen[M, A]): Property[M, A] =
+  def fromGen[M[_] : Monad, A](gen: GenT[M, A]): Property[M, A] =
     Property(gen.map(x => (Nil, Some(x))))
 
   def hoist[M[_], A](a: (List[Log], A))(implicit F: Monad[M]): Property[M, A] =
-    Property(Gen.GenApplicative(F).point(a.map(some)))
+    Property(GenT.GenApplicative(F).point(a.map(some)))
 
   def writeLog[M[_] : Monad](log: Log): Property[M, Unit] =
     hoist((List(log), ()))
@@ -61,10 +61,10 @@ object Property {
     writeLog(Info(log))
 
   def discard[M[_] : Monad]: Property[M, Unit] =
-    fromGen(Gen.discard)
+    fromGen(genT.discard)
 
   def failure[M[_], A](implicit F: Monad[M]): Property[M, A] =
-    Property(Gen.GenApplicative(F).point((Nil, None)))
+    Property(GenT.GenApplicative(F).point((Nil, None)))
 
   def success[M[_] : Monad]: Property[M, Unit] =
     hoist((Nil, ()))

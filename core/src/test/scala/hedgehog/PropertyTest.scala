@@ -2,9 +2,8 @@ package hedgehog
 
 import hedgehog.Gen._
 import hedgehog.Property._
-import org.scalacheck._
+import org.scalacheck.{Gen => _, _}
 import org.scalacheck.Prop._
-import scalaz._
 import scalaz.effect._
 
 object PropertyTest extends Properties("Property") {
@@ -12,8 +11,8 @@ object PropertyTest extends Properties("Property") {
   property("example1") = {
     val seed = Seed.fromLong(5489)
     val r = (for {
-      x <- Gen.char[IO]('a', 'z').log("x")
-      y <- integral[IO, Int](Range.linear(0, 50)).log("y")
+      x <- Gen.char('a', 'z').log("x")
+      y <- integral(Range.linear(0, 50)).log("y")
       _ <- if (y % 2 == 0) Property.discard[IO] else success[IO]
       _ <- assert[IO](y < 87 && x <= 'r')
     } yield ()).check(seed).unsafePerformIO
@@ -40,26 +39,26 @@ object PropertyTest extends Properties("Property") {
     Order(xs.items ++ ys.items ++ extra)
   }
 
-  def cheap[M[_]: Monad]: Gen[M, Item] =
+  def cheap: Gen[Item] =
     for {
-      n <- element[M, String]("sandwich", List("noodles"))
-      p <- integral[M, Long](Range.constant(5, 10)).map(USD)
+      n <- element("sandwich", List("noodles"))
+      p <- integral[Long](Range.constant(5, 10)).map(USD)
     } yield Item(n, p)
 
-  def expensive[M[_]: Monad]: Gen[M, Item] =
+  def expensive: Gen[Item] =
     for {
-      n <- element[M, String]("oculus", List("vive"))
-      p <- integral[M, Long](Range.linear(1000, 2000)).map(USD)
+      n <- element("oculus", List("vive"))
+      p <- integral[Long](Range.linear(1000, 2000)).map(USD)
     } yield Item(n, p)
 
-  def order[M[_]: Monad](gen: Gen[M, Item]): Gen[M, Order] =
+  def order(gen: Gen[Item]): Gen[Order] =
     gen.list(Range.linear(0, 50)).map(Order)
 
   property("total") = {
     val seed = Seed.fromLong(5489)
     val r = (for {
-      x <- order(cheap[IO]).log("cheap")
-      y <- order(expensive[IO]).log("expensive")
+      x <- order(cheap).log("cheap")
+      y <- order(expensive).log("expensive")
       _ <- assert[IO](merge(x, y).total.value == x.total.value + y.total.value)
     } yield ()).check(seed).unsafePerformIO
     r ?= Report(SuccessCount(3), DiscardCount(0), Failed(ShrinkCount(5), List(
