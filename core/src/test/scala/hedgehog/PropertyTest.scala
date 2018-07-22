@@ -14,7 +14,7 @@ object PropertyTest extends Properties("Property") {
       y <- integral(Range.linear(0, 50)).log("y")
       _ <- if (y % 2 == 0) Property.discard else success
       _ <- assert(y < 87 && x <= 'r')
-    } yield ()).check(seed).unsafePerformIO
+    } yield ()).check(seed).value
     r ?= Report(SuccessCount(0), DiscardCount(2), Failed(ShrinkCount(1), List(
         ForAll("x", "s")
       , ForAll("y", "1"))
@@ -59,7 +59,7 @@ object PropertyTest extends Properties("Property") {
       x <- order(cheap).log("cheap")
       y <- order(expensive).log("expensive")
       _ <- assert(merge(x, y).total.value == x.total.value + y.total.value)
-    } yield ()).check(seed).unsafePerformIO
+    } yield ()).check(seed).value
     r ?= Report(SuccessCount(3), DiscardCount(0), Failed(ShrinkCount(5), List(
         ForAll("cheap", "Order(List())")
       , ForAll("expensive", "Order(List(Item(oculus,USD(1000))))"
