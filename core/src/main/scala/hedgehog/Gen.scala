@@ -38,11 +38,11 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
   /**********************************************************************/
   // Combinators - Property
 
-  def log(name: Name)(implicit F: Monad[M]): Property[M, A] =
+  def log(name: Name)(implicit F: Monad[M]): PropertyT[M, A] =
     for {
-      x <- Property.fromGen(this)
+      x <- propertyT.fromGen(this)
       // TODO Add better render, although I don't really like Show
-      _ <- Property.writeLog[M](ForAll(name, x.toString))
+      _ <- propertyT[M].writeLog(ForAll(name, x.toString))
     } yield x
 
   /**********************************************************************/
@@ -215,11 +215,3 @@ trait GenTOps[M[_]] {
   def discard[A](implicit F: Applicative[M]): GenT[M, A] =
     GenT((_, seed) => Tree.TreeApplicative(F).point((seed, None)))
 }
-
-/**
- * This is _purely_ to make consuming this library a nicer experience,
- * mainly due to Scala's type inference problems and higher kinds.
- *
- * NOTE: GenT needs to be trampolined as well.
- */
-object Gen extends GenTOps[scalaz.effect.IO]

@@ -4,7 +4,6 @@ import hedgehog.Gen._
 import hedgehog.Property._
 import org.scalacheck.{Gen => _, _}
 import org.scalacheck.Prop._
-import scalaz.effect._
 
 object PropertyTest extends Properties("Property") {
 
@@ -13,8 +12,8 @@ object PropertyTest extends Properties("Property") {
     val r = (for {
       x <- Gen.char('a', 'z').log("x")
       y <- integral(Range.linear(0, 50)).log("y")
-      _ <- if (y % 2 == 0) Property.discard[IO] else success[IO]
-      _ <- assert[IO](y < 87 && x <= 'r')
+      _ <- if (y % 2 == 0) Property.discard else success
+      _ <- assert(y < 87 && x <= 'r')
     } yield ()).check(seed).unsafePerformIO
     r ?= Report(SuccessCount(0), DiscardCount(2), Failed(ShrinkCount(1), List(
         ForAll("x", "s")
@@ -59,7 +58,7 @@ object PropertyTest extends Properties("Property") {
     val r = (for {
       x <- order(cheap).log("cheap")
       y <- order(expensive).log("expensive")
-      _ <- assert[IO](merge(x, y).total.value == x.total.value + y.total.value)
+      _ <- assert(merge(x, y).total.value == x.total.value + y.total.value)
     } yield ()).check(seed).unsafePerformIO
     r ?= Report(SuccessCount(3), DiscardCount(0), Failed(ShrinkCount(5), List(
         ForAll("cheap", "Order(List())")

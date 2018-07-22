@@ -16,13 +16,13 @@ sealed trait Log
 case class ForAll(name: Name, value: String) extends Log
 case class Info(value: String) extends Log
 
-case class Property[M[_], A](run: GenT[M, (List[Log], Option[A])]) {
+case class PropertyT[M[_], A](run: GenT[M, (List[Log], Option[A])]) {
 
-  def map[B](f: A => B)(implicit F: Functor[M]): Property[M, B] =
-    Property(run.map(_.map(_.map(f))))
+  def map[B](f: A => B)(implicit F: Functor[M]): PropertyT[M, B] =
+    PropertyT(run.map(_.map(_.map(f))))
 
-  def flatMap[B](f: A => Property[M, B])(implicit F: Monad[M]): Property[M, B] =
-    Property(run.flatMap(x =>
+  def flatMap[B](f: A => PropertyT[M, B])(implicit F: Monad[M]): PropertyT[M, B] =
+    PropertyT(run.flatMap(x =>
       x._2.cata(
         a => f(a).run.map(y => (x._1 ++ y._1, y._2))
       , GenT.GenApplicative(F).point((x._1, None))
@@ -30,55 +30,58 @@ case class Property[M[_], A](run: GenT[M, (List[Log], Option[A])]) {
     ))
 
   def check(seed: Seed)(implicit F: Monad[M]): M[Report] =
-    Property.report(SuccessCount(100), Size(0), seed, this)
+    propertyT.report(SuccessCount(100), Size(0), seed, this)
 
-  def checkRandom(p: Property[M, Unit])(implicit F: MonadIO[M]): M[Report] =
+  def checkRandom(p: PropertyT[M, Unit])(implicit F: MonadIO[M]): M[Report] =
     Seed.fromTime.liftIO.flatMap(s => check(s))
 }
 
-object Property {
+object PropertyT {
 
-  implicit def PropertyMonad[M[_]](implicit F: Monad[M]): Monad[Property[M, ?]] =
-    new Monad[Property[M, ?]] {
-      override def map[A, B](fa: Property[M, A])(f: A => B): Property[M, B] =
+  implicit def PropertyMonad[M[_]](implicit F: Monad[M]): Monad[PropertyT[M, ?]] =
+    new Monad[PropertyT[M, ?]] {
+      override def map[A, B](fa: PropertyT[M, A])(f: A => B): PropertyT[M, B] =
         fa.map(f)
-      override def point[A](a: => A): Property[M, A] =
-        hoist((Nil, a))
-      override def bind[A, B](fa: Property[M, A])(f: A => Property[M, B]): Property[M, B] =
+      override def point[A](a: => A): PropertyT[M, A] =
+        propertyT.hoist((Nil, a))
+      override def bind[A, B](fa: PropertyT[M, A])(f: A => PropertyT[M, B]): PropertyT[M, B] =
         fa.flatMap(f)
     }
+}
 
-  def fromGen[M[_] : Monad, A](gen: GenT[M, A]): Property[M, A] =
-    Property(gen.map(x => (Nil, Some(x))))
+trait PropertyTOps[M[_]] {
 
-  def hoist[M[_], A](a: (List[Log], A))(implicit F: Monad[M]): Property[M, A] =
-    Property(GenT.GenApplicative(F).point(a.map(some)))
+  def fromGen[A](gen: GenT[M, A])(implicit F: Monad[M]): PropertyT[M, A] =
+    PropertyT(gen.map(x => (Nil, Some(x))))
 
-  def writeLog[M[_] : Monad](log: Log): Property[M, Unit] =
+  def hoist[A](a: (List[Log], A))(implicit F: Monad[M]): PropertyT[M, A] =
+    PropertyT(GenT.GenApplicative(F).point(a.map(some)))
+
+  def writeLog(log: Log)(implicit F: Monad[M]): PropertyT[M, Unit] =
     hoist((List(log), ()))
 
-  def info[M[_] : Monad](log: String): Property[M, Unit] =
+  def info(log: String)(implicit F: Monad[M]): PropertyT[M, Unit] =
     writeLog(Info(log))
 
-  def discard[M[_] : Monad]: Property[M, Unit] =
+  def discard(implicit F: Monad[M]): PropertyT[M, Unit] =
     fromGen(genT.discard)
 
-  def failure[M[_], A](implicit F: Monad[M]): Property[M, A] =
-    Property(GenT.GenApplicative(F).point((Nil, None)))
+  def failure[A](implicit F: Monad[M]): PropertyT[M, A] =
+    PropertyT(GenT.GenApplicative(F).point((Nil, None)))
 
-  def success[M[_] : Monad]: Property[M, Unit] =
+  def success(implicit F: Monad[M]): PropertyT[M, Unit] =
     hoist((Nil, ()))
 
-  def assert[M[_] : Monad](b: Boolean): Property[M, Unit] =
+  def assert(b: Boolean)(implicit F: Monad[M]): PropertyT[M, Unit] =
     if (b) success else failure
 
   /**********************************************************************/
   // Reporting
 
-  def isFailure[M[_], A, B](n: Node[M, Option[(B, Option[A])]]): Boolean =
+  def isFailure[A, B](n: Node[M, Option[(B, Option[A])]]): Boolean =
     n.value.map(_._2) == Some(None)
 
-  def takeSmallest[M[_] : Monad, A](n: ShrinkCount, t: Node[M, Option[(List[Log], Option[A])]]): M[Status] =
+  def takeSmallest[A](n: ShrinkCount, t: Node[M, Option[(List[Log], Option[A])]])(implicit F: Monad[M]): M[Status] =
     t.value match {
       case None =>
         Status.gaveUp.point[M]
@@ -98,7 +101,7 @@ object Property {
         Status.ok.point[M]
     }
 
-  def report[M[_] : Monad, A](n : SuccessCount, size0: Size, seed0: Seed, p: Property[M, A]): M[Report] = {
+  def report[A](n : SuccessCount, size0: Size, seed0: Seed, p: PropertyT[M, A])(implicit F: Monad[M]): M[Report] = {
     def loop(successes: SuccessCount, discards: DiscardCount, size: Size, seed: Seed): M[Report] =
       if (size.value > 99)
         loop(successes, discards, Size(0), seed)
@@ -122,7 +125,7 @@ object Property {
     loop(SuccessCount(0), DiscardCount(0), size0, seed0)
   }
 
-  def recheck[M[_] : Monad](size: Size, seed: Seed)(p: Property[M, Unit]): M[Report] =
+  def recheck(size: Size, seed: Seed)(p: PropertyT[M, Unit])(implicit F: Monad[M]): M[Report] =
     report(SuccessCount(1), Size(0), seed, p)
 }
 
