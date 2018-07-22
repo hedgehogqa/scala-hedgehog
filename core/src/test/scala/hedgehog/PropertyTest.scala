@@ -32,7 +32,7 @@ object PropertyTest extends Properties("Property") {
   def merge(xs: Order, ys: Order): Order = {
     val extra =
       if (xs.items.exists(_.price.value > 50) || ys.items.exists(_.price.value > 50) )
-        List(Item("processing", (USD(1))))
+        List(Item("processing", USD(1)))
       else
         Nil
     Order(xs.items ++ ys.items ++ extra)
