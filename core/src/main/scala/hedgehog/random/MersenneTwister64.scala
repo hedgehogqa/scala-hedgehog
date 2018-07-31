@@ -23,14 +23,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  **/
-package hedgehog
+package hedgehog.random
 
 import java.nio.ByteBuffer
 import java.util.Arrays
 
 final class MersenneTwister64 private(private val mt0: Array[Long], private val mti0: Int = 313) { // N + 1 = 313
 
-  import MersenneTwister64.{UpperMask, LowerMask, N, M, N_M, N_1, M_N, M_1, BYTES, mag01}
+  import MersenneTwister64._
 
   override def equals(other: Any): Boolean =
     other match {

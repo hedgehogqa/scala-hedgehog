@@ -1,5 +1,6 @@
 package hedgehog
 
+import hedgehog.random._
 import scalaz.effect._
 
 case class Seed(seed: MersenneTwister64) {
