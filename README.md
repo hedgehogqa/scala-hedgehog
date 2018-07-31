@@ -22,14 +22,69 @@ mature and prove to be a better place to start.
   [plans to implementing hedgehog-like shrinking](https://github.com/scalaz/testz/issues/5)
 
 
-# scala-hedgehog
+> Hedgehog will eat all your bugs.
 
-An alternative property-based testing system for Scala, in the spirit of John
-Hughes & Koen Classen's [QuickCheck](https://web.archive.org/web/20160319204559/http://www.cs.tufts.edu/~nr/cs257/archive/john-hughes/quick.pdf).
+<img src="https://github.com/hedgehogqa/haskell-hedgehog/raw/master/img/hedgehog-logo.png" width="307" align="right"/>
 
-The key improvement is that shrinking comes for free — instead of generating
-a random value and using a shrinking function after the fact, we generate the
-random value and all the possible shrinks in a rose tree, all at once.
+[Hedgehog](http://hedgehog.qa/) is a modern property-based testing
+system, in the spirit of QuickCheck (and ScalaCheck). Hedgehog uses integrated shrinking,
+so shrinks obey the invariants of generated values by construction.
+
+
+## Features
+
+- Integrated shrinking, shrinks obey invariants by construction.
+- Abstract state machine testing.
+- Generators allow monadic effects.
+- Range combinators for full control over the scope of generated numbers and collections.
+- SBT test runner
+
+
+## Usage
+
+**NOTE** This libraries is still a WIP and so for now the easiest way to add the library
+of the dependency is as a [subproject](https://www.scala-sbt.org/1.x/docs/Multi-Project.html).
+
+```
+lazy val root =
+  (project in file("."))
+    .dependsOn(RootProject(uri("https://github.com/hedgehogqa/scala-hedgehog.git#master")))
+```
+
+Scala Hedgehog comes with a _very_ primitive runner interface, and supports the
+[SBT testing extension](https://www.scala-sbt.org/1.x/docs/Testing.html#Using+Extensions).
+
+```
+testFrameworks := Seq(TestFramework("hedgehog.sbt.Framework"))
+```
+
+
+## Example
+
+See the [example](example/) module for a complete version.
+
+```scala
+import hedgehog._
+import hedgehog.Gen._
+import hedgehog.runner._
+
+class PropertyTest extends Properties {
+
+  def tests: List[Prop] =
+    List(
+      Prop("example1", example1)
+    )
+
+  def example1: Property[Unit] =
+    for {
+      x <- Gen.char('a', 'z').log("x")
+      y <- integral(Range.linear(0, 50)).log("y")
+      _ <- if (y % 2 == 0) discard else success
+      _ <- assert(y < 87 && x <= 'r')
+    } yield ()
+}
+```
+
 
 ## Alternatives
 
