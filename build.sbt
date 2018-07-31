@@ -9,12 +9,19 @@ lazy val scalacheck = Seq(
     "org.scalacheck" %% "scalacheck" % "1.13.4" % "test"
   )
 
+lazy val noPublish = Seq(
+  publish := {},
+  publishLocal := {},
+  publishArtifact := false
+)
+
 lazy val hedgehog = Project(
     id = "hedgehog"
   , base = file(".")
   )
   .settings(standardSettings)
-  .aggregate(core)
+  .settings(noPublish)
+  .aggregate(core, runner, sbtTest)
 
 lazy val standardSettings = Seq(
     Defaults.coreDefaultSettings
@@ -41,22 +48,39 @@ lazy val core = Project(
     , scalacheck
   ).flatten))
 
+lazy val example = Project(
+    id = "example"
+  , base = file("example")
+  ).settings(standardSettings ++ Seq(
+    name := "hedgehog-example"
+  ) ++ Seq(libraryDependencies ++= Seq(
+  ))
+  ).dependsOn(core, runner, sbtTest)
+
+lazy val runner = Project(
+    id = "runner"
+  , base = file("runner")
+  ).settings(standardSettings ++ Seq(
+    name := "hedgehog-runner"
+  ) ++ Seq(libraryDependencies ++= Seq(
+    ))
+  ).dependsOn(core)
+
 lazy val sbtTest = Project(
     id = "sbt-test"
   , base = file("sbt-test")
-  ).settings(standardSettings ++ Seq(
+  ).settings(standardSettings ++ testingSettings ++ Seq(
     name := "hedgehog-sbt"
   ) ++ Seq(libraryDependencies ++= Seq(
       "org.scala-sbt" % "test-interface" % "1.0"
     ))
-  ).dependsOn(core)
+  ).dependsOn(core, runner)
 
 lazy val compilationSettings = Seq(
     javacOptions ++= Seq("-source", "1.6", "-target", "1.6")
   , maxErrors := 10
   , scalacOptions in Compile ++= Seq(
-      "-target:jvm-1.6"
-    , "-deprecation"
+      "-deprecation"
     , "-unchecked"
     , "-feature"
     , "-language:_"
@@ -70,5 +94,9 @@ lazy val compilationSettings = Seq(
   , scalacOptions in (Compile,doc) := Seq("-language:_", "-feature")
   , scalacOptions in (Compile,console) := Seq("-language:_", "-feature")
   , scalacOptions in (Test,console) := Seq("-language:_", "-feature")
-  , addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3")
+  , libraryDependencies += compilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
+  )
+
+lazy val testingSettings = Seq(
+    testFrameworks := Seq(TestFramework("hedgehog.sbt.HedgehogFramework"))
   )
