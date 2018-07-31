@@ -12,11 +12,9 @@ lazy val scalacheck = Seq(
 lazy val hedgehog = Project(
     id = "hedgehog"
   , base = file(".")
-  , settings = standardSettings
-  , aggregate = Seq(
-      core
-    )
   )
+  .settings(standardSettings)
+  .aggregate(core)
 
 lazy val standardSettings = Seq(
     Defaults.coreDefaultSettings
@@ -36,13 +34,22 @@ lazy val projectSettings = Seq(
 lazy val core = Project(
     id = "core"
   , base = file("core")
-  , settings = standardSettings ++ Seq(
-      name := "hedgehog-core"
-    ) ++ Seq(libraryDependencies ++= Seq(
+  ).settings(standardSettings ++ Seq(
+    name := "hedgehog-core"
+  ) ++ Seq(libraryDependencies ++= Seq(
       scalaz
     , scalacheck
-    ).flatten)
-  )
+  ).flatten))
+
+lazy val sbtTest = Project(
+    id = "sbt-test"
+  , base = file("sbt-test")
+  ).settings(standardSettings ++ Seq(
+    name := "hedgehog-sbt"
+  ) ++ Seq(libraryDependencies ++= Seq(
+      "org.scala-sbt" % "test-interface" % "1.0"
+    ))
+  ).dependsOn(core)
 
 lazy val compilationSettings = Seq(
     javacOptions ++= Seq("-source", "1.6", "-target", "1.6")
