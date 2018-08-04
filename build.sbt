@@ -1,9 +1,5 @@
 import sbt._, Keys._
 
-lazy val scalacheck = Seq(
-    "org.scalacheck" %% "scalacheck" % "1.13.4" % "test"
-  )
-
 lazy val noPublish = Seq(
   publish := {},
   publishLocal := {},
@@ -16,7 +12,7 @@ lazy val hedgehog = Project(
   )
   .settings(standardSettings)
   .settings(noPublish)
-  .aggregate(core, runner, sbtTest)
+  .aggregate(core, runner, sbtTest, test)
 
 lazy val standardSettings = Seq(
     Defaults.coreDefaultSettings
@@ -39,7 +35,6 @@ lazy val core = Project(
   ).settings(standardSettings ++ Seq(
     name := "hedgehog-core"
   ) ++ Seq(libraryDependencies ++= Seq(
-      scalacheck
   ).flatten))
 
 lazy val example = Project(
@@ -69,6 +64,16 @@ lazy val sbtTest = Project(
       "org.scala-sbt" % "test-interface" % "1.0"
     ))
   ).dependsOn(core, runner)
+
+lazy val test = Project(
+      id = "test"
+    , base = file("test")
+  ).settings(standardSettings ++ Seq(
+    name := "hedgehog-test"
+  , testFrameworks := Seq(TestFramework("hedgehog.sbt.Framework"))
+  ) ++ Seq(libraryDependencies ++= Seq(
+    ))
+  ).dependsOn(core, runner, sbtTest)
 
 lazy val compilationSettings = Seq(
     javacOptions ++= Seq("-source", "1.6", "-target", "1.6")

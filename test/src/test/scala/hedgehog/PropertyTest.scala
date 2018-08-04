@@ -2,12 +2,17 @@ package hedgehog
 
 import hedgehog.Gen._
 import hedgehog.Property._
-import org.scalacheck.{Gen => _, _}
-import org.scalacheck.Prop._
+import hedgehog.runner._
 
-object PropertyTest extends Properties("Property") {
+class PropertyTest extends Properties {
 
-  property("example1") = {
+  def tests: List[Prop] =
+    List(
+      Prop("example1", example1)
+    , Prop("total", total)
+    )
+
+  def example1: Property[Unit] = {
     val seed = Seed.fromLong(5489)
     val r = (for {
       x <- Gen.char('a', 'z').log("x")
@@ -15,10 +20,10 @@ object PropertyTest extends Properties("Property") {
       _ <- if (y % 2 == 0) Property.discard else success
       _ <- assert(y < 87 && x <= 'r')
     } yield ()).check(seed).value
-    r ?= Report(SuccessCount(0), DiscardCount(2), Failed(ShrinkCount(1), List(
+    assert(r == Report(SuccessCount(0), DiscardCount(2), Failed(ShrinkCount(1), List(
         ForAll("x", "s")
       , ForAll("y", "1"))
-      ))
+      )))
   }
 
   case class USD(value: Long)
@@ -53,16 +58,16 @@ object PropertyTest extends Properties("Property") {
   def order(gen: Gen[Item]): Gen[Order] =
     gen.list(Range.linear(0, 50)).map(Order)
 
-  property("total") = {
+  def total: Property[Unit] = {
     val seed = Seed.fromLong(5489)
     val r = (for {
       x <- order(cheap).log("cheap")
       y <- order(expensive).log("expensive")
       _ <- assert(merge(x, y).total.value == x.total.value + y.total.value)
     } yield ()).check(seed).value
-    r ?= Report(SuccessCount(3), DiscardCount(0), Failed(ShrinkCount(5), List(
+    assert(r == Report(SuccessCount(3), DiscardCount(0), Failed(ShrinkCount(5), List(
         ForAll("cheap", "Order(List())")
       , ForAll("expensive", "Order(List(Item(oculus,USD(1000))))"
-      ))))
+      )))))
   }
 }
