@@ -13,8 +13,6 @@ mature and prove to be a better place to start.
 - https://github.com/melrief/sonic
 
   This is another port, based on cats and monix.
-  It's worth noting that scala-hedgehog currently uses scalaz, but this was
-  for prototyping and the vague plan was to make it agnostic (if possible).
 
 - https://github.com/scalaz/testz
 
