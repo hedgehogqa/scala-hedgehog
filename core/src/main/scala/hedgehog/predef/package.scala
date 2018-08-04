@@ -2,12 +2,6 @@ package hedgehog
 
 package object predef {
 
-  type Functor[F[_]] = scalaz.Functor[F]
-  type Applicative[F[_]] = scalaz.Applicative[F]
-  type Monad[F[_]] = scalaz.Monad[F]
-
-  type Identity[A] = scalaz.Scalaz.Identity[A]
-
   def some[A](a: A): Option[A] =
     Some(a)
 
