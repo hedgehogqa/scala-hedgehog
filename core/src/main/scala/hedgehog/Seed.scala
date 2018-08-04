@@ -1,7 +1,6 @@
 package hedgehog
 
 import hedgehog.random._
-import scalaz.effect._
 
 case class Seed(seed: MersenneTwister64) {
 
@@ -41,8 +40,9 @@ case class Seed(seed: MersenneTwister64) {
 
 object Seed {
 
-  def fromTime: IO[Seed] =
-    IO(System.nanoTime).map(fromLong(_))
+  // FIX: predef IO
+  def fromTime(): Seed =
+    fromLong(System.nanoTime)
 
   def fromLong(seed: Long): Seed =
     Seed(MersenneTwister64.fromSeed(seed))

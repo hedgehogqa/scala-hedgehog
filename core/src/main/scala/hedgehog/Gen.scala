@@ -1,6 +1,6 @@
 package hedgehog
 
-import scalaz._, Scalaz._
+import hedgehog.predef._
 
 /**
  * Generator for random values of `A`.
@@ -8,11 +8,11 @@ import scalaz._, Scalaz._
 case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
 
   def map[B](f: A => B)(implicit F: Functor[M]): GenT[M, B] =
-    GenT((size, seed) => run(size, seed).map(_.map(_.map(f))))
+    GenT((size, seed) => run(size, seed).map(t => t.copy(_2 = t._2.map(f))))
 
   def flatMap[B](f: A => GenT[M, B])(implicit F: Monad[M]): GenT[M, B] =
     GenT((size, seed) => run(size, seed).flatMap(x =>
-      x._2.cata(a => f(a).run(size, x._1), Tree.TreeApplicative(F).point(x.as(none)))
+      x._2.fold(Tree.TreeApplicative(F).point(x.copy(_2 = Option.empty[B])))(a => f(a).run(size, x._1))
     ))
 
   def mapTree[N[_], B](f: Tree[M, (Seed, Option[A])] => Tree[N, (Seed, Option[B])]): GenT[N, B] =
@@ -26,7 +26,7 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
    */
   def shrink(f: A => List[A])(implicit F: Monad[M]): GenT[M, A] =
     mapTree(_.expand(x =>
-      x._2.cata(a => f(a).map(y => (x._1, Some(y))), Nil)
+      x._2.fold(List.empty[(Seed, Option[A])])(a => f(a).map(y => (x._1, Some(y))))
     ))
 
   /**
@@ -75,7 +75,7 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
 
   def list(range: Range[Int])(implicit F: Monad[M]): GenT[M, List[A]] =
     // TODO filterM, needs a MonadPlus for Gen
-    genT[M].integral_[Int](range).flatMap(k => this.replicateM(k))
+    genT[M].integral_[Int](range).flatMap(k => replicateM[GenT[M, ?], A](k, this))
       .shrink(Shrink.list)
 }
 
@@ -168,7 +168,7 @@ trait GenTOps[M[_]] {
       val (x, y) = range.bounds(size)
       val (s2, a) = seed.chooseLong(I.toLong(x), I.toLong(y))
       // TODO Integral doesn't support Long, can we only use int seeds? :(
-      I.fromInt(a.toInt).point[GenT[M, ?]].run(size, s2)
+      GenT.GenApplicative.point(I.fromInt(a.toInt)).run(size, s2)
     })
 
   def char(lo: Char, hi: Char)(implicit F: Monad[M]): GenT[M, Char] =
@@ -184,7 +184,7 @@ trait GenTOps[M[_]] {
     GenT((size, seed) => {
       val (x, y) = range.bounds(size)
       val (s2, a) = seed.chooseDouble(x, y)
-      a.point[GenT[M, ?]].run(size, s2)
+      GenT.GenApplicative[M].point(a).run(size, s2)
     })
 
   /**********************************************************************/
@@ -212,6 +212,6 @@ trait GenTOps[M[_]] {
   /**
    * Discards the whole generator.
    */
-  def discard[A](implicit F: Applicative[M]): GenT[M, A] =
+  def discard[A](implicit F: Monad[M]): GenT[M, A] =
     GenT((_, seed) => Tree.TreeApplicative(F).point((seed, None)))
 }

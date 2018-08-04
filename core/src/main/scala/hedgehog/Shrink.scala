@@ -1,7 +1,5 @@
 package hedgehog
 
-import scalaz.{ Node => _, Tree => _, _ }, Scalaz._
-
 object Shrink {
 
   /**
@@ -69,7 +67,9 @@ object Shrink {
    * ''Note we always try the empty list first, as that is the optimal shrink.''
    */
   def list[A](xs: List[A]): List[List[A]] =
-    halves(xs.length).foldMap(k => removes(k, xs))
+    halves(xs.length)
+      // FIX: predef foldMap
+      .foldLeft(List.empty[List[A]])((lla, k) => lla ++ removes(k, xs))
 
   /**
    * Produce all permutations of removing 'k' elements from a list.
