@@ -1,5 +1,6 @@
 package hedgehog
 
+import hedgehog.core._
 import hedgehog.Gen._
 import hedgehog.Property._
 import hedgehog.runner._

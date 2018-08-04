@@ -1,4 +1,4 @@
-package hedgehog
+package hedgehog.core
 
 object Shrink {
 
