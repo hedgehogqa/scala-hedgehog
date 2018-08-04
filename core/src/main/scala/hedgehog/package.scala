@@ -1,3 +1,5 @@
+import hedgehog.core._
+
 package object hedgehog {
 
   type HM[A] = predef.Identity[A]

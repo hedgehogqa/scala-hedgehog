@@ -1,6 +1,6 @@
 package hedgehog.sbt
 
-import hedgehog._
+import hedgehog.core._
 import hedgehog.runner._
 import _root_.sbt.{testing => sbtt}
 
