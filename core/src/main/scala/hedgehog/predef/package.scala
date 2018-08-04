@@ -1,5 +1,16 @@
 package hedgehog
 
+/**
+ * We have our own FP predef for 2 reasons.
+ *
+ * 1. The obvious political reasons. I don't think there are any really good reasons to need more than one
+ * implementation of this library (if we do our job correctly).
+ *
+ * Probably more importantly:
+ *
+ * 2. Library dependencies _do_ have a cost. Especially in the JVM world where we insist of relying on binary
+ * compatibility.
+ */
 package object predef {
 
   def some[A](a: A): Option[A] =
