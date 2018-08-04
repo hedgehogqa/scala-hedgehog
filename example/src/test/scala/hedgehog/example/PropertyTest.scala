@@ -16,7 +16,7 @@ class PropertyTest extends Properties {
     for {
       x <- Gen.char('a', 'z').log("x")
       y <- integral(Range.linear(0, 50)).log("y")
-      _ <- if (y % 2 == 0) discard else success
+      _ <- if (y % 2 == 0) Property.discard else success
       _ <- assert(y < 87 && x <= 'r')
     } yield ()
 
