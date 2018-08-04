@@ -57,7 +57,7 @@ class Task(
     Array()
 
   override def execute(eventHandler: sbtt.EventHandler, loggers: Array[sbtt.Logger]): Array[sbtt.Task] = {
-    val seed = Seed.fromTime.unsafePerformIO
+    val seed = Seed.fromTime()
     val c = testClassLoader
       .loadClass(taskDef.fullyQualifiedName)
       .asInstanceOf[Class[Properties]]

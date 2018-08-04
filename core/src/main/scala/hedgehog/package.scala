@@ -1,6 +1,6 @@
 package object hedgehog {
 
-  type HM[A] = scalaz.Scalaz.Identity[A]
+  type HM[A] = predef.Identity[A]
 
   /**
    * This is _purely_ to make consuming this library a nicer experience,

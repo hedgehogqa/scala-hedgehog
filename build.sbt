@@ -1,10 +1,5 @@
 import sbt._, Keys._
 
-lazy val scalaz = Seq(
-    "org.scalaz" %% "scalaz-core" % "7.2.9"
-  , "org.scalaz" %% "scalaz-effect" % "7.2.9"
-  )
-
 lazy val scalacheck = Seq(
     "org.scalacheck" %% "scalacheck" % "1.13.4" % "test"
   )
@@ -44,8 +39,7 @@ lazy val core = Project(
   ).settings(standardSettings ++ Seq(
     name := "hedgehog-core"
   ) ++ Seq(libraryDependencies ++= Seq(
-      scalaz
-    , scalacheck
+      scalacheck
   ).flatten))
 
 lazy val example = Project(

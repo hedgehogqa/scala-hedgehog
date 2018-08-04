@@ -1,7 +1,6 @@
 package hedgehog
 
-import scalaz._, Scalaz._
-import scalaz.effect._
+import hedgehog.predef._
 
 case class Name(value: String)
 
@@ -19,21 +18,23 @@ case class Info(value: String) extends Log
 case class PropertyT[M[_], A](run: GenT[M, (List[Log], Option[A])]) {
 
   def map[B](f: A => B)(implicit F: Functor[M]): PropertyT[M, B] =
-    PropertyT(run.map(_.map(_.map(f))))
+    PropertyT(run.map(x => x.copy(_2 = x._2.map(f))))
 
   def flatMap[B](f: A => PropertyT[M, B])(implicit F: Monad[M]): PropertyT[M, B] =
     PropertyT(run.flatMap(x =>
-      x._2.cata(
+      x._2.fold(
+       GenT.GenApplicative(F).point((x._1, Option.empty[B]))
+      )(
         a => f(a).run.map(y => (x._1 ++ y._1, y._2))
-      , GenT.GenApplicative(F).point((x._1, None))
       )
     ))
 
   def check(seed: Seed)(implicit F: Monad[M]): M[Report] =
     propertyT.report(SuccessCount(100), Size(0), seed, this)
 
-  def checkRandom(p: PropertyT[M, Unit])(implicit F: MonadIO[M]): M[Report] =
-    Seed.fromTime.liftIO.flatMap(s => check(s))
+  def checkRandom(p: PropertyT[M, Unit])(implicit F: Monad[M]): M[Report] =
+    // FIX: predef MonadIO
+    check(Seed.fromTime())
 }
 
 object PropertyT {
@@ -55,7 +56,7 @@ trait PropertyTOps[M[_]] {
     PropertyT(gen.map(x => (Nil, Some(x))))
 
   def hoist[A](a: (List[Log], A))(implicit F: Monad[M]): PropertyT[M, A] =
-    PropertyT(GenT.GenApplicative(F).point(a.map(some)))
+    PropertyT(GenT.GenApplicative(F).point(a.copy(_2 = Some(a._2))))
 
   def writeLog(log: Log)(implicit F: Monad[M]): PropertyT[M, Unit] =
     hoist((List(log), ()))
@@ -84,21 +85,20 @@ trait PropertyTOps[M[_]] {
   def takeSmallest[A](n: ShrinkCount, t: Node[M, Option[(List[Log], Option[A])]])(implicit F: Monad[M]): M[Status] =
     t.value match {
       case None =>
-        Status.gaveUp.point[M]
+        F.point(Status.gaveUp)
 
       case Some((w, None)) =>
-        t.children.findMapM[M, Status](m =>
-            m.run.flatMap(node =>
-              if(isFailure(node))
-                takeSmallest(n.inc, node).map(some)
-              else
-                none.point[M]
-            )
+        F.map(findMapM(t.children)(m =>
+          F.bind(m.run)(node =>
+            if(isFailure(node))
+              F.map(takeSmallest(n.inc, node))(some)
+            else
+              F.point(Option.empty[Status])
           )
-          .map(_.getOrElse(Status.failed(n, w)))
+        ))(_.getOrElse(Status.failed(n, w)))
 
       case Some((_, Some(_))) =>
-        Status.ok.point[M]
+        F.point(Status.ok)
     }
 
   def report[A](n : SuccessCount, size0: Size, seed0: Seed, p: PropertyT[M, A])(implicit F: Monad[M]): M[Report] = {
@@ -106,17 +106,17 @@ trait PropertyTOps[M[_]] {
       if (size.value > 99)
         loop(successes, discards, Size(0), seed)
       else if (successes == n)
-        Report(successes, discards, OK).point[M]
+        F.point(Report(successes, discards, OK))
       else if (discards.value >= 100)
-        Report(successes, discards, GaveUp).point[M]
+        F.point(Report(successes, discards, GaveUp))
       else
-        p.run.run(size, seed).run.flatMap(x =>
+        F.bind(p.run.run(size, seed).run)(x =>
           x.value._2 match {
             case None =>
               loop(successes, discards.inc, size.inc, x.value._1)
 
             case Some((_, None)) =>
-              takeSmallest(ShrinkCount(0), x.map(_._2)).map(y => Report(successes, discards, y))
+              F.map(takeSmallest(ShrinkCount(0), x.map(_._2)))(y => Report(successes, discards, y))
 
             case Some((m, Some(_))) =>
               loop(successes.inc, discards, size.inc, x.value._1)
