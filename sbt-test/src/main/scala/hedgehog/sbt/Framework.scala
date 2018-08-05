@@ -18,8 +18,8 @@ class Framework extends sbtt.Framework {
       }
 
     Array(
-      // For now only support classes. Do we want to have 2 different ways of doing the same thing?
       mkFP(false, classOf[Properties].getName)
+    , mkFP(true, classOf[Properties].getName)
     )
   }
 
@@ -59,51 +59,25 @@ class Task(
   override def execute(eventHandler: sbtt.EventHandler, loggers: Array[sbtt.Logger]): Array[sbtt.Task] = {
     val seed = Seed.fromTime()
     val c = testClassLoader
-      .loadClass(taskDef.fullyQualifiedName)
+      .loadClass(taskDef.fullyQualifiedName + (if (fingerprint.isModule) "$" else ""))
       .asInstanceOf[Class[Properties]]
-    val properties = c.newInstance
+    val properties =
+      if (fingerprint.isModule)
+        // FIX Use scala-reflect to be more future compatible
+        c.getField("MODULE$").get(c).asInstanceOf[Properties]
+      else
+        c.newInstance
     properties.tests.foreach(t => {
       val startTime = System.currentTimeMillis
       val report = t.result.check(seed).value
       val endTime = System.currentTimeMillis
       eventHandler.handle(Event.fromReport(taskDef, new sbtt.TestSelector(t.name), report, endTime - startTime))
 
-      loggers.foreach(logger => logger.info(renderReport(t, report, logger.ansiCodesSupported)))
+      loggers.foreach(logger => logger.info(Prop.renderReport(taskDef.fullyQualifiedName, t, report, logger.ansiCodesSupported)))
     })
     Array()
   }
 
-  def renderReport(t: Prop, report: Report, ansiCodesSupported: Boolean): String = {
-    def render(ok: Boolean, msg: String, extraS: List[String]): String = {
-      val name = taskDef.fullyQualifiedName + "." + t.name
-      val sym = if (ok) "+" else "-"
-      val colour = if (ok) Console.GREEN else Console.RED
-      val extra = if (extraS.isEmpty) "" else "\n" + extraS.map(s => "> " + s).mkString("\n")
-      if(ansiCodesSupported) {
-        s"$colour$sym${Console.RESET} $name: $msg$extra"
-      } else {
-        s"$sym $name: $msg$extra"
-      }
-    }
-
-    report.status match {
-      case Failed(shrinks, log) =>
-        render(false, s"Falsified after ${report.tests.value} passed tests", log.map(renderLog))
-      case GaveUp =>
-        render(false, s"Gave up after only ${report.tests.value} passed test. " +
-        s"${report.discards.value} were discarded", Nil)
-      case OK =>
-        render(true, s"OK, passed ${report.tests.value} tests", Nil)
-    }
-  }
-
-  def renderLog(log: Log): String =
-    log match {
-      case ForAll(name, value) =>
-        s"${name.value}: $value"
-      case Info(value) =>
-        value
-    }
 }
 
 case class Event(

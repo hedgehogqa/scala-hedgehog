@@ -66,7 +66,7 @@ import hedgehog._
 import hedgehog.Gen._
 import hedgehog.runner._
 
-class PropertyTest extends Properties {
+object PropertyTest extends Properties {
 
   def tests: List[Prop] =
     List(
