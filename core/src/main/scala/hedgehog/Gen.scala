@@ -117,6 +117,14 @@ trait GenTOps[M[_]] {
    *
    * This generator shrinks towards the first element in the list.
    */
+  def element1[A](x: A, xs: A*)(implicit F: Monad[M]): GenT[M, A] =
+    element(x, xs.toList)
+
+  /**
+   * Randomly selects one of the elements in the list.
+   *
+   * This generator shrinks towards the first element in the list.
+   */
   def element[A](x: A, xs: List[A])(implicit F: Monad[M]): GenT[M, A] =
     integral[Int](Range.constant(0, xs.length)).map(i => (x :: xs)(i))
 
