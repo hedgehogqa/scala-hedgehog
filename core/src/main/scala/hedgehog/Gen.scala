@@ -154,7 +154,7 @@ trait GenTOps[M[_]] {
    *
    * _The input list must be non-empty._
    */
-   def frequency1[A](a: (Int, GenT[M, A]), l: (Int, GenT[M, A])*)(implicit F: Monad[M]): GenT[M, A] =
+   def frequency1[A](a: (Int, GenT[M, A]), l: (Int, GenT[M, A])*): GenT[M, A] =
      frequency(a, l.toList)
 
    /**
@@ -164,7 +164,7 @@ trait GenTOps[M[_]] {
     *
     * _The input list must be non-empty._
     */
-   def frequency[A](a: (Int, GenT[M, A]), l: List[(Int, GenT[M, A])])(implicit F: Monad[M]): GenT[M, A] = {
+   def frequency[A](a: (Int, GenT[M, A]), l: List[(Int, GenT[M, A])]): GenT[M, A] = {
      val xs0 = a :: l.toList
      @annotation.tailrec
      def pick(n: Int, x: (Int, GenT[M, A]), xs: List[(Int, GenT[M, A])]): GenT[M, A] =
