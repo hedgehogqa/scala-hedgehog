@@ -1,4 +1,5 @@
 import hedgehog.core._
+import hedgehog.extra._
 
 package object hedgehog {
 
@@ -8,11 +9,18 @@ package object hedgehog {
    * This is _purely_ to make consuming this library a nicer experience,
    * mainly due to Scala's type inference problems and higher kinds.
    */
-  object Gen extends GenTOps[HM]
+  object Gen
+    extends GenTOps[HM]
+    with ByteOps[HM]
+    with CharacterOps[HM]
+    with StringOps[HM]
   type Gen[A] = GenT[HM, A]
 
-  def genT[M[_]]: GenTOps[M] =
-    new GenTOps[M] {}
+  def genT[M[_]] =
+    new GenTOps[M]
+    with ByteOps[M]
+    with CharacterOps[M]
+    with StringOps[M] {}
 
   type Property[A] = PropertyT[HM, A]
   object Property extends PropertyTOps[HM]
