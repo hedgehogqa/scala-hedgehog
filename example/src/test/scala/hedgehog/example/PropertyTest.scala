@@ -25,7 +25,7 @@ object PropertyTest extends Properties {
     for {
       x <- order(cheap).log("cheap")
       y <- order(expensive).log("expensive")
-      _ <- assert(merge(x, y).total.value == x.total.value + y.total.value)
+      _ <- merge(x, y).total.value === x.total.value + y.total.value
     } yield ()
 
   case class USD(value: Long)
