@@ -92,10 +92,7 @@ trait GenTOps[M[_]] {
    * _This generator shrinks to 'False'._
    */
   def boolean(implicit F: Monad[M]): GenT[M, Boolean] =
-    choice1(
-      GenT.GenApplicative.point(false)
-    , GenT.GenApplicative.point(true)
-    )
+    element1(false, true)
 
   /**********************************************************************/
   // Combinators - Fractional
