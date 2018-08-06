@@ -6,6 +6,18 @@ import hedgehog.predef._
 trait GenTOps[M[_]] {
 
   /**********************************************************************/
+  // Combinators
+
+  /**
+   * Construct a generator that depends on the size parameter.
+   */
+  def generate[A](f: (Size, Seed) => (Seed, A))(implicit F: Monad[M]): GenT[M, A] =
+    GenT((size, seed) => {
+      val (s2, a) = f(size, seed)
+      Tree.TreeApplicative.point((s2, some(a)))
+    })
+
+  /**********************************************************************/
   // Combinators - Size
 
   /**
@@ -62,15 +74,28 @@ trait GenTOps[M[_]] {
    * ''This generator does not shrink.''
    */
   def integral_[A](range: Range[A])(implicit F: Monad[M], I: Integral[A]): GenT[M, A] =
-    GenT((size, seed) => {
+    genT.generate((size, seed) => {
       val (x, y) = range.bounds(size)
       val (s2, a) = seed.chooseLong(I.toLong(x), I.toLong(y))
-      // TODO Integral doesn't support Long, can we only use int seeds? :(
-      GenT.GenApplicative.point(I.fromInt(a.toInt)).run(size, s2)
+      (s2, I.fromInt(a.toInt))
     })
 
   def char(lo: Char, hi: Char)(implicit F: Monad[M]): GenT[M, Char] =
     integral[Long](Range.constant(lo.toLong, hi.toLong)).map(_.toChar)
+
+  /**********************************************************************/
+  // Combinators - Enumeration
+
+  /**
+   * Generates a random boolean.
+   *
+   * _This generator shrinks to 'False'._
+   */
+  def boolean(implicit F: Monad[M]): GenT[M, Boolean] =
+    choice1(
+      GenT.GenApplicative.point(false)
+    , GenT.GenApplicative.point(true)
+    )
 
   /**********************************************************************/
   // Combinators - Fractional
@@ -79,10 +104,9 @@ trait GenTOps[M[_]] {
     double_(range).shrink(Shrink.towardsFloat(range.origin, _))
 
   def double_(range: Range[Double])(implicit F: Monad[M]): GenT[M, Double] =
-    GenT((size, seed) => {
+    genT.generate((size, seed) => {
       val (x, y) = range.bounds(size)
-      val (s2, a) = seed.chooseDouble(x, y)
-      GenT.GenApplicative[M].point(a).run(size, s2)
+      seed.chooseDouble(x, y)
     })
 
   /**********************************************************************/
@@ -101,8 +125,51 @@ trait GenTOps[M[_]] {
    *
    * This generator shrinks towards the first generator in the list.
    */
+  def choice1[A](x: GenT[M, A], xs: GenT[M, A]*)(implicit F: Monad[M]): GenT[M, A] =
+    choice(x, xs.toList)
+
+  /**
+   * Randomly selects one of the generators in the list.
+   *
+   * This generator shrinks towards the first generator in the list.
+   */
   def choice[A](x: GenT[M, A], xs: List[GenT[M, A]])(implicit F: Monad[M]): GenT[M, A] =
     integral[Int](Range.constant(0, xs.length)).flatMap(i => (x :: xs)(i))
+
+  /**
+   * Uses a weighted distribution to randomly select one of the generators in the list.
+   *
+   * This generator shrinks towards the first generator in the list.
+   *
+   * _The input list must be non-empty._
+   */
+   def frequency1[A](a: (Int, GenT[M, A]), l: (Int, GenT[M, A])*)(implicit F: Monad[M]): GenT[M, A] =
+     frequency(a, l.toList)
+
+   /**
+    * Uses a weighted distribution to randomly select one of the generators in the list.
+    *
+    * This generator shrinks towards the first generator in the list.
+    *
+    * _The input list must be non-empty._
+    */
+   def frequency[A](a: (Int, GenT[M, A]), l: List[(Int, GenT[M, A])])(implicit F: Monad[M]): GenT[M, A] = {
+     val xs0 = a :: l.toList
+     @annotation.tailrec
+     def pick(n: Int, x: (Int, GenT[M, A]), xs: List[(Int, GenT[M, A])]): GenT[M, A] =
+       if (n <= x._1)
+         x._2
+       else
+         xs match {
+           case Nil =>
+             sys.error("Invariant: frequency hits an impossible code path")
+           case h :: t =>
+             pick(n - x._1, h, t)
+         }
+     val total = xs0.map(_._1).sum
+     val n = Range.constant(1, total)
+     pick(n.origin, a, xs0)
+   }
 
   /**********************************************************************/
   // Combinators - Conditional
