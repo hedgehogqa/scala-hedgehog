@@ -6,6 +6,18 @@ import hedgehog.predef._
 trait GenTOps[M[_]] {
 
   /**********************************************************************/
+  // Combinators
+
+  /**
+   * Construct a generator that depends on the size parameter.
+   */
+  def generate[A](f: (Size, Seed) => (Seed, A))(implicit F: Monad[M]): GenT[M, A] =
+    GenT((size, seed) => {
+      val (s2, a) = f(size, seed)
+      Tree.TreeApplicative.point((s2, some(a)))
+    })
+
+  /**********************************************************************/
   // Combinators - Size
 
   /**
@@ -62,11 +74,10 @@ trait GenTOps[M[_]] {
    * ''This generator does not shrink.''
    */
   def integral_[A](range: Range[A])(implicit F: Monad[M], I: Integral[A]): GenT[M, A] =
-    GenT((size, seed) => {
+    genT.generate((size, seed) => {
       val (x, y) = range.bounds(size)
       val (s2, a) = seed.chooseLong(I.toLong(x), I.toLong(y))
-      // TODO Integral doesn't support Long, can we only use int seeds? :(
-      GenT.GenApplicative.point(I.fromInt(a.toInt)).run(size, s2)
+      (s2, I.fromInt(a.toInt))
     })
 
   def char(lo: Char, hi: Char)(implicit F: Monad[M]): GenT[M, Char] =
@@ -79,10 +90,9 @@ trait GenTOps[M[_]] {
     double_(range).shrink(Shrink.towardsFloat(range.origin, _))
 
   def double_(range: Range[Double])(implicit F: Monad[M]): GenT[M, Double] =
-    GenT((size, seed) => {
+    genT.generate((size, seed) => {
       val (x, y) = range.bounds(size)
-      val (s2, a) = seed.chooseDouble(x, y)
-      GenT.GenApplicative[M].point(a).run(size, s2)
+      seed.chooseDouble(x, y)
     })
 
   /**********************************************************************/
