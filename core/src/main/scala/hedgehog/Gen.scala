@@ -92,10 +92,7 @@ trait GenTOps[M[_]] {
    * _This generator shrinks to 'False'._
    */
   def boolean(implicit F: Monad[M]): GenT[M, Boolean] =
-    choice1(
-      GenT.GenApplicative.point(false)
-    , GenT.GenApplicative.point(true)
-    )
+    element1(false, true)
 
   /**********************************************************************/
   // Combinators - Fractional
@@ -111,6 +108,12 @@ trait GenTOps[M[_]] {
 
   /**********************************************************************/
   // Combinators - Choice
+
+  /**
+   * Trivial generator that always produces the same element.
+   */
+  def constant[A](x: => A)(implicit F: Monad[M]): GenT[M, A] =
+    GenT.GenApplicative.point(x)
 
   /**
    * Randomly selects one of the elements in the list.
