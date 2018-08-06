@@ -198,4 +198,11 @@ object Range {
   /** Scale a fractional number linearly with the size parameter. */
   def scaleLinearFrac[A](sz: Size, z: A, n: A)(implicit F: Fractional[A]): A =
     F.plus(z, F.times(F.minus(n, z), F.div(F.fromInt(sz.value), F.fromInt(99))))
+
+  /** Check that list contains at least a certain number of elements. */
+  def atLeast[A](n: Int, l: List[A]): Boolean =
+    if (n == 0)
+      true
+    else
+      l.drop(n - 1).nonEmpty
 }

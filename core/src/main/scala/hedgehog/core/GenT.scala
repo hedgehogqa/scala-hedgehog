@@ -72,12 +72,24 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
     scale(_.golden)
 
   /**********************************************************************/
+  // Combinators - Conditional
+
+  /**
+   * Discards the generator if the generated value does not satisfy the predicate.
+   */
+  def ensure(p: A => Boolean)(implicit F: Monad[M]): GenT[M, A] =
+    this.flatMap(x => if (p(x)) GenT.GenApplicative.point(x) else genT.discard)
+
+  /**********************************************************************/
   // Combinators
 
+  /** Generates a list using a 'Range' to determine the length. */
   def list(range: Range[Int])(implicit F: Monad[M]): GenT[M, List[A]] =
-    // TODO filterM, needs a MonadPlus for Gen
-    genT[M].integral_[Int](range).flatMap(k => replicateM[GenT[M, ?], A](k, this))
-      .shrink(Shrink.list)
+    genT.sized(size =>
+      genT.integral_(range).flatMap(k => replicateM[GenT[M, ?], A](k, this))
+        .shrink(Shrink.list)
+        .ensure(Range.atLeast(range.lowerBound(size), _))
+    )
 }
 
 abstract class GenImplicits1 {
