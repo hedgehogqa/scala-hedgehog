@@ -19,4 +19,21 @@ package object hedgehog {
 
   def propertyT[M[_]]: PropertyTOps[M] =
     new PropertyTOps[M] {}
+
+  implicit class Syntax[A](a1: A) {
+
+     // FIX Is there a way to get this to work with PropertyT and type-inference?
+     def ===(a2: A): Property[Unit] = {
+       val p = Property
+       if (a1 == a2)
+         p.success
+       else
+         for {
+           _ <- p.info("=== Not Equal ===")
+           _ <- p.info(a1.toString)
+           _ <- p.info(a2.toString)
+           _ <- p.failure
+         } yield ()
+     }
+  }
 }

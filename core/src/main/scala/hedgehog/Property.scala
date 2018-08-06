@@ -20,7 +20,7 @@ trait PropertyTOps[M[_]] extends PropertyTReporting[M] {
   def discard(implicit F: Monad[M]): PropertyT[M, Unit] =
     fromGen(genT.discard)
 
-  def failure[A](implicit F: Monad[M]): PropertyT[M, A] =
+  def failure(implicit F: Monad[M]): PropertyT[M, Unit] =
     PropertyT(GenT.GenApplicative(F).point((Nil, None)))
 
   def success(implicit F: Monad[M]): PropertyT[M, Unit] =
