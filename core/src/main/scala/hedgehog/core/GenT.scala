@@ -46,6 +46,10 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
       _ <- propertyT[M].writeLog(ForAll(name, x.toString))
     } yield x
 
+  // Different from Haskell version, which uses the MonadGen typeclass
+  def lift(implicit F: Monad[M]): PropertyT[M, A] =
+    propertyT.fromGen(this)
+
   /**********************************************************************/
   // Combinators - Size
 
