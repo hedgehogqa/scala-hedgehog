@@ -110,6 +110,12 @@ trait GenTOps[M[_]] {
   // Combinators - Choice
 
   /**
+   * Trivial generator that always produces the same element.
+   */
+  def constant[A](x: => A)(implicit F: Monad[M]): GenT[M, A] =
+    GenT.GenApplicative.point(x)
+
+  /**
    * Randomly selects one of the elements in the list.
    *
    * This generator shrinks towards the first element in the list.

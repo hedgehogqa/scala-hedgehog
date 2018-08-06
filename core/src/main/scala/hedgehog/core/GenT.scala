@@ -78,7 +78,7 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
    * Discards the generator if the generated value does not satisfy the predicate.
    */
   def ensure(p: A => Boolean)(implicit F: Monad[M]): GenT[M, A] =
-    this.flatMap(x => if (p(x)) GenT.GenApplicative.point(x) else genT.discard)
+    this.flatMap(x => if (p(x)) genT.constant(x) else genT.discard)
 
   /**
    * Generates a value that satisfies a predicate.
@@ -93,7 +93,7 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
       else
         this.scale(s => Size(2 * k + s.value)).flatMap(x =>
           if (p(x))
-            GenT.GenApplicative.point(x)
+            genT.constant(x)
           else
             try_(k + 1)
         )
@@ -107,7 +107,7 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
   def option(implicit F: Monad[M]): GenT[M, Option[A]] =
     genT.sized(size =>
       genT.frequency1(
-        2 -> GenT.GenApplicative.point(Option.empty[A])
+        2 -> genT.constant(Option.empty[A])
       , 1 + size.value -> this.map(some)
       )
     )
