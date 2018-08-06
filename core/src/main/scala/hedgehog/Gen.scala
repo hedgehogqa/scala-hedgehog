@@ -92,7 +92,10 @@ trait GenTOps[M[_]] {
    * _This generator shrinks to 'False'._
    */
   def boolean(implicit F: Monad[M]): GenT[M, Boolean] =
-    choice(GenT.GenApplicative.point(false), List(GenT.GenApplicative.point(true)))
+    choice1(
+      GenT.GenApplicative.point(false)
+    , GenT.GenApplicative.point(true)
+    )
 
   /**********************************************************************/
   // Combinators - Fractional
@@ -122,6 +125,14 @@ trait GenTOps[M[_]] {
    *
    * This generator shrinks towards the first generator in the list.
    */
+  def choice1[A](x: GenT[M, A], xs: GenT[M, A]*)(implicit F: Monad[M]): GenT[M, A] =
+    choice(x, xs.toList)
+
+  /**
+   * Randomly selects one of the generators in the list.
+   *
+   * This generator shrinks towards the first generator in the list.
+   */
   def choice[A](x: GenT[M, A], xs: List[GenT[M, A]])(implicit F: Monad[M]): GenT[M, A] =
     integral[Int](Range.constant(0, xs.length)).flatMap(i => (x :: xs)(i))
 
@@ -132,7 +143,17 @@ trait GenTOps[M[_]] {
    *
    * _The input list must be non-empty._
    */
-   def frequency[A](a: (Int, GenT[M, A]), l: (Int, GenT[M, A])*)(implicit F: Monad[M]): GenT[M, A] = {
+   def frequency1[A](a: (Int, GenT[M, A]), l: (Int, GenT[M, A])*)(implicit F: Monad[M]): GenT[M, A] =
+     frequency(a, l.toList)
+
+   /**
+    * Uses a weighted distribution to randomly select one of the generators in the list.
+    *
+    * This generator shrinks towards the first generator in the list.
+    *
+    * _The input list must be non-empty._
+    */
+   def frequency[A](a: (Int, GenT[M, A]), l: List[(Int, GenT[M, A])])(implicit F: Monad[M]): GenT[M, A] = {
      val xs0 = a :: l.toList
      @annotation.tailrec
      def pick(n: Int, x: (Int, GenT[M, A]), xs: List[(Int, GenT[M, A])]): GenT[M, A] =

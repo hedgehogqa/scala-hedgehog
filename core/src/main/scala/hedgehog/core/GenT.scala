@@ -86,7 +86,7 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
   /** Generates a 'None' some of the time. */
   def option(implicit F: Monad[M]): GenT[M, Option[A]] =
     genT.sized(size =>
-      genT.frequency(
+      genT.frequency1(
         2 -> GenT.GenApplicative.point(Option.empty[A])
       , 1 + size.value -> this.map(some)
       )
