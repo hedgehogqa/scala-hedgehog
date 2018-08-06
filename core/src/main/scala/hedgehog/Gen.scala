@@ -84,6 +84,17 @@ trait GenTOps[M[_]] {
     integral[Long](Range.constant(lo.toLong, hi.toLong)).map(_.toChar)
 
   /**********************************************************************/
+  // Combinators - Enumeration
+
+  /**
+   * Generates a random boolean.
+   *
+   * _This generator shrinks to 'False'._
+   */
+  def boolean(implicit F: Monad[M]): GenT[M, Boolean] =
+    choice(GenT.GenApplicative.point(false), List(GenT.GenApplicative.point(true)))
+
+  /**********************************************************************/
   // Combinators - Fractional
 
   def double(range: Range[Double])(implicit F: Monad[M]): GenT[M, Double] =
