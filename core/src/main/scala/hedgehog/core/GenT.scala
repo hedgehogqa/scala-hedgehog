@@ -80,6 +80,26 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
   def ensure(p: A => Boolean)(implicit F: Monad[M]): GenT[M, A] =
     this.flatMap(x => if (p(x)) GenT.GenApplicative.point(x) else genT.discard)
 
+  /**
+   * Generates a value that satisfies a predicate.
+   *
+   * We keep some state to avoid looping forever.
+   * If we trigger these limits then the whole generator is discarded.
+   */
+  def filter(p: A => Boolean)(implicit F: Monad[M]): GenT[M, A] = {
+    def try_(k: Int): GenT[M, A] =
+      if (k > 100)
+        genT.discard
+      else
+        this.scale(s => Size(2 * k + s.value)).flatMap(x =>
+          if (p(x))
+            GenT.GenApplicative.point(x)
+          else
+            try_(k + 1)
+        )
+    try_(0)
+  }
+
   /**********************************************************************/
   // Combinators - Collections
 
