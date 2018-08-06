@@ -24,8 +24,8 @@ lazy val projectSettings = Seq(
     name := "hedgehog"
   , version in ThisBuild := "1.0.0"
   , organization := "hedgehog"
-  , scalaVersion := "2.11.6"
-  , crossScalaVersions := Seq(scalaVersion.value)
+  , scalaVersion := "2.12.6"
+  , crossScalaVersions := Seq("2.11.12", scalaVersion.value)
   , fork in run  := true
   )
 
@@ -87,13 +87,12 @@ lazy val compilationSettings = Seq(
     , "-Yno-adapted-args"
     , "-Xlint"
     , "-Xfatal-warnings"
-    , "-Yinline-warnings"
     , "-Ywarn-unused-import"
     )
   , scalacOptions in (Compile,doc) := Seq("-language:_", "-feature")
   , scalacOptions in (Compile,console) := Seq("-language:_", "-feature")
   , scalacOptions in (Test,console) := Seq("-language:_", "-feature")
-  , libraryDependencies += compilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
+  , libraryDependencies += compilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7" cross CrossVersion.binary)
   )
 
 lazy val testingSettings = Seq(
