@@ -185,7 +185,7 @@ object Range {
    * 5
    * }}}
    */
-  def clamp[A](x: A, y: A, n: A)(implicit O: Ordering[A]) =
+  def clamp[A](x: A, y: A, n: A)(implicit O: Ordering[A]): A =
     if (O.gt(x, y))
       O.min(x, O.max(y, n))
     else
