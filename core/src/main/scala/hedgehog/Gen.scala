@@ -104,6 +104,31 @@ trait GenTOps[M[_]] {
   def choice[A](x: GenT[M, A], xs: List[GenT[M, A]])(implicit F: Monad[M]): GenT[M, A] =
     integral[Int](Range.constant(0, xs.length)).flatMap(i => (x :: xs)(i))
 
+  /**
+   * Uses a weighted distribution to randomly select one of the generators in the list.
+   *
+   * This generator shrinks towards the first generator in the list.
+   *
+   * _The input list must be non-empty._
+   */
+   def frequency[A](a: (Int, GenT[M, A]), l: (Int, GenT[M, A])*)(implicit F: Monad[M]): GenT[M, A] = {
+     val xs0 = a :: l.toList
+     @annotation.tailrec
+     def pick(n: Int, x: (Int, GenT[M, A]), xs: List[(Int, GenT[M, A])]): GenT[M, A] =
+       if (n <= x._1)
+         x._2
+       else
+         xs match {
+           case Nil =>
+             sys.error("Invariant: frequency hits an impossible code path")
+           case h :: t =>
+             pick(n - x._1, h, t)
+         }
+     val total = xs0.map(_._1).sum
+     val n = Range.constant(1, total)
+     pick(n.origin, a, xs0)
+   }
+
   /**********************************************************************/
   // Combinators - Conditional
 

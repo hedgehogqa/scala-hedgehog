@@ -81,7 +81,16 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
     this.flatMap(x => if (p(x)) GenT.GenApplicative.point(x) else genT.discard)
 
   /**********************************************************************/
-  // Combinators
+  // Combinators - Collections
+
+  /** Generates a 'None' some of the time. */
+  def option(implicit F: Monad[M]): GenT[M, Option[A]] =
+    genT.sized(size =>
+      genT.frequency(
+        2 -> GenT.GenApplicative.point(Option.empty[A])
+      , 1 + size.value -> this.map(some)
+      )
+    )
 
   /** Generates a list using a 'Range' to determine the length. */
   def list(range: Range[Int])(implicit F: Monad[M]): GenT[M, List[A]] =
