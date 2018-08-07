@@ -1,3 +1,15 @@
 language: scala
 scala:
- - 2.11.7
+ - 2.11.12
+ - 2.12.6
+deploy:
+  provider: releases
+  api_key:
+    secure: pF8TC/9BxpZR6WSQ+QKWaGU1VWkctxt/FjvMAtPQyyYcdk7o1BQbGrcV/KP9CW9Gt+WeD71656qPWXx4Lj3afTBj5wEsi0XSvnbk6m1BLJ5PKcaBSkgiMYUMJTQYrKbvliHuIfewv+ZkQQX303C6rCObZVGg67NPZIWxy2PCuweipK+r2nmYZ/eYXOndlA52rUxGrgI5NLyXwnHSA/mbsbNihq32hkkb5TmZWCFejAmIWeyMZoR/we36rfdQyB9oKdi0ktX/TPexLlIelqxQqwaQk7iJBh7p722dakVlXoAsqeHFHR9dup+yYwsi9yYtnj8vBCpuMAohcNn8+qCm72aCFXWuwB1jPQm3ABKCHhzUP1HaZI3j19nz5lW03OvYJSPJ9GRExPIXwOWpuhecNaB8wNRBq8DTQQv33KHVlORrLp5IQ7iYARshBhRXeSs9q4WFf186EfbxR+f8uG7IM9qTfBzk1ab0nWAAJ9USW5LAMuSipv6FVIaxyvR2c43zRFSq7HmQIex1SIkTG0ZwTipfAu6jQpocfsatakobEnAXCFYRN3ZNtl72h8E3HAMc0RlxdCRu6dNlVGyMzJUjUDnAdQJEPUBeazgbeJBRJ2uXtrhfle2yZaEKeTCyvpIMqP57rfMOKNbY6LfbeFAqKnVt8pIWUiNq/r1mNmWfCAY=
+  file_glob: true
+  file:
+  - core/target/scala-*/hedgehog-core*
+  - runner/target/scala-*/hedgehog-runner*
+  - sbt-test/target/scala-*/hedgehog-sbt*
+  on:
+    repo: hedgehogqa/scala-hedgehog
