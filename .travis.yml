@@ -3,4 +3,4 @@ scala:
  - 2.11.12
  - 2.12.6
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION 'set version := "'$TRAVIS_SCALA_VERSION'"' test publish
+  - sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$TRAVIS_SCALA_VERSION'"' test publish
