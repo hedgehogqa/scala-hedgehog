@@ -19,7 +19,6 @@ lazy val standardSettings = Seq(
     Defaults.coreDefaultSettings
   , projectSettings
   , compilationSettings
-  , bintrarySettings
   ).flatten
 
 lazy val projectSettings = Seq(
@@ -34,7 +33,7 @@ lazy val projectSettings = Seq(
 lazy val core = Project(
     id = "core"
   , base = file("core")
-  ).settings(standardSettings ++ Seq(
+  ).settings(standardSettings ++ bintrarySettings ++ Seq(
     name := "hedgehog-core"
   ) ++ Seq(libraryDependencies ++= Seq(
   ).flatten))
@@ -51,7 +50,7 @@ lazy val example = Project(
 lazy val runner = Project(
     id = "runner"
   , base = file("runner")
-  ).settings(standardSettings ++ Seq(
+  ).settings(standardSettings ++ bintrarySettings ++ Seq(
     name := "hedgehog-runner"
   ) ++ Seq(libraryDependencies ++= Seq(
     ))
@@ -60,7 +59,7 @@ lazy val runner = Project(
 lazy val sbtTest = Project(
     id = "sbt-test"
   , base = file("sbt-test")
-  ).settings(standardSettings ++ testingSettings ++ Seq(
+  ).settings(standardSettings ++ testingSettings ++ bintrarySettings ++ Seq(
     name := "hedgehog-sbt"
   ) ++ Seq(libraryDependencies ++= Seq(
       "org.scala-sbt" % "test-interface" % "1.0"
