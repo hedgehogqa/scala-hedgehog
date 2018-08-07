@@ -1,24 +1,6 @@
 [![Build Status](https://travis-ci.org/hedgehogqa/scala-hedgehog.svg?branch=master)](https://travis-ci.org/hedgehogqa/scala-hedgehog)
 
-# WARNING
-
-This project is _only_ a proof of concept at the moment. It was ported
-almost verbatim from the [haskell](https://github.com/hedgehogqa/haskell-hedgehog)
-implementation in a few days, without consideration of how it was consumed
-in Scala.
-
-Since then there are been independent efforts that may or may not be more
-mature and prove to be a better place to start.
-
-- https://github.com/melrief/sonic
-
-  This is another port, based on cats and monix.
-
-- https://github.com/scalaz/testz
-
-  A more general FP testing library, with
-  [plans to implementing hedgehog-like shrinking](https://github.com/scalaz/testz/issues/5)
-
+**NOTE** This project is in some form of beta, and _hasn't_ been used in anger.
 
 > Hedgehog will eat all your bugs.
 
@@ -100,6 +82,14 @@ There will obviously be exceptions where Scala forces us to make a different tra
 
 In Scala there are other property-testing alternatives:
 
+- https://github.com/melrief/sonic
+
+  This is another port of Hedgegot, based on cats and monix.
+
 - https://github.com/rickynils/scalacheck
 - https://github.com/scalaprops/scalaprops
 - https://github.com/japgolly/nyaya
+- https://github.com/scalaz/testz
+
+  A more general FP testing library, with
+  [plans to implementing hedgehog-like shrinking](https://github.com/scalaz/testz/issues/5)
