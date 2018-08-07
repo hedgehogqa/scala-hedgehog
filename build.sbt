@@ -3,7 +3,8 @@ import sbt._, Keys._
 lazy val noPublish = Seq(
   publish := {},
   publishLocal := {},
-  publishArtifact := false
+  publishArtifact := false,
+  skip in publish := true
 )
 
 lazy val hedgehog = Project(
@@ -18,6 +19,7 @@ lazy val standardSettings = Seq(
     Defaults.coreDefaultSettings
   , projectSettings
   , compilationSettings
+  , bintrarySettings
   ).flatten
 
 lazy val projectSettings = Seq(
@@ -95,4 +97,11 @@ lazy val compilationSettings = Seq(
 
 lazy val testingSettings = Seq(
     testFrameworks := Seq(TestFramework("hedgehog.sbt.HedgehogFramework"))
+  )
+
+lazy val bintrarySettings = Seq(
+    bintrayOrganization := Some("hedgehogqa")
+  , bintrayRepository := "scala-hedgehog"
+  , publishMavenStyle := false
+  , licenses += ("Apache-2.0", url("https://opensource.org/licenses/Apache-2.0"))
   )
