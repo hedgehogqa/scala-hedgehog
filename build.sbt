@@ -76,8 +76,7 @@ lazy val test = Project(
   ).dependsOn(core, runner, sbtTest)
 
 lazy val compilationSettings = Seq(
-    javacOptions ++= Seq("-source", "1.6", "-target", "1.6")
-  , maxErrors := 10
+    maxErrors := 10
   , scalacOptions in Compile ++= Seq(
       "-deprecation"
     , "-unchecked"
@@ -89,7 +88,6 @@ lazy val compilationSettings = Seq(
     , "-Xfatal-warnings"
     , "-Ywarn-unused-import"
     )
-  , scalacOptions in (Compile,doc) := Seq("-language:_", "-feature")
   , scalacOptions in (Compile,console) := Seq("-language:_", "-feature")
   , scalacOptions in (Test,console) := Seq("-language:_", "-feature")
   , libraryDependencies += compilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7" cross CrossVersion.binary)

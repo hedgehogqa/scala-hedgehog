@@ -3,7 +3,7 @@ scala:
  - 2.11.12
  - 2.12.6
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION test package
+  - sbt ++$TRAVIS_SCALA_VERSION 'set version := "'$TRAVIS_SCALA_VERSION'"' test publishLocal
 before_deploy:
   # Set up git user name and tag this commit
   # https://docs.travis-ci.com/user/deployment/releases
