@@ -69,7 +69,7 @@ lazy val sbtTest = Project(
 lazy val test = Project(
       id = "test"
     , base = file("test")
-  ).settings(standardSettings ++ Seq(
+  ).settings(standardSettings ++ noPublish ++ Seq(
     name := "hedgehog-test"
   , testFrameworks := Seq(TestFramework("hedgehog.sbt.Framework"))
   ) ++ Seq(libraryDependencies ++= Seq(
