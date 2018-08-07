@@ -109,7 +109,7 @@ In Scala there are other property-testing alternatives:
 
 - https://github.com/melrief/sonic
 
-  This is another port of Hedgegot, based on cats and monix.
+  This is another port of Hedgegog, based on cats and monix.
 
 - https://github.com/rickynils/scalacheck
 - https://github.com/scalaprops/scalaprops
