@@ -14,7 +14,7 @@ trait GenTOps[M[_]] {
   def generate[A](f: (Size, Seed) => (Seed, A))(implicit F: Monad[M]): GenT[M, A] =
     GenT((size, seed) => {
       val (s2, a) = f(size, seed)
-      Tree.TreeApplicative.point((s2, some(a)))
+      Tree.TreeApplicative[OptionT[M, ?]].point((s2, a))
     })
 
   /**********************************************************************/
@@ -189,5 +189,5 @@ trait GenTOps[M[_]] {
    * Discards the whole generator.
    */
   def discard[A](implicit F: Monad[M]): GenT[M, A] =
-    GenT((_, seed) => Tree.TreeApplicative(F).point((seed, None)))
+    GenT((_, _) => Tree[OptionT[M, ?], (Seed, A)](OptionT(F.point(None))))
 }

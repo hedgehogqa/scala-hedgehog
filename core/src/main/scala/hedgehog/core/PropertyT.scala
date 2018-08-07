@@ -84,16 +84,18 @@ trait PropertyTReporting[M[_]] {
       else if (discards.value >= 100)
         F.point(Report(successes, discards, GaveUp))
       else
-        F.bind(p.run.run(size, seed).run)(x =>
-          x.value._2 match {
+        F.bind(GenT.runDiscardEffects(p.run.run(size, seed)).run)(x =>
+          x.value match {
             case None =>
-              loop(successes, discards.inc, size.inc, x.value._1)
+              // TODO I think there is where we would _need_ splitmix
+              // We don't have a different seed to use here, we've just lost ours
+              loop(successes, discards.inc, size.inc, ???)
 
-            case Some((_, None)) =>
-              F.map(takeSmallest(ShrinkCount(0), x.map(_._2)))(y => Report(successes, discards, y))
+            case Some((_, (_, None))) =>
+              F.map(takeSmallest(ShrinkCount(0), x.map(_.map(_._2))))(y => Report(successes, discards, y))
 
-            case Some((m, Some(_))) =>
-              loop(successes.inc, discards, size.inc, x.value._1)
+            case Some((seed2, (m, Some(_)))) =>
+              loop(successes.inc, discards, size.inc, seed2)
           }
         )
     loop(SuccessCount(0), DiscardCount(0), size0, seed0)

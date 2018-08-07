@@ -6,17 +6,17 @@ import hedgehog.predef._
 /**
  * Generator for random values of `A`.
  */
-case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
+case class GenT[M[_], A](run: (Size, Seed) => Tree[OptionT[M, ?], (Seed, A)]) {
 
   def map[B](f: A => B)(implicit F: Functor[M]): GenT[M, B] =
-    GenT((size, seed) => run(size, seed).map(t => t.copy(_2 = t._2.map(f))))
+    GenT((size, seed) => run(size, seed).map(t => t.copy(_2 = f(t._2))))
 
   def flatMap[B](f: A => GenT[M, B])(implicit F: Monad[M]): GenT[M, B] =
     GenT((size, seed) => run(size, seed).flatMap(x =>
-      x._2.fold(Tree.TreeApplicative(F).point(x.copy(_2 = Option.empty[B])))(a => f(a).run(size, x._1))
+      f(x._2).run(size, x._1)
     ))
 
-  def mapTree[N[_], B](f: Tree[M, (Seed, Option[A])] => Tree[N, (Seed, Option[B])]): GenT[N, B] =
+  def mapTree[N[_], B](f: Tree[OptionT[M, ?], (Seed, A)] => Tree[OptionT[N, ?], (Seed, B)]): GenT[N, B] =
     GenT((size, seed) => f(run(size, seed)))
 
   /**********************************************************************/
@@ -26,9 +26,7 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
    * Apply a shrinking function to a generator.
    */
   def shrink(f: A => List[A])(implicit F: Monad[M]): GenT[M, A] =
-    mapTree(_.expand(x =>
-      x._2.fold(List.empty[(Seed, Option[A])])(a => f(a).map(y => (x._1, Some(y))))
-    ))
+    mapTree(_.expand(x => f(x._2).map(y => (x._1, y))))
 
   /**
    * Throw away a generator's shrink tree.
@@ -139,7 +137,7 @@ abstract class GenImplicits2 extends GenImplicits1 {
   implicit def GenApplicative[M[_]](implicit F: Monad[M]): Applicative[GenT[M, ?]] =
     new Applicative[GenT[M, ?]] {
       def point[A](a: => A): GenT[M, A] =
-        GenT((_, s) => Tree.TreeApplicative(F).point((s, Some(a))))
+        GenT((_, s) => Tree.TreeApplicative[OptionT[M, ?]](OptionT.OptionTMonad(F)).point((s, a)))
       def ap[A, B](fa: => GenT[M, A])(f: => GenT[M, A => B]): GenT[M, B] =
         for {
           ab <- f
@@ -148,4 +146,8 @@ abstract class GenImplicits2 extends GenImplicits1 {
     }
 }
 
-object GenT extends GenImplicits2
+object GenT extends GenImplicits2 {
+
+  def runDiscardEffects[M[_], A](s: Tree[OptionT[M, ?], A]): Tree[M, Option[A]] =
+    ???
+}
