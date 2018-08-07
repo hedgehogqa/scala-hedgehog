@@ -16,5 +16,7 @@ deploy:
   - runner/target/scala-*/ivy*
   - sbt-test/target/scala-*/hedgehog*
   - sbt-test/target/scala-*/ivy*
+  # https://docs.travis-ci.com/user/deployment#uploading-files-and-skip_cleanup
+  skip_cleanup: true
   on:
     repo: hedgehogqa/scala-hedgehog
