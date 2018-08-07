@@ -4,6 +4,12 @@ scala:
  - 2.12.6
 script:
   - sbt ++$TRAVIS_SCALA_VERSION test package
+before_deploy:
+  # Set up git user name and tag this commit
+  # https://docs.travis-ci.com/user/deployment/releases
+  - git config --global user.email "builds@travis-ci.com"
+  - git config --global user.name "Travis CI"
+  - git tag "release/$(git log --format=%h -1)"
 deploy:
   provider: releases
   api_key:
