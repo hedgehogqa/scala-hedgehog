@@ -23,12 +23,12 @@ so shrinks obey the invariants of generated values by construction.
 ## Getting Started
 
 
-## Binary Dependency
+### Binary Dependency
 
 In your `build.sbt` you will unfortunately need to add a
 [custom resolver](https://www.scala-sbt.org/1.x/docs/Resolvers.html#Custom+Layout).
 Hedgehog is released for every commit and so the "version" will be a git commit hash.
-You can find the [list of releases here](https://bintray.com/hedgehogqa/scala-hedgehog).
+You can find the [bintray repository here](https://bintray.com/hedgehogqa/scala-hedgehog).
 
 ```
 val hedgehogVersion = "${COMMIT}"
@@ -38,13 +38,12 @@ libraryDependencies ++= Seq(
   "hedgehog" %% "hedgehog-sbt" % hedgehogVersion
 )
 
-resolvers += Resolver.url("bintray-scala-hedgehog", url("https://dl.bintray.com/hedgehogqa/scala-hedgehog"))(Resolver.ivyStylePatterns)
-""
+resolvers += Resolver.url("bintray-scala-hedgehog",
+    url("https://dl.bintray.com/hedgehogqa/scala-hedgehog")
+  )(Resolver.ivyStylePatterns)
 ```
 
-https://github.com/hedgehogqa/scala-hedgehog/releases
-
-## Source Dependency
+### Source Dependency
 
 This project can be added as an SBT [subproject](https://www.scala-sbt.org/1.x/docs/Multi-Project.html).
 
@@ -53,6 +52,9 @@ lazy val root =
   (project in file("."))
     .dependsOn(RootProject(uri("https://github.com/hedgehogqa/scala-hedgehog.git#master")))
 ```
+
+
+## SBT Testing
 
 Scala Hedgehog comes with a _very_ primitive runner interface, and supports the
 [SBT testing extension](https://www.scala-sbt.org/1.x/docs/Testing.html#Using+Extensions).
