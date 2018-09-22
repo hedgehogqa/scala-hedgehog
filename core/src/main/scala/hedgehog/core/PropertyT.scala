@@ -16,6 +16,12 @@ sealed trait Log
 case class ForAll(name: Name, value: String) extends Log
 case class Info(value: String) extends Log
 
+object Log {
+
+  implicit def String2Log(s: String): Log =
+    Info(s)
+}
+
 case class PropertyConfig(
     testLimit: SuccessCount
   , discardLimit: DiscardCount
