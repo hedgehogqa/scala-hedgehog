@@ -43,5 +43,9 @@ package object hedgehog {
            _ <- p.failure
          } yield ()
      }
+
+    // To avoid name clashes
+    def ====(a2: A): Property[Unit] =
+      ===(a2)
   }
 }

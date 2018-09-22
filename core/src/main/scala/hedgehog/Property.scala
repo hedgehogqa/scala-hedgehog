@@ -6,10 +6,10 @@ import hedgehog.predef._
 trait PropertyTOps[M[_]] extends PropertyTReporting[M] {
 
   def fromGen[A](gen: GenT[M, A])(implicit F: Monad[M]): PropertyT[M, A] =
-    PropertyT(gen.map(x => (Nil, Some(x))))
+    PropertyT(PropertyConfig.default, gen.map(x => (Nil, Some(x))))
 
   def hoist[A](a: (List[Log], A))(implicit F: Monad[M]): PropertyT[M, A] =
-    PropertyT(GenT.GenApplicative(F).point(a.copy(_2 = Some(a._2))))
+    PropertyT(PropertyConfig.default, GenT.GenApplicative(F).point(a.copy(_2 = Some(a._2))))
 
   def writeLog(log: Log)(implicit F: Monad[M]): PropertyT[M, Unit] =
     hoist((List(log), ()))
@@ -21,7 +21,7 @@ trait PropertyTOps[M[_]] extends PropertyTReporting[M] {
     fromGen(genT.discard)
 
   def failure(implicit F: Monad[M]): PropertyT[M, Unit] =
-    PropertyT(GenT.GenApplicative(F).point((Nil, None)))
+    PropertyT(PropertyConfig.default, GenT.GenApplicative(F).point((Nil, None)))
 
   def success(implicit F: Monad[M]): PropertyT[M, Unit] =
     hoist((Nil, ()))
