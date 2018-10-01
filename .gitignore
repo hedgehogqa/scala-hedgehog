@@ -6,3 +6,7 @@ src_managed/
 project/boot/
 project/plugins/project/
 project/source.scala
+.idea/
+/.classpath/
+/.project/
+/.settings/
