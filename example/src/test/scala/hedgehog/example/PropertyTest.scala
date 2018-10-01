@@ -11,6 +11,8 @@ object PropertyTest extends Properties {
     List(
       Prop("example1", example1)
     , Prop("total", total)
+    , Prop("matchPatternExample", matchPatternExample)
+    , Prop("matchMoreThanOnePatternExample", matchMoreThanOnePatternExample)
     )
 
   def example1: Property[Unit] =
@@ -27,6 +29,24 @@ object PropertyTest extends Properties {
       y <- order(expensive).log("expensive")
       _ <- merge(x, y).total.value === x.total.value + y.total.value
     } yield ()
+
+  def matchPatternExample: Property[Unit] =
+    for {
+      x <- Gen.element1("abc").log("x")
+      y <- integral[Long](Range.constant(5, 10)).map(USD).lift
+      _ <- matchPattern(Item(x, y)) { case Item("abc", _) => }
+    } yield ()
+
+  def matchMoreThanOnePatternExample: Property[Unit] =
+    for {
+      x <- Gen.element1("abc", "bbb", "ccc").log("x")
+      y <- integral[Long](Range.constant(5, 10)).map(USD).lift
+      _ <- matchPattern(Item(x, y)) {
+            case Item("abc", _) =>
+            case Item("bbb", _) =>
+          }
+    } yield ()
+
 
   case class USD(value: Long)
   case class Item(name: String, price: USD)
