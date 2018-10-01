@@ -28,4 +28,9 @@ trait PropertyTOps[M[_]] extends PropertyTReporting[M] {
 
   def assert(b: Boolean)(implicit F: Monad[M]): PropertyT[M, Unit] =
     if (b) success else failure
+
+  def matchPattern[A](a: A)(right: PartialFunction[Any, _])(implicit F: Monad[M]): PropertyT[M, Unit] =
+    // TODO: Think about a better way as this doesn't work if the pattern has guards
+    if (right.isDefinedAt(a)) success else failure
+
 }
