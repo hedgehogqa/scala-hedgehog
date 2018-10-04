@@ -3,4 +3,6 @@ scala:
  - 2.11.12
  - 2.12.6
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$(git log --format=%H -1)'"' test publish
+  - sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$(git log --format=%H -1)'"' test
+after_success:
+  - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$(git log --format=%H -1)'"' publish
