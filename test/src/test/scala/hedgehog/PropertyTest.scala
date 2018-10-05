@@ -17,7 +17,7 @@ object PropertyTest extends Properties {
     val seed = Seed.fromLong(5489)
     val r = (for {
       x <- Gen.char('a', 'z').log("x")
-      y <- integral(Range.linear(0, 50)).log("y")
+      y <- int(Range.linear(0, 50)).log("y")
       _ <- if (y % 2 == 0) Property.discard else success
       _ <- assert(y < 87 && x <= 'r')
     } yield ()).check(seed).value
@@ -47,13 +47,13 @@ object PropertyTest extends Properties {
   def cheap: Gen[Item] =
     for {
       n <- element("sandwich", List("noodles"))
-      p <- integral[Long](Range.constant(5, 10)).map(USD)
+      p <- long(Range.constant(5, 10)).map(USD)
     } yield Item(n, p)
 
   def expensive: Gen[Item] =
     for {
       n <- element("oculus", List("vive"))
-      p <- integral[Long](Range.linear(1000, 2000)).map(USD)
+      p <- long(Range.linear(1000, 2000)).map(USD)
     } yield Item(n, p)
 
   def order(gen: Gen[Item]): Gen[Order] =

@@ -16,6 +16,6 @@ trait ByteOps[M[_]] {
   def bytes(range: Range[Int])(implicit F: Monad[M]): GenT[M, Array[Byte]] =
     genT.choice1(
       genT.ascii.map(_.toByte)
-    , genT.integral(Range.constant(java.lang.Byte.MIN_VALUE, java.lang.Byte.MAX_VALUE))
+    , genT.byte(Range.constant(java.lang.Byte.MIN_VALUE, java.lang.Byte.MAX_VALUE))
     ).list(range).map(_.toArray)
 }
