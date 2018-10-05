@@ -126,7 +126,7 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
   /** Generates a list using a 'Range' to determine the length. */
   def list(range: Range[Int])(implicit F: Monad[M]): GenT[M, List[A]] =
     genT.sized(size =>
-      genT.integral_(range).flatMap(k => replicateM[GenT[M, ?], A](k, this))
+      genT.integral_(range, _.toInt).flatMap(k => replicateM[GenT[M, ?], A](k, this))
         .shrink(Shrink.list)
         .ensure(Range.atLeast(range.lowerBound(size), _))
     )

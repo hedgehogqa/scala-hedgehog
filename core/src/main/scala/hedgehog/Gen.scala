@@ -65,23 +65,36 @@ trait GenTOps[M[_]] {
    * 2060
    * }}}
    */
-  def integral[A : Integral](range: Range[A])(implicit F: Monad[M]): GenT[M, A] =
-    integral_[A](range).shrink(Shrink.towards(range.origin, _))
+  def integral[A : Integral](range: Range[A], fromLong : Long => A)(implicit F: Monad[M]): GenT[M, A] =
+    integral_(range, fromLong).shrink(Shrink.towards(range.origin, _))
 
   /**
    * Generates a random integral number in the `[inclusive,inclusive]` range.
    *
    * ''This generator does not shrink.''
+   *
    */
-  def integral_[A](range: Range[A])(implicit F: Monad[M], I: Integral[A]): GenT[M, A] =
+  def integral_[A](range: Range[A], fromLong : Long => A)(implicit F: Monad[M], I: Integral[A]): GenT[M, A] =
     genT.generate((size, seed) => {
       val (x, y) = range.bounds(size)
       val (s2, a) = seed.chooseLong(I.toLong(x), I.toLong(y))
-      (s2, I.fromInt(a.toInt))
+      (s2, fromLong(a))
     })
 
+  def int(range: Range[Int])(implicit F: Monad[M]): GenT[M, Int] =
+    integral(range, _.toInt)
+
+  def short(range: Range[Short])(implicit F: Monad[M]): GenT[M, Short] =
+    integral(range, _.toShort)
+
+  def long(range: Range[Long])(implicit F: Monad[M]): GenT[M, Long] =
+    integral(range, identity)
+
+  def byte(range: Range[Byte])(implicit F: Monad[M]): GenT[M, Byte] =
+    integral(range, _.toByte)
+
   def char(lo: Char, hi: Char)(implicit F: Monad[M]): GenT[M, Char] =
-    integral[Long](Range.constant(lo.toLong, hi.toLong)).map(_.toChar)
+    long(Range.constant(lo.toLong, hi.toLong)).map(_.toChar)
 
   /**********************************************************************/
   // Combinators - Enumeration
@@ -129,7 +142,7 @@ trait GenTOps[M[_]] {
    * This generator shrinks towards the first element in the list.
    */
   def element[A](x: A, xs: List[A])(implicit F: Monad[M]): GenT[M, A] =
-    integral[Int](Range.constant(0, xs.length)).map(i => (x :: xs)(i))
+    int(Range.constant(0, xs.length)).map(i => (x :: xs)(i))
 
   /**
    * Randomly selects one of the generators in the list.
@@ -145,7 +158,7 @@ trait GenTOps[M[_]] {
    * This generator shrinks towards the first generator in the list.
    */
   def choice[A](x: GenT[M, A], xs: List[GenT[M, A]])(implicit F: Monad[M]): GenT[M, A] =
-    integral[Int](Range.constant(0, xs.length)).flatMap(i => (x :: xs)(i))
+    int(Range.constant(0, xs.length)).flatMap(i => (x :: xs)(i))
 
   /**
    * Uses a weighted distribution to randomly select one of the generators in the list.
