@@ -165,7 +165,7 @@ trait GenTOps[M[_]] {
    *
    * This generator shrinks towards the first generator in the list.
    */
-   def frequency1[A](a: (Int, GenT[M, A]), l: (Int, GenT[M, A])*): GenT[M, A] =
+   def frequency1[A](a: (Int, GenT[M, A]), l: (Int, GenT[M, A])*)(implicit F: Monad[M]): GenT[M, A] =
      frequency(a, l.toList)
 
    /**
@@ -173,8 +173,7 @@ trait GenTOps[M[_]] {
     *
     * This generator shrinks towards the first generator in the list.
     */
-   def frequency[A](a: (Int, GenT[M, A]), l: List[(Int, GenT[M, A])]): GenT[M, A] = {
-     val xs0 = a :: l.toList
+   def frequency[A](a: (Int, GenT[M, A]), l: List[(Int, GenT[M, A])])(implicit F: Monad[M]): GenT[M, A] = {
      @annotation.tailrec
      def pick(n: Int, x: (Int, GenT[M, A]), xs: List[(Int, GenT[M, A])]): GenT[M, A] =
        if (n <= x._1)
@@ -186,9 +185,11 @@ trait GenTOps[M[_]] {
            case h :: t =>
              pick(n - x._1, h, t)
          }
-     val total = xs0.map(_._1).sum
-     val n = Range.constant(1, total)
-     pick(n.origin, a, xs0)
+     val total = (a :: l).map(_._1).sum
+     for {
+       n <- int(Range.constant(1, total))
+       x <- pick(n, a, l)
+     } yield x
    }
 
   /**********************************************************************/
