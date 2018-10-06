@@ -164,8 +164,6 @@ trait GenTOps[M[_]] {
    * Uses a weighted distribution to randomly select one of the generators in the list.
    *
    * This generator shrinks towards the first generator in the list.
-   *
-   * _The input list must be non-empty._
    */
    def frequency1[A](a: (Int, GenT[M, A]), l: (Int, GenT[M, A])*): GenT[M, A] =
      frequency(a, l.toList)
@@ -174,8 +172,6 @@ trait GenTOps[M[_]] {
     * Uses a weighted distribution to randomly select one of the generators in the list.
     *
     * This generator shrinks towards the first generator in the list.
-    *
-    * _The input list must be non-empty._
     */
    def frequency[A](a: (Int, GenT[M, A]), l: List[(Int, GenT[M, A])]): GenT[M, A] = {
      val xs0 = a :: l.toList
