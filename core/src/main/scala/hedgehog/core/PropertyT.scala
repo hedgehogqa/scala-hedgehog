@@ -120,8 +120,12 @@ trait PropertyTReporting[M[_]] {
             case Some((_, None)) =>
               F.map(takeSmallest(ShrinkCount(0), p.config.shrinkLimit, x.map(_._2)))(y => Report(successes, discards, y))
 
-            case Some((m, Some(_))) =>
-              loop(successes.inc, discards, size.inc, x.value._1)
+            case Some((_, Some(_))) =>
+              // Stop looping if the seed was never used - the property never generated anything
+              if (seed == x.value._1)
+                F.point(Report(successes.inc, discards, OK))
+              else
+                loop(successes.inc, discards, size.inc, x.value._1)
           }
         )
     loop(SuccessCount(0), DiscardCount(0), size0, seed0)
