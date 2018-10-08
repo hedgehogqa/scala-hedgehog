@@ -66,7 +66,7 @@ class Task(
         // FIX Use scala-reflect to be more future compatible
         c.getField("MODULE$").get(c).asInstanceOf[Properties]
       else
-        c.newInstance
+        c.getDeclaredConstructor().newInstance()
     properties.tests.foreach(t => {
       val startTime = System.currentTimeMillis
       val report = t.result.check(seed).value
