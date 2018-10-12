@@ -17,9 +17,18 @@ abstract class Properties {
   }
 }
 
-case class Prop(name: String, result: Property[Unit])
+class Prop(val name: String, val result: Property[Unit])
 
 object Prop {
+
+  /** Wrap the actual constructor so we can catch any exceptions thrown */
+  def apply(name: String, result: => Property[Unit]): Prop =
+    try {
+      new Prop(name, result)
+    } catch {
+      case e: Exception =>
+        new Prop(name, Property.error(e))
+    }
 
   def renderReport(className: String, t: Prop, report: Report, ansiCodesSupported: Boolean): String = {
     def render(ok: Boolean, msg: String, extraS: List[String]): String = {
@@ -51,5 +60,9 @@ object Prop {
         s"${name.value}: $value"
       case Info(value) =>
         value
+      case Error(e) =>
+        val sw = new java.io.StringWriter()
+        e.printStackTrace(new java.io.PrintWriter(sw))
+        sw.toString
     }
 }

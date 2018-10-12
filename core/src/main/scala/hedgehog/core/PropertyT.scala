@@ -15,6 +15,7 @@ object Name {
 sealed trait Log
 case class ForAll(name: Name, value: String) extends Log
 case class Info(value: String) extends Log
+case class Error(value: Exception) extends Log
 
 object Log {
 
@@ -39,15 +40,31 @@ case class PropertyT[M[_], A](
   , run: GenT[M, (List[Log], Option[A])]
   ) {
 
-  def map[B](f: A => B)(implicit F: Functor[M]): PropertyT[M, B] =
-    copy(run = run.map(x => x.copy(_2 = x._2.map(f))))
+  def map[B](f: A => B)(implicit F: Monad[M]): PropertyT[M, B] =
+    copy(run = run.map(x =>
+      try {
+        x.copy(_2 = x._2.map(f))
+      } catch {
+        // Forgive me, I'm assuming this breaks the Functor laws
+        // If there's a better and non-law breaking of handling this we should remove this
+        case e: Exception =>
+          (x._1 ++ List(Error(e)), None)
+      }
+    ))
 
   def flatMap[B](f: A => PropertyT[M, B])(implicit F: Monad[M]): PropertyT[M, B] =
     copy(run = run.flatMap(x =>
       x._2.fold(
        GenT.GenApplicative(F).point((x._1, Option.empty[B]))
-      )(
-        a => f(a).run.map(y => (x._1 ++ y._1, y._2))
+      )(a =>
+        try {
+          f(a).run.map(y => (x._1 ++ y._1, y._2))
+        } catch {
+          // Forgive me, I'm assuming this breaks the Monad laws
+          // If there's a better and non-law breaking of handling this we should remove this
+          case e: Exception =>
+            genT.constant((x._1 ++ List(Error(e)), None))
+        }
       )
     ))
 
