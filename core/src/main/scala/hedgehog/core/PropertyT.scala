@@ -54,7 +54,7 @@ case class PropertyT[M[_], A](
   def check(seed: Seed)(implicit F: Monad[M]): M[Report] =
     propertyT.report(Size(0), seed, this)
 
-  def checkRandom(p: PropertyT[M, Unit])(implicit F: Monad[M]): M[Report] =
+  def checkRandom(implicit F: Monad[M]): M[Report] =
     // FIX: predef MonadIO
     check(Seed.fromTime())
 
