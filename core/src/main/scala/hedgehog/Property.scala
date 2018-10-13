@@ -21,7 +21,13 @@ trait PropertyTOps[M[_]] extends PropertyTReporting[M] {
     fromGen(genT.discard)
 
   def failure(implicit F: Monad[M]): PropertyT[M, Unit] =
+    failureA[Unit]
+
+  def failureA[A](implicit F: Monad[M]): PropertyT[M, A] =
     PropertyT(PropertyConfig.default, GenT.GenApplicative(F).point((Nil, None)))
+
+  def error[A](e: Exception)(implicit F: Monad[M]): PropertyT[M, A] =
+    writeLog(Error(e)).flatMap(_ => failureA[A])
 
   def success(implicit F: Monad[M]): PropertyT[M, Unit] =
     hoist((Nil, ()))
