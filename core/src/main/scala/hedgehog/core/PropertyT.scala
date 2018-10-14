@@ -137,7 +137,7 @@ trait PropertyTReporting[M[_]] {
             case Some((_, None)) =>
               F.map(takeSmallest(ShrinkCount(0), p.config.shrinkLimit, x.map(_._2)))(y => Report(successes, discards, y))
 
-            case Some((m, Some(_))) =>
+            case Some((_, Some(_))) =>
               loop(successes.inc, discards, size.inc, x.value._1)
           }
         )
