@@ -49,7 +49,7 @@ In your `build.sbt` you will unfortunately need to add a
 Hedgehog is released for every commit and so the "version" will be a git commit hash.
 You can find the [bintray repository here](https://bintray.com/hedgehogqa/scala-hedgehog).
 
-```
+```scala
 val hedgehogVersion = "${COMMIT}"
 
 libraryDependencies ++= Seq(
@@ -67,7 +67,7 @@ resolvers += Resolver.url("bintray-scala-hedgehog",
 
 This project can be added as an SBT [subproject](https://www.scala-sbt.org/1.x/docs/Multi-Project.html).
 
-```
+```scala
 // This can also be a branch name, like 'master'`, if you want to live on the edge
 val hedgehogVersion = "${COMMIT}"
 val hedgehogUri = uri("https://github.com/hedgehogqa/scala-hedgehog.git#" + hedgehogVersion)
