@@ -173,6 +173,11 @@ are still relevant despite whatever language they are presented with.
 - [Testing the Hard Stuff and Staying Sane](http://www.infoq.com/presentations/testing-techniques-case-study) - John Hughes on property-based testing using Quviq QuickCheck.
 - [Testing Stateful Systems with ScalaCheck](http://parleys.com/play/53a7d2d0e4b0543940d9e566) - Rickard Nilsson at ScalaDays 2014 (slides available here).
 
+### Books
+
+- [ScalaCheck: The Definitive Guide](https://www.artima.com/shop/scalacheck) by Rickard Nilsson (2014)
+- [Property-Based Testing with PropEr, Erlang, and Elixir](https://pragprog.com/book/fhproper/property-based-testing-with-proper-erlang-and-elixir) by Fred Hebert (2018)
+
 
 ## Alternatives
 
