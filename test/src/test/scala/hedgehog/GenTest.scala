@@ -9,6 +9,8 @@ object GenTest extends Properties {
     List(
       Prop("long generates correctly", testLong)
     , Prop("frequency is random", testFrequency)
+    , Prop("fromSome some", testFromSomeSome)
+    , Prop("fromSome none", testFromSomeNone)
     )
 
   def testLong: Property[Unit] = {
@@ -26,5 +28,15 @@ object GenTest extends Properties {
       _ <- r1 ==== Some("a")
       _ <- r2 ==== Some("b")
     } yield ()
+  }
+
+  def testFromSomeSome: Property[Unit] = {
+    val r = Gen.fromSome(Gen.constant(()).option).forAll.checkRandom.value
+    r ==== Report(SuccessCount(100), DiscardCount(0), OK)
+  }
+
+  def testFromSomeNone: Property[Unit] = {
+    val r = Gen.fromSome(Gen.constant(Option.empty[Unit])).forAll.checkRandom.value
+    r ==== Report(SuccessCount(0), DiscardCount(100), GaveUp)
   }
 }
