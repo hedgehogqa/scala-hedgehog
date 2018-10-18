@@ -9,6 +9,16 @@ trait GenTOps[M[_]] {
   // Combinators
 
   /**
+   * Runs a `Option` generator until it produces a `Some`.
+   *
+   * This is implemented using `filter` and has the same caveats.
+   */
+  def fromSome[A](gen: GenT[M, Option[A]])(implicit F: Monad[M]): GenT[M, A] =
+    gen.filter(_.isDefined).map(
+      _.getOrElse(sys.error("fromSome: internal error, unexpected None"))
+    )
+
+  /**
    * Construct a generator that depends on the size parameter.
    */
   def generate[A](f: (Size, Seed) => (Seed, A))(implicit F: Monad[M]): GenT[M, A] =
