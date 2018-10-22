@@ -2,26 +2,25 @@ package hedgehog
 
 import hedgehog.core._
 import hedgehog.Gen._
-import hedgehog.Property._
 import hedgehog.runner._
 
 object PropertyTest extends Properties {
 
   def tests: List[Prop] =
     List(
-      Prop("example1", example1)
-    , Prop("total", total)
+      Prop("example1", example1.property)
+    , Prop("total", total.property)
+    , Prop("fail", fail.property)
     )
 
-  def example1: Property = {
+  def example1: Result = {
     val seed = Seed.fromLong(5489)
-    val r = (for {
+    val r = Property.check(for {
       x <- Gen.char('a', 'z').log("x")
       y <- int(Range.linear(0, 50)).log("y")
-      _ <- if (y % 2 == 0) Property.discard else success
-      _ <- assert(y < 87 && x <= 'r')
-    } yield ()).check(seed).value
-    assert(r == Report(SuccessCount(0), DiscardCount(2), Failed(ShrinkCount(1), List(
+      _ <- if (y % 2 == 0) Property.discard else Property.point(())
+    } yield Result.assert(y < 87 && x <= 'r'), seed).value
+    Result.assert(r == Report(SuccessCount(0), DiscardCount(2), Failed(ShrinkCount(1), List(
         ForAll("x", "s")
       , ForAll("y", "1"))
       )))
@@ -59,16 +58,19 @@ object PropertyTest extends Properties {
   def order(gen: Gen[Item]): Gen[Order] =
     gen.list(Range.linear(0, 50)).map(Order)
 
-  def total: Property = {
+  def total: Result = {
     val seed = Seed.fromLong(5489)
-    val r = (for {
+    val r = Property.check(for {
       x <- order(cheap).log("cheap")
       y <- order(expensive).log("expensive")
-      _ <- assert(merge(x, y).total.value == x.total.value + y.total.value)
-    } yield ()).check(seed).value
-    assert(r == Report(SuccessCount(3), DiscardCount(0), Failed(ShrinkCount(5), List(
+    } yield Result.assert(merge(x, y).total.value == x.total.value + y.total.value)
+      , seed).value
+    Result.assert(r == Report(SuccessCount(3), DiscardCount(0), Failed(ShrinkCount(5), List(
         ForAll("cheap", "Order(List())")
       , ForAll("expensive", "Order(List(Item(oculus,USD(1000))))"
       )))))
   }
+
+  def fail: Result =
+    Property.checkRandom(Result.failure.property).value.status ==== Failed(ShrinkCount(0), Nil)
 }

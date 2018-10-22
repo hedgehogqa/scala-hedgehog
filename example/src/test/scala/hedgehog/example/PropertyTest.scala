@@ -2,7 +2,6 @@ package hedgehog.example
 
 import hedgehog._
 import hedgehog.Gen._
-import hedgehog.Property._
 import hedgehog.runner._
 
 object PropertyTest extends Properties {
@@ -17,16 +16,14 @@ object PropertyTest extends Properties {
     for {
       x <- Gen.char('a', 'z').log("x")
       y <- int(Range.linear(0, 50)).lift
-      _ <- if (y % 2 == 0) Property.discard else success
-      _ <- assert(y < 87 && x <= 'r')
-    } yield ()
+      _ <- if (y % 2 == 0) Property.discard else Property.point(())
+    } yield Result.assert(y < 87 && x <= 'r')
 
   def total: Property =
     for {
       x <- order(cheap).log("cheap")
       y <- order(expensive).log("expensive")
-      _ <- merge(x, y).total.value === x.total.value + y.total.value
-    } yield ()
+    } yield merge(x, y).total.value === x.total.value + y.total.value
 
   case class USD(value: Long)
   case class Item(name: String, price: USD)

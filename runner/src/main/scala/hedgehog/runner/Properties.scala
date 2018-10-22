@@ -11,7 +11,7 @@ abstract class Properties {
   def main(args: Array[String]): Unit = {
     val seed = Seed.fromTime()
     tests.foreach(t => {
-      val report = t.result.check(seed).value
+      val report = Property.check(t.result, seed).value
       println(Prop.renderReport(this.getClass.getName, t, report, ansiCodesSupported = true))
     })
   }
