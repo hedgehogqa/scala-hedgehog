@@ -145,8 +145,8 @@ As a general rule, the current Scala API is intended to be _direct_ port of
 [scalacheck](https://github.com/rickynils/scalacheck) was for [QuickCheck](http://hackage.haskell.org/package/QuickCheck).
 The idea being that people familiar with one of the libraries will be comfortable with the other.
 It also makes it easier not having to re-invent any wheels (or APIs).
-There will obviously be exceptions where Scala forces us to make a different trade-off, such as the
-[Gen](core/src/main/scala/hedgehog/Gen.scala) type alias of `GenT` to assist with type-inference.
+There will obviously be exceptions where Scala forces us to make a different trade-off.
+See [haskell-differences](doc/haskell-differences.md) for examples and more explanation.
 
 
 ## Resources
