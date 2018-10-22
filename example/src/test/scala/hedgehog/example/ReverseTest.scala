@@ -9,7 +9,7 @@ object ReverseTest extends Properties {
       Prop("reverse", testReverse)
     )
 
-  def testReverse: Property[Unit] =
+  def testReverse: Property =
     for {
       xs <- Gen.alpha.list(Range.linear(0, 100)).forAll
       _ <- xs.reverse.reverse === xs

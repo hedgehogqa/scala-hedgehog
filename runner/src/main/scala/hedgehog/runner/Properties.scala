@@ -17,12 +17,12 @@ abstract class Properties {
   }
 }
 
-class Prop(val name: String, val result: Property[Unit])
+class Prop(val name: String, val result: Property)
 
 object Prop {
 
   /** Wrap the actual constructor so we can catch any exceptions thrown */
-  def apply(name: String, result: => Property[Unit]): Prop =
+  def apply(name: String, result: => Property): Prop =
     try {
       new Prop(name, result)
     } catch {

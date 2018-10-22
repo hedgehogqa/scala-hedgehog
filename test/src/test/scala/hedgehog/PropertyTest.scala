@@ -13,7 +13,7 @@ object PropertyTest extends Properties {
     , Prop("total", total)
     )
 
-  def example1: Property[Unit] = {
+  def example1: Property = {
     val seed = Seed.fromLong(5489)
     val r = (for {
       x <- Gen.char('a', 'z').log("x")
@@ -59,7 +59,7 @@ object PropertyTest extends Properties {
   def order(gen: Gen[Item]): Gen[Order] =
     gen.list(Range.linear(0, 50)).map(Order)
 
-  def total: Property[Unit] = {
+  def total: Property = {
     val seed = Seed.fromLong(5489)
     val r = (for {
       x <- order(cheap).log("cheap")

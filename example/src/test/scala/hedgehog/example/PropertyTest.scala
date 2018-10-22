@@ -13,7 +13,7 @@ object PropertyTest extends Properties {
     , Prop("total", total)
     )
 
-  def example1: Property[Unit] =
+  def example1: Property =
     for {
       x <- Gen.char('a', 'z').log("x")
       y <- int(Range.linear(0, 50)).lift
@@ -21,7 +21,7 @@ object PropertyTest extends Properties {
       _ <- assert(y < 87 && x <= 'r')
     } yield ()
 
-  def total: Property[Unit] =
+  def total: Property =
     for {
       x <- order(cheap).log("cheap")
       y <- order(expensive).log("expensive")

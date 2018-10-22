@@ -22,7 +22,7 @@ package object hedgehog {
     with CharacterOps[M]
     with StringOps[M] {}
 
-  type Property[A] = PropertyT[HM, A]
+  type Property = PropertyT[HM, Unit]
   object Property extends PropertyTOps[HM]
 
   def propertyT[M[_]]: PropertyTOps[M] =
@@ -31,7 +31,7 @@ package object hedgehog {
   implicit class Syntax[A](a1: A) {
 
      // FIX Is there a way to get this to work with PropertyT and type-inference?
-     def ===(a2: A): Property[Unit] = {
+     def ===(a2: A): Property = {
        val p = Property
        if (a1 == a2)
          p.success
@@ -45,7 +45,7 @@ package object hedgehog {
      }
 
     // To avoid name clashes
-    def ====(a2: A): Property[Unit] =
+    def ====(a2: A): Property =
       ===(a2)
   }
 }
