@@ -68,13 +68,6 @@ case class PropertyT[M[_], A](
       )
     ))
 
-  def check(seed: Seed)(implicit F: Monad[M]): M[Report] =
-    propertyT.report(Size(0), seed, this)
-
-  def checkRandom(implicit F: Monad[M]): M[Report] =
-    // FIX: predef MonadIO
-    check(Seed.fromTime())
-
  def withTests(n: SuccessCount):  PropertyT[M, A] =
    copy(config = config.copy(testLimit = n))
 }
@@ -94,33 +87,38 @@ object PropertyT {
 
 trait PropertyTReporting[M[_]] {
 
-  def isFailure[A, B](n: Node[M, Option[(B, Option[A])]]): Boolean =
-    n.value.map(_._2) == Some(None)
-
-  def takeSmallest[A](n: ShrinkCount, slimit: ShrinkLimit, t: Node[M, Option[(List[Log], Option[A])]])(implicit F: Monad[M]): M[Status] =
+  def takeSmallest(n: ShrinkCount, slimit: ShrinkLimit, t: Node[M, Option[(List[Log], Option[Result])]])(implicit F: Monad[M]): M[Status] =
     t.value match {
       case None =>
         F.point(Status.gaveUp)
 
-      case Some((w, None)) =>
-        if (n.value >= slimit.value) {
-          F.point(Status.failed(n, w))
+      case Some((w, r)) =>
+        if (r.forall(!_.success)) {
+          if (n.value >= slimit.value) {
+            F.point(Status.failed(n, w))
+          } else {
+            F.map(findMapM(t.children)(m =>
+              F.bind(m.run)(node =>
+                node.value match {
+                  case Some((_, None)) =>
+                    F.map(takeSmallest(n.inc, slimit, node))(some)
+                  case Some((_, Some(r2))) =>
+                    if (!r2.success)
+                      F.map(takeSmallest(n.inc, slimit, node))(some)
+                    else
+                      F.point(Option.empty[Status])
+                  case None =>
+                    F.point(Option.empty[Status])
+                }
+              )
+            ))(_.getOrElse(Status.failed(n, w ++ r.map(_.logs).getOrElse(Nil))))
+          }
         } else {
-          F.map(findMapM(t.children)(m =>
-            F.bind(m.run)(node =>
-              if(isFailure(node))
-                F.map(takeSmallest(n.inc, slimit, node))(some)
-              else
-                F.point(Option.empty[Status])
-            )
-          ))(_.getOrElse(Status.failed(n, w)))
+          F.point(Status.ok)
         }
-
-      case Some((_, Some(_))) =>
-        F.point(Status.ok)
     }
 
-  def report[A](size0: Size, seed0: Seed, p: PropertyT[M, A])(implicit F: Monad[M]): M[Report] = {
+  def report(size0: Size, seed0: Seed, p: PropertyT[M, Result])(implicit F: Monad[M]): M[Report] = {
     def loop(successes: SuccessCount, discards: DiscardCount, size: Size, seed: Seed): M[Report] =
       if (size.value > 99)
         loop(successes, discards, Size(0), seed)
@@ -137,14 +135,17 @@ trait PropertyTReporting[M[_]] {
             case Some((_, None)) =>
               F.map(takeSmallest(ShrinkCount(0), p.config.shrinkLimit, x.map(_._2)))(y => Report(successes, discards, y))
 
-            case Some((_, Some(_))) =>
-              loop(successes.inc, discards, size.inc, x.value._1)
+            case Some((_, Some(r))) =>
+              if (!r.success)
+                F.map(takeSmallest(ShrinkCount(0), p.config.shrinkLimit, x.map(_._2)))(y => Report(successes, discards, y))
+              else
+                loop(successes.inc, discards, size.inc, x.value._1)
           }
         )
     loop(SuccessCount(0), DiscardCount(0), size0, seed0)
   }
 
-  def recheck(size: Size, seed: Seed)(p: PropertyT[M, Unit])(implicit F: Monad[M]): M[Report] =
+  def recheck(size: Size, seed: Seed)(p: PropertyT[M, Result])(implicit F: Monad[M]): M[Report] =
     report(Size(0), seed, p.withTests(SuccessCount(1)))
 }
 

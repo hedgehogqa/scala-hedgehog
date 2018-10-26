@@ -11,18 +11,22 @@ abstract class Properties {
   def main(args: Array[String]): Unit = {
     val seed = Seed.fromTime()
     tests.foreach(t => {
-      val report = t.result.check(seed).value
+      val report = Property.check(t.result, seed).value
       println(Prop.renderReport(this.getClass.getName, t, report, ansiCodesSupported = true))
     })
   }
 }
 
-class Prop(val name: String, val result: Property[Unit])
+class Prop(val name: String, val result: Property) {
+
+  def setProperty(r2: Property): Prop =
+    new Prop(name, r2)
+}
 
 object Prop {
 
   /** Wrap the actual constructor so we can catch any exceptions thrown */
-  def apply(name: String, result: => Property[Unit]): Prop =
+  def apply(name: String, result: => Property): Prop =
     try {
       new Prop(name, result)
     } catch {

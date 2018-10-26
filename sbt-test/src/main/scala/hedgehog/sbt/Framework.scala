@@ -1,5 +1,6 @@
 package hedgehog.sbt
 
+import hedgehog._
 import hedgehog.core._
 import hedgehog.runner._
 import _root_.sbt.{testing => sbtt}
@@ -69,7 +70,7 @@ class Task(
         c.getDeclaredConstructor().newInstance()
     properties.tests.foreach(t => {
       val startTime = System.currentTimeMillis
-      val report = t.result.check(seed).value
+      val report = Property.check(t.result, seed).value
       val endTime = System.currentTimeMillis
       eventHandler.handle(Event.fromReport(taskDef, new sbtt.TestSelector(t.name), report, endTime - startTime))
 

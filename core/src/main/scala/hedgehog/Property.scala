@@ -5,6 +5,9 @@ import hedgehog.predef._
 
 trait PropertyTOps[M[_]] extends PropertyTReporting[M] {
 
+  def point[A](value: A)(implicit F: Monad[M]): PropertyT[M, A] =
+    fromGen(genT.constant(value))
+
   def fromGen[A](gen: GenT[M, A])(implicit F: Monad[M]): PropertyT[M, A] =
     PropertyT(PropertyConfig.default, gen.map(x => (Nil, Some(x))))
 
@@ -29,9 +32,10 @@ trait PropertyTOps[M[_]] extends PropertyTReporting[M] {
   def error[A](e: Exception)(implicit F: Monad[M]): PropertyT[M, A] =
     writeLog(Error(e)).flatMap(_ => failureA[A])
 
-  def success(implicit F: Monad[M]): PropertyT[M, Unit] =
-    hoist((Nil, ()))
+  def check(p: PropertyT[M, Result], seed: Seed)(implicit F: Monad[M]): M[Report] =
+    propertyT.report(Size(0), seed, p)
 
-  def assert(b: Boolean)(implicit F: Monad[M]): PropertyT[M, Unit] =
-    if (b) success else failure
+  def checkRandom(p: PropertyT[M, Result])(implicit F: Monad[M]): M[Report] =
+    // FIX: predef MonadIO
+    check(p, Seed.fromTime())
 }
