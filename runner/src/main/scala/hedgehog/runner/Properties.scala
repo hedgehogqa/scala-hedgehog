@@ -17,7 +17,11 @@ abstract class Properties {
   }
 }
 
-class Prop(val name: String, val result: Property)
+class Prop(val name: String, val result: Property) {
+
+  def setProperty(r2: Property): Prop =
+    new Prop(name, r2)
+}
 
 object Prop {
 
