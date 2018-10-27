@@ -16,6 +16,8 @@ so shrinks obey the invariants of generated values by construction.
   - [SBT Testing](#sbt-testing)
   - [IntelliJ](#intellij)
 - [Example](#example)
+- [Guides](#guides)
+  - [Migration from ScalaCheck](doc/migration-scalacheck.md)
 - [Motivation](#motivation)
   - [Design Considerations](#design-considerations)
 - [Resources](#resources)
@@ -120,6 +122,10 @@ object PropertyTest extends Properties {
     } yield xs.reverse.reverse === xs
 }
 ```
+
+## Guides
+
+- [Migration from ScalaCheck](doc/migration-scalacheck.md)
 
 
 ## Motivation
