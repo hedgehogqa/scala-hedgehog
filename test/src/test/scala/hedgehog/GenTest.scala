@@ -5,7 +5,7 @@ import hedgehog.runner._
 
 object GenTest extends Properties {
 
-  def tests: List[Prop] =
+  def tests: List[Test] =
     List(
       property("long generates correctly", testLong)
     , example("frequency is random", testFrequency)

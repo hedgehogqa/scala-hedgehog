@@ -5,7 +5,7 @@ import hedgehog.runner._
 
 object ErrorTest extends Properties {
 
-  def tests: List[Prop] =
+  def tests: List[Test] =
     List(
       example("tests with no generators don't throw exceptions", noGen)
     , example("tests with generators that throw exception in map will shrink", shrinkMap)
@@ -14,7 +14,7 @@ object ErrorTest extends Properties {
 
   def noGen: Result = {
     val e = new RuntimeException()
-    val prop = Prop("", throw e)
+    val prop = Test("", throw e)
     val r = Property.checkRandom(PropertyConfig.default, prop.result).value
     getErrorLog(r.status) ==== List(Error(e))
   }

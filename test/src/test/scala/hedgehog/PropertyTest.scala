@@ -6,7 +6,7 @@ import hedgehog.runner._
 
 object PropertyTest extends Properties {
 
-  def tests: List[Prop] =
+  def tests: List[Test] =
     List(
       example("example1", example1)
     , example("total", total)

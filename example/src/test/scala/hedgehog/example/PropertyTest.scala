@@ -6,10 +6,10 @@ import hedgehog.runner._
 
 object PropertyTest extends Properties {
 
-  def tests: List[Prop] =
+  def tests: List[Test] =
     List(
-      Prop("example1", example1)
-    , Prop("total", total)
+      Test("example1", example1)
+    , Test("total", total)
     )
 
   def example1: Property =
