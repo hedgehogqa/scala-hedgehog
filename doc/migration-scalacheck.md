@@ -52,7 +52,7 @@ import hedgehog.runner._
 object StringSpecification extends Properties {
 
   override def tests: List[Prop] = List(
-    Prop("startsWith", for {
+    property("startsWith", for {
       a <- Gen.string(Gen.unicode, Range.linear(0, 100)).forAll
       b <- Gen.string(Gen.unicode, Range.linear(0, 100)).forAll
       } yield Result.assert((a+b).startsWith(a))

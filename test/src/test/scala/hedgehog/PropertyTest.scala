@@ -8,14 +8,14 @@ object PropertyTest extends Properties {
 
   def tests: List[Prop] =
     List(
-      Prop("example1", example1.property)
-    , Prop("total", total.property)
-    , Prop("fail", fail.property)
+      example("example1", example1)
+    , example("total", total)
+    , example("fail", fail)
     )
 
   def example1: Result = {
     val seed = Seed.fromLong(5489)
-    val r = Property.check(for {
+    val r = Property.check(PropertyConfig.default, for {
       x <- Gen.char('a', 'z').log("x")
       y <- int(Range.linear(0, 50)).log("y")
       _ <- if (y % 2 == 0) Property.discard else Property.point(())
@@ -60,7 +60,7 @@ object PropertyTest extends Properties {
 
   def total: Result = {
     val seed = Seed.fromLong(5489)
-    val r = Property.check(for {
+    val r = Property.check(PropertyConfig.default, for {
       x <- order(cheap).log("cheap")
       y <- order(expensive).log("expensive")
     } yield Result.assert(merge(x, y).total.value == x.total.value + y.total.value)
@@ -72,5 +72,5 @@ object PropertyTest extends Properties {
   }
 
   def fail: Result =
-    Property.checkRandom(Result.failure.property).value.status ==== Failed(ShrinkCount(0), Nil)
+    Property.checkRandom(PropertyConfig.default, Property.point(Result.failure)).value.status ==== Failed(ShrinkCount(0), Nil)
 }

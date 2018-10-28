@@ -113,7 +113,7 @@ object PropertyTest extends Properties {
 
   def tests: List[Prop] =
     List(
-      Prop("reverse", testReverse)
+      property("reverse", testReverse)
     )
 
   def testReverse: Property =

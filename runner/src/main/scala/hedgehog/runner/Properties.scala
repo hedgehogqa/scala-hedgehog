@@ -9,18 +9,23 @@ abstract class Properties {
 
   /** Allows the implementing test to be run separately without SBT */
   def main(args: Array[String]): Unit = {
+    val config = PropertyConfig.default
     val seed = Seed.fromTime()
     tests.foreach(t => {
-      val report = Property.check(t.result, seed).value
+      val report = Property.check(t.withConfig(config), t.result, seed).value
       println(Prop.renderReport(this.getClass.getName, t, report, ansiCodesSupported = true))
     })
   }
 }
 
-class Prop(val name: String, val result: Property) {
+class Prop(
+    val name: String
+  , val withConfig: PropertyConfig => PropertyConfig
+  , val result: Property
+  ) {
 
-  def setProperty(r2: Property): Prop =
-    new Prop(name, r2)
+  def config(f: PropertyConfig => PropertyConfig): Prop =
+    new Prop(name, c => f(withConfig(c)), result)
 }
 
 object Prop {
@@ -28,10 +33,10 @@ object Prop {
   /** Wrap the actual constructor so we can catch any exceptions thrown */
   def apply(name: String, result: => Property): Prop =
     try {
-      new Prop(name, result)
+      new Prop(name, identity, result)
     } catch {
       case e: Exception =>
-        new Prop(name, Property.error(e))
+        new Prop(name, identity, Property.error(e))
     }
 
   def renderReport(className: String, t: Prop, report: Report, ansiCodesSupported: Boolean): String = {
