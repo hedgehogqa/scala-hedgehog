@@ -58,6 +58,7 @@ class Task(
     Array()
 
   override def execute(eventHandler: sbtt.EventHandler, loggers: Array[sbtt.Logger]): Array[sbtt.Task] = {
+    val config = PropertyConfig.default
     val seed = Seed.fromTime()
     val c = testClassLoader
       .loadClass(taskDef.fullyQualifiedName + (if (fingerprint.isModule) "$" else ""))
@@ -70,11 +71,11 @@ class Task(
         c.getDeclaredConstructor().newInstance()
     properties.tests.foreach(t => {
       val startTime = System.currentTimeMillis
-      val report = Property.check(t.result, seed).value
+      val report = Property.check(t.withConfig(config), t.result, seed).value
       val endTime = System.currentTimeMillis
       eventHandler.handle(Event.fromReport(taskDef, new sbtt.TestSelector(t.name), report, endTime - startTime))
 
-      loggers.foreach(logger => logger.info(Prop.renderReport(taskDef.fullyQualifiedName, t, report, logger.ansiCodesSupported)))
+      loggers.foreach(logger => logger.info(Test.renderReport(taskDef.fullyQualifiedName, t, report, logger.ansiCodesSupported)))
     })
     Array()
   }

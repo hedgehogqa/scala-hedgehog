@@ -111,9 +111,9 @@ import hedgehog.runner._
 
 object PropertyTest extends Properties {
 
-  def tests: List[Prop] =
+  def tests: List[Test] =
     List(
-      Prop("reverse", testReverse)
+      property("reverse", testReverse)
     )
 
   def testReverse: Property =

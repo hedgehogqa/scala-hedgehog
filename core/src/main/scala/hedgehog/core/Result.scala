@@ -1,7 +1,5 @@
 package hedgehog.core
 
-import hedgehog._
-
 sealed trait Result {
 
   import Result._
@@ -55,13 +53,6 @@ sealed trait Result {
       case Failure(l) =>
         Failure(l ++ List(info))
     }
-
-  def property: Property =
-    Property.point(this)
-      // By default run once
-      // This is related to:
-      // https://github.com/hedgehogqa/scala-hedgehog/pull/35
-      .withTests(SuccessCount(1))
 }
 
 object Result {

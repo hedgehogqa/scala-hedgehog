@@ -5,12 +5,12 @@ import hedgehog.runner._
 
 object GenTest extends Properties {
 
-  def tests: List[Prop] =
+  def tests: List[Test] =
     List(
-      Prop("long generates correctly", testLong)
-    , Prop("frequency is random", testFrequency.property)
-    , Prop("fromSome some", testFromSomeSome.property)
-    , Prop("fromSome none", testFromSomeNone.property)
+      property("long generates correctly", testLong)
+    , example("frequency is random", testFrequency)
+    , example("fromSome some", testFromSomeSome)
+    , example("fromSome none", testFromSomeNone)
     )
 
   def testLong: Property = {
@@ -28,12 +28,12 @@ object GenTest extends Properties {
   }
 
   def testFromSomeSome: Result = {
-    val r = Property.checkRandom(Gen.fromSome(Gen.constant(Result.success).option).forAll).value
+    val r = Property.checkRandom(PropertyConfig.default, Gen.fromSome(Gen.constant(Result.success).option).forAll).value
     r ==== Report(SuccessCount(100), DiscardCount(0), OK)
   }
 
   def testFromSomeNone: Result = {
-    val r = Property.checkRandom(Gen.fromSome(Gen.constant(Option.empty[Result])).forAll).value
+    val r = Property.checkRandom(PropertyConfig.default, Gen.fromSome(Gen.constant(Option.empty[Result])).forAll).value
     r ==== Report(SuccessCount(0), DiscardCount(100), GaveUp)
   }
 }

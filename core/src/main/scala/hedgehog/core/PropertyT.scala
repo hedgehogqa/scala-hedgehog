@@ -36,8 +36,7 @@ object PropertyConfig {
 }
 
 case class PropertyT[M[_], A](
-    config: PropertyConfig
-  , run: GenT[M, (List[Log], Option[A])]
+    run: GenT[M, (List[Log], Option[A])]
   ) {
 
   def map[B](f: A => B)(implicit F: Monad[M]): PropertyT[M, B] =
@@ -67,9 +66,6 @@ case class PropertyT[M[_], A](
         }
       )
     ))
-
- def withTests(n: SuccessCount):  PropertyT[M, A] =
-   copy(config = config.copy(testLimit = n))
 }
 
 object PropertyT {
@@ -118,13 +114,13 @@ trait PropertyTReporting[M[_]] {
         }
     }
 
-  def report(size0: Size, seed0: Seed, p: PropertyT[M, Result])(implicit F: Monad[M]): M[Report] = {
+  def report(config: PropertyConfig, size0: Size, seed0: Seed, p: PropertyT[M, Result])(implicit F: Monad[M]): M[Report] = {
     def loop(successes: SuccessCount, discards: DiscardCount, size: Size, seed: Seed): M[Report] =
       if (size.value > 99)
         loop(successes, discards, Size(0), seed)
-      else if (successes.value >= p.config.testLimit.value)
+      else if (successes.value >= config.testLimit.value)
         F.point(Report(successes, discards, OK))
-      else if (discards.value >= p.config.discardLimit.value)
+      else if (discards.value >= config.discardLimit.value)
         F.point(Report(successes, discards, GaveUp))
       else
         F.bind(p.run.run(size, seed).run)(x =>
@@ -133,11 +129,11 @@ trait PropertyTReporting[M[_]] {
               loop(successes, discards.inc, size.inc, x.value._1)
 
             case Some((_, None)) =>
-              F.map(takeSmallest(ShrinkCount(0), p.config.shrinkLimit, x.map(_._2)))(y => Report(successes, discards, y))
+              F.map(takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2)))(y => Report(successes, discards, y))
 
             case Some((_, Some(r))) =>
               if (!r.success)
-                F.map(takeSmallest(ShrinkCount(0), p.config.shrinkLimit, x.map(_._2)))(y => Report(successes, discards, y))
+                F.map(takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2)))(y => Report(successes, discards, y))
               else
                 loop(successes.inc, discards, size.inc, x.value._1)
           }
@@ -145,8 +141,8 @@ trait PropertyTReporting[M[_]] {
     loop(SuccessCount(0), DiscardCount(0), size0, seed0)
   }
 
-  def recheck(size: Size, seed: Seed)(p: PropertyT[M, Result])(implicit F: Monad[M]): M[Report] =
-    report(Size(0), seed, p.withTests(SuccessCount(1)))
+  def recheck(config: PropertyConfig, size: Size, seed: Seed)(p: PropertyT[M, Result])(implicit F: Monad[M]): M[Report] =
+    report(config.copy(testLimit = SuccessCount(1)), Size(0), seed, p)
 }
 
 /**********************************************************************/

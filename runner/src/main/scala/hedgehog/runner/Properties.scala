@@ -5,36 +5,44 @@ import hedgehog.core._
 
 abstract class Properties {
 
-  def tests: List[Prop]
+  def tests: List[Test]
 
   /** Allows the implementing test to be run separately without SBT */
   def main(args: Array[String]): Unit = {
+    val config = PropertyConfig.default
     val seed = Seed.fromTime()
     tests.foreach(t => {
-      val report = Property.check(t.result, seed).value
-      println(Prop.renderReport(this.getClass.getName, t, report, ansiCodesSupported = true))
+      val report = Property.check(t.withConfig(config), t.result, seed).value
+      println(Test.renderReport(this.getClass.getName, t, report, ansiCodesSupported = true))
     })
   }
 }
 
-class Prop(val name: String, val result: Property) {
+class Test(
+    val name: String
+  , val withConfig: PropertyConfig => PropertyConfig
+  , val result: Property
+  ) {
 
-  def setProperty(r2: Property): Prop =
-    new Prop(name, r2)
+  def config(f: PropertyConfig => PropertyConfig): Test =
+    new Test(name, c => f(withConfig(c)), result)
+
+  def withTests(count: SuccessCount): Test =
+    config(_.copy(testLimit = count))
 }
 
-object Prop {
+object Test {
 
   /** Wrap the actual constructor so we can catch any exceptions thrown */
-  def apply(name: String, result: => Property): Prop =
+  def apply(name: String, result: => Property): Test =
     try {
-      new Prop(name, result)
+      new Test(name, identity, result)
     } catch {
       case e: Exception =>
-        new Prop(name, Property.error(e))
+        new Test(name, identity, Property.error(e))
     }
 
-  def renderReport(className: String, t: Prop, report: Report, ansiCodesSupported: Boolean): String = {
+  def renderReport(className: String, t: Test, report: Report, ansiCodesSupported: Boolean): String = {
     def render(ok: Boolean, msg: String, extraS: List[String]): String = {
       val name = className + "." + t.name
       val sym = if (ok) "+" else "-"
