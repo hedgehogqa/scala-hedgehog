@@ -26,6 +26,9 @@ class Test(
 
   def config(f: PropertyConfig => PropertyConfig): Test =
     new Test(name, c => f(withConfig(c)), result)
+
+  def withTests(count: SuccessCount): Test =
+    config(_.copy(testLimit = count))
 }
 
 object Test {
