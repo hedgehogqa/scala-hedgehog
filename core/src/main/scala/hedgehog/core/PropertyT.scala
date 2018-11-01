@@ -91,7 +91,7 @@ trait PropertyTReporting[M[_]] {
       case Some((w, r)) =>
         if (r.forall(!_.success)) {
           if (n.value >= slimit.value) {
-            F.point(Status.failed(n, w))
+            F.point(Status.failed(n, w ++ r.map(_.logs).getOrElse(Nil)))
           } else {
             F.map(findMapM(t.children)(m =>
               F.bind(m.run)(node =>

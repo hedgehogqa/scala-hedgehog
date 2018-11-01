@@ -29,6 +29,9 @@ class Test(
 
   def withTests(count: SuccessCount): Test =
     config(_.copy(testLimit = count))
+
+  def noShrinking: Test =
+    config(_.copy(shrinkLimit = ShrinkLimit(0)))
 }
 
 object Test {
