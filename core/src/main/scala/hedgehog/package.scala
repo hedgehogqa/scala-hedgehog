@@ -1,7 +1,8 @@
 import hedgehog.core._
 import hedgehog.extra._
+import hedgehog.predef.ApplicativeSyntax
 
-package object hedgehog {
+package object hedgehog extends ApplicativeSyntax {
 
   type HM[A] = predef.Identity[A]
 
@@ -24,6 +25,9 @@ package object hedgehog {
 
   type Property = PropertyT[HM, Result]
   object Property extends PropertyTOps[HM]
+
+  type PropertyR[A] = core.PropertyR[A]
+  val PropertyR = core.PropertyR
 
   type Result = hedgehog.core.Result
   val Result = hedgehog.core.Result

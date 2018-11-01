@@ -1,4 +1,4 @@
-package hedgehog.example
+package hedgehog.examples
 
 import hedgehog._
 import hedgehog.Gen._
