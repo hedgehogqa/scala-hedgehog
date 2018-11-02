@@ -3,6 +3,8 @@ Differences to Haskell Hedgehog
 
 This page documents where the Scala Hedgehog API deviates significantly from the Haskell version.
 
+- [Result](#result)
+  - [Property Plus Example](#property-plus-example)
 
 ## Result
 
@@ -59,4 +61,27 @@ def propUnixSort: Property =
       dir.delete()
     }
   }
+```
+
+
+### Property Plus Example
+
+The Scala version has an additional data type that allows generators to be applied to the final "test" in a way that
+can be invoked from by consumers.
+
+```
+def propReverse: PropertyR[List[Char]] =
+  PropertyR(
+    Gen.alpha.list(Range.linear(0, 100)).forAll
+  )(xs => xs.reverse.reverse === xs)
+```
+
+Here is an example of re-using the same method with both a property and a "golden" example test:
+
+```
+  def tests: List[Test] =
+    List(
+      property(propReverse)
+    , example(propReverse.test(List('a', 'b', 'c')))
+    )
 ```
