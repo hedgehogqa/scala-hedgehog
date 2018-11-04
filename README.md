@@ -17,6 +17,7 @@ so shrinks obey the invariants of generated values by construction.
   - [IntelliJ](#intellij)
 - [Example](#example)
 - [Guides](#guides)
+  - [Tutorial](doc/tutorial.md)
   - [Migration from ScalaCheck](doc/migration-scalacheck.md)
 - [Motivation](#motivation)
   - [Design Considerations](#design-considerations)
@@ -125,6 +126,7 @@ object PropertyTest extends Properties {
 
 ## Guides
 
+- [Tutorial](doc/tutorial.md)
 - [Migration from ScalaCheck](doc/migration-scalacheck.md)
 
 
