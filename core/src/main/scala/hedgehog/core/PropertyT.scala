@@ -144,7 +144,7 @@ trait PropertyTReporting[M[_]] {
   }
 
   def recheck(config: PropertyConfig, size: Size, seed: Seed)(p: PropertyT[M, Result])(implicit F: Monad[M]): M[Report] =
-    report(config.copy(testLimit = SuccessCount(1)), Size(0), seed, p)
+    report(config.copy(testLimit = SuccessCount(1)), size, seed, p)
 }
 
 /**********************************************************************/
