@@ -23,7 +23,7 @@ object PropertyTest extends Properties {
     for {
       x <- order(cheap).log("cheap")
       y <- order(expensive).log("expensive")
-    } yield merge(x, y).total.value === x.total.value + y.total.value
+    } yield merge(x, y).total.value ==== x.total.value + y.total.value
 
   case class USD(value: Long)
   case class Item(name: String, price: USD)

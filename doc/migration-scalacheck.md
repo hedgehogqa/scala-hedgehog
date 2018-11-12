@@ -26,7 +26,7 @@ Some basic rules:
    comprehension.
 - Return your `Prop` or `Boolean` assetions with `Result.assert(...)`
 - Replace [label] or `:|` with  [Result.log(...)][log]
-- Replace equality assertions like `?=` with `===`
+- Replace equality assertions like `?=` with `====`
 
 
 ### ScalaCheck
