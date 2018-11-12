@@ -120,7 +120,7 @@ object PropertyTest extends Properties {
   def testReverse: Property =
     for {
       xs <- Gen.alpha.list(Range.linear(0, 100)).forAll
-    } yield xs.reverse.reverse === xs
+    } yield xs.reverse.reverse ==== xs
 }
 ```
 

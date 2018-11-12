@@ -38,7 +38,7 @@ package object hedgehog extends ApplicativeSyntax {
   implicit class Syntax[A](a1: A) {
 
      // FIX Is there a way to get this to work with PropertyT and type-inference?
-     def ===(a2: A): Result = {
+     def ====(a2: A): Result = {
        if (a1 == a2)
          Result.success
        else
@@ -48,8 +48,5 @@ package object hedgehog extends ApplicativeSyntax {
            .log(a2.toString)
      }
 
-    // To avoid name clashes
-    def ====(a2: A): Result =
-      ===(a2)
   }
 }

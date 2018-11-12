@@ -16,7 +16,7 @@ prop_reverse :: Property
 prop_reverse =
   property $ do
     xs <- forAll $ Gen.list (Range.linear 0 100) Gen.alpha
-    reverse (reverse xs) === xs
+    reverse (reverse xs) ==== xs
 ```
 
 And the corresponding Scala version:
@@ -25,7 +25,7 @@ And the corresponding Scala version:
 def propReverse: Property =
   for {
     xs <- Gen.alpha.list(Range.linear(0, 100)).forAll
-  } yield xs.reverse.reverse === xs
+  } yield xs.reverse.reverse ==== xs
 ```
 
 ### Resource Management
@@ -42,7 +42,7 @@ prop_unix_sort =
     test . runResourceT $ do
       dir <- Temp.createTempDirectory Nothing "prop_dir"
       ...
-      values0 === values
+      values0 ==== values
 ```
 
 To simplify this, and to reduce surprises, the final result in the Scala version is now a separate
@@ -56,7 +56,7 @@ def propUnixSort: Property =
   } yield {
     val dir = java.io.Files.createTempDirectory(getClass.getSimpleName).toFile
     try {
-      values0 === values
+      values0 ==== values
     } finally {
       dir.delete()
     }
@@ -73,7 +73,7 @@ can be invoked from by consumers.
 def propReverse: PropertyR[List[Char]] =
   PropertyR(
     Gen.alpha.list(Range.linear(0, 100)).forAll
-  )(xs => xs.reverse.reverse === xs)
+  )(xs => xs.reverse.reverse ==== xs)
 ```
 
 Here is an example of re-using the same method with both a property and a "golden" example test:

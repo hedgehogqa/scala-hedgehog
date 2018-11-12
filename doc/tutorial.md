@@ -58,7 +58,7 @@ object Spec extends Properties {
     for {
        l1 <- Gen.int(Range.linear(-100, 100)).list(Range.linear(0, 100)).forAll
        l2 <- Gen.int(Range.linear(-100, 100)).list(Range.linear(0, 100)).forAll
-     } yield l1.size + l2.size === (l1 ::: l2).size
+     } yield l1.size + l2.size ==== (l1 ::: l2).size
 }
 ```
 
@@ -77,7 +77,7 @@ OK, that seemed alright. Now define another property.
 def propSqrt: Property =
   for {
     n <- Gen.int(Range.linearFrom(0, -100, 100)).forAll
-  } yield scala.math.sqrt(n * n) === n
+  } yield scala.math.sqrt(n * n) ==== n
 ```
 
 Check it!
@@ -172,11 +172,11 @@ Spec$.add: Falsified after 1 passed tests
 
 That's it? What about a useful message telling us what failed?
 For starters, given that we're just doing an assertion Hedgehog comes with the
-convenient `===` operator:
+convenient `====` operator:
 
 ```scala
 def testAdd: Result =
-  1 + 2 === 3 + 4
+  1 + 2 ==== 3 + 4
 ```
 
 ```
@@ -265,8 +265,8 @@ def propMul: Property =
   } yield {
     val res = n*m
     Result.all(List(
-      (res / m === n).log("div1")
-    , (res / n === m).log("div2")
+      (res / m ==== n).log("div1")
+    , (res / n ==== m).log("div2")
     , Result.assert(res > m).log("lt1")
     , Result.assert(res > n).log("lt2")
     )).log("evidence = " + res)
@@ -297,10 +297,10 @@ boolean logic.
 
 ```scala
 def p1: Result =
-  "a" === "a"
+  "a" ==== "a"
 
 def p2: Result =
-  1 === 1
+  1 ==== 1
 
 def p3: Result =
   p1 and p2
@@ -466,7 +466,7 @@ val propMakeList: Property =
     n <- Gen.int(Range.linear(0, 100))
       .ensure(n => n % 2 == 0)
       .forAll
-  } yield List.fill(n)("").length === n
+  } yield List.fill(n)("").length ==== n
 }
 ```
 
@@ -483,7 +483,7 @@ def propTrivial: Property =
     n <- Gen.int(Range.linear(0, 100))
      .ensure(n => n == 0)
      .forAll
-  } yield n === 0
+  } yield n ==== 0
 ```
 
 ```
@@ -538,7 +538,7 @@ shrinking in action!
 def p1: Property =
   for {
     l <- Gen.int(Range.linearFrom(0, -100, 100)).list(Range.linear(0, 100)).log("l")
-  } yield l === l.distinct
+  } yield l ==== l.distinct
 ```
 
 Now, run the tests:
@@ -562,7 +562,7 @@ def p1: Property =
     l <- Gen.int(Range.linearFrom(0, -100, 100)).list(Range.linear(0, 100)).log("i")
   } yield {
     println(l)
-    l === l.distinct
+    l ==== l.distinct
   }
 ```
 

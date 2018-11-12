@@ -28,6 +28,6 @@ object PropertyRTest extends Properties {
       order(cheap).log("cheap")
     , order(expensive).log("expensive")
     )) {
-      case (x, y) => merge(x, y).total.value === x.total.value + y.total.value
+      case (x, y) => merge(x, y).total.value ==== x.total.value + y.total.value
     }
 }
