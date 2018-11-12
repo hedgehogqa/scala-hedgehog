@@ -1,6 +1,5 @@
-package hedgehog.examples
+package hedgehog
 
-import hedgehog._
 import hedgehog.runner._
 
 object RangeTest extends Properties {
