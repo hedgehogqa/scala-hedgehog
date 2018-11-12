@@ -1,5 +1,6 @@
 package hedgehog
 
+import hedgehog.core.NumericPlus
 import hedgehog.predef.{DecimalPlus, IntegralPlus}
 
 /**
@@ -8,14 +9,24 @@ import hedgehog.predef.{DecimalPlus, IntegralPlus}
  */
 case class Size(value: Int) {
 
-  def incBy(v: Int): Size =
-    Size(value + v)
+  /** Represents the size as a percentage (0 - 1) which is useful for range calculations */
+  def percentage: Double =
+    value.toDouble / Size.max
+
+  def incBy(v: Size): Size =
+    Size(value + v.value)
 
   /**
    * Scale a size using the golden ratio.
    */
   def golden: Size =
     Size((value * 0.61803398875).toInt)
+}
+
+object Size {
+
+  def max: Int =
+    100
 }
 
 /**
@@ -130,7 +141,7 @@ object Range {
    * (0,10)
    * }}}
    */
-  def linear[A : Integral : IntegralPlus](x: A, y: A): Range[A] =
+  def linear[A : Integral : IntegralPlus : NumericPlus](x: A, y: A): Range[A] =
     linearFrom(x, x, y)
 
   /**
@@ -148,7 +159,7 @@ object Range {
    * (-10,20)
    * }}}
    */
-  def linearFrom[A](z: A, x: A, y: A)(implicit I: Integral[A], J: IntegralPlus[A]): Range[A] =
+  def linearFrom[A](z: A, x: A, y: A)(implicit I: Integral[A], J: IntegralPlus[A], R: NumericPlus[A]): Range[A] =
     // Check for overflow and if we do then start using BigInt
     if (I.lt(I.minus(y, x), I.zero) && I.gt(y, I.zero)) {
       linearFrom_(J.toBigInt(z), J.toBigInt(x), J.toBigInt(y))
@@ -157,7 +168,7 @@ object Range {
       linearFrom_(z, x, y)
     }
 
-  def linearFrom_[A : Integral : IntegralPlus](z: A, x: A, y: A): Range[A] =
+  def linearFrom_[A : Integral : NumericPlus](z: A, x: A, y: A): Range[A] =
     Range(z, sz => (
         clamp(x, y, scaleLinear(sz, z, x))
       , clamp(x, y, scaleLinear(sz, z, y))
@@ -170,7 +181,7 @@ object Range {
    *
    * This works the same as 'linear', but for fractional values.
    */
-  def linearFrac[A : Fractional : DecimalPlus](x: A, y: A): Range[A] =
+  def linearFrac[A : Fractional : DecimalPlus : NumericPlus](x: A, y: A): Range[A] =
     linearFracFrom(x, x, y)
 
   /**
@@ -178,7 +189,7 @@ object Range {
    *
    * This works the same as [[linearFrom]], but for fractional values.
    */
-  def linearFracFrom[A](z: A, x: A, y: A)(implicit I: Fractional[A], J: DecimalPlus[A]): Range[A] =
+  def linearFracFrom[A](z: A, x: A, y: A)(implicit I: Fractional[A], J: DecimalPlus[A], R: NumericPlus[A]): Range[A] =
     // Check for gross imprecision and lift to `BigDecimal` to ensure we don't produce a bad range
     if (I.toDouble(I.minus(y, x)).isInfinity) {
       linearFracFrom_(J.toBigDecimal(z), J.toBigDecimal(x), J.toBigDecimal(y))
@@ -187,7 +198,7 @@ object Range {
       linearFracFrom_(z, x, y)
     }
 
-  def linearFracFrom_[A : Fractional](z: A, x: A, y: A): Range[A] =
+  def linearFracFrom_[A : Fractional : NumericPlus](z: A, x: A, y: A): Range[A] =
     Range(z, sz => (
         clamp(x, y, scaleLinearFrac(sz, z, x))
       , clamp(x, y, scaleLinearFrac(sz, z, y))
@@ -212,12 +223,12 @@ object Range {
       O.min(y, O.max(x, n))
 
   /** Scale an integral linearly with the size parameter. */
-  def scaleLinear[A](sz: Size, z: A, n: A)(implicit I: Integral[A], J: IntegralPlus[A]): A =
-    I.plus(z, J.times(I.minus(n, z), sz.value.toDouble / 99))
+  def scaleLinear[A](sz: Size, z: A, n: A)(implicit I: Integral[A], J: NumericPlus[A]): A =
+    I.plus(z, J.timesDouble(I.minus(n, z), sz.percentage))
 
   /** Scale a fractional number linearly with the size parameter. */
-  def scaleLinearFrac[A](sz: Size, z: A, n: A)(implicit F: Fractional[A]): A =
-    F.plus(z, F.times(F.minus(n, z), F.div(F.fromInt(sz.value), F.fromInt(99))))
+  def scaleLinearFrac[A](sz: Size, z: A, n: A)(implicit F: Fractional[A], J: NumericPlus[A]): A =
+    F.plus(z, J.timesDouble(F.minus(n, z), sz.percentage))
 
   /** Check that list contains at least a certain number of elements. */
   def atLeast[A](n: Int, l: List[A]): Boolean =
