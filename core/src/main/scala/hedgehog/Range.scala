@@ -8,8 +8,8 @@ import hedgehog.predef.{DecimalPlus, IntegralPlus}
  */
 case class Size(value: Int) {
 
-  def incBy(v: Int): Size =
-    Size(value + v)
+  def incBy(v: Size): Size =
+    Size(value + v.value)
 
   /**
    * Scale a size using the golden ratio.
@@ -21,7 +21,7 @@ case class Size(value: Int) {
 object Size {
 
   def max: Int =
-    99
+    100
 }
 
 /**

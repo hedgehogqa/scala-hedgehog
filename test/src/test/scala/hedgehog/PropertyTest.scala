@@ -20,10 +20,10 @@ object PropertyTest extends Properties {
       y <- int(Range.linear(0, 50)).log("y")
       _ <- if (y % 2 == 0) Property.discard else Property.point(())
     } yield Result.assert(y < 87 && x <= 'r'), seed).value
-    Result.assert(r == Report(SuccessCount(0), DiscardCount(2), Failed(ShrinkCount(1), List(
+    r ==== Report(SuccessCount(2), DiscardCount(4), Failed(ShrinkCount(2), List(
         ForAll("x", "s")
       , ForAll("y", "1"))
-      )))
+      ))
   }
 
   case class USD(value: Long)
@@ -65,10 +65,10 @@ object PropertyTest extends Properties {
       y <- order(expensive).log("expensive")
     } yield Result.assert(merge(x, y).total.value == x.total.value + y.total.value)
       , seed).value
-    Result.assert(r == Report(SuccessCount(3), DiscardCount(0), Failed(ShrinkCount(5), List(
+    r ==== Report(SuccessCount(1), DiscardCount(0), Failed(ShrinkCount(4), List(
         ForAll("cheap", "Order(List())")
       , ForAll("expensive", "Order(List(Item(oculus,USD(1000))))"
-      )))))
+      ))))
   }
 
   def fail: Result =
