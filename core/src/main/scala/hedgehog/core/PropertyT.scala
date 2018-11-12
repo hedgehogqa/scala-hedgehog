@@ -118,7 +118,7 @@ trait PropertyTReporting[M[_]] {
     // Increase the size proportionally to the number of tests to ensure better coverage of the desired range
     val sizeInc = Math.max(1, 100 / config.testLimit.value)
     def loop(successes: SuccessCount, discards: DiscardCount, size: Size, seed: Seed): M[Report] =
-      if (size.value > 99)
+      if (size.value > Size.max)
         loop(successes, discards, Size(0), seed)
       else if (successes.value >= config.testLimit.value)
         F.point(Report(successes, discards, OK))

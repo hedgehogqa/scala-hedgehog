@@ -18,6 +18,12 @@ case class Size(value: Int) {
     Size((value * 0.61803398875).toInt)
 }
 
+object Size {
+
+  def max: Int =
+    99
+}
+
 /**
  * A range describes the bounds of a number to generate, which may or may not
  * be dependent on a 'Size'.
@@ -213,11 +219,11 @@ object Range {
 
   /** Scale an integral linearly with the size parameter. */
   def scaleLinear[A](sz: Size, z: A, n: A)(implicit I: Integral[A], J: IntegralPlus[A]): A =
-    I.plus(z, J.times(I.minus(n, z), sz.value.toDouble / 99))
+    I.plus(z, J.times(I.minus(n, z), sz.value.toDouble / Size.max))
 
   /** Scale a fractional number linearly with the size parameter. */
   def scaleLinearFrac[A](sz: Size, z: A, n: A)(implicit F: Fractional[A]): A =
-    F.plus(z, F.times(F.minus(n, z), F.div(F.fromInt(sz.value), F.fromInt(99))))
+    F.plus(z, F.times(F.minus(n, z), F.div(F.fromInt(sz.value), F.fromInt(Size.max))))
 
   /** Check that list contains at least a certain number of elements. */
   def atLeast[A](n: Int, l: List[A]): Boolean =
