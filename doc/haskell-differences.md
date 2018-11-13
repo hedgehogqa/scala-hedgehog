@@ -16,7 +16,7 @@ prop_reverse :: Property
 prop_reverse =
   property $ do
     xs <- forAll $ Gen.list (Range.linear 0 100) Gen.alpha
-    reverse (reverse xs) ==== xs
+    reverse (reverse xs) === xs
 ```
 
 And the corresponding Scala version:
@@ -42,7 +42,7 @@ prop_unix_sort =
     test . runResourceT $ do
       dir <- Temp.createTempDirectory Nothing "prop_dir"
       ...
-      values0 ==== values
+      values0 === values
 ```
 
 To simplify this, and to reduce surprises, the final result in the Scala version is now a separate
@@ -69,7 +69,7 @@ def propUnixSort: Property =
 The Scala version has an additional data type that allows generators to be applied to the final "test" in a way that
 can be invoked from by consumers.
 
-```
+```scala
 def propReverse: PropertyR[List[Char]] =
   PropertyR(
     Gen.alpha.list(Range.linear(0, 100)).forAll
@@ -78,7 +78,7 @@ def propReverse: PropertyR[List[Char]] =
 
 Here is an example of re-using the same method with both a property and a "golden" example test:
 
-```
+```scala
   def tests: List[Test] =
     List(
       property(propReverse)
