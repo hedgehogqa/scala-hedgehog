@@ -173,12 +173,13 @@ are still relevant despite whatever language they are presented with.
 - [Property-based State Machine Testing](https://www.youtube.com/watch?v=boBD1qhCQ94) - Andrew McCluskey at YOW! Lambda Jam 2018.
 - [Gens N’ Roses: Appetite for Reduction](https://www.youtube.com/watch?v=AIv_9T0xKEo) - Jacob Stanley at YOW! Lambda Jam 2017.
 - [Find More Bugs with Less Effort](https://www.youtube.com/watch?v=hP-VstNdFGo) - Charles O'Farrell at YOW! Night Singapore 2017.
-- [Property-based Testing in Practice](https://www.infoq.com/presentations/hypothesis-afl-property-testing) - Alex Chan  at QCon 2017.
+- [Property-based Testing in Practice](https://www.infoq.com/presentations/hypothesis-afl-property-testing) - Alex Chan at QCon 2017.
+- [Functions and Determinism in Property-based Testing](https://www.youtube.com/watch?v=UlZGZh7hfbs) - Erik Osheim at Philly ETE 2017
 - [Practical Property-Based Testing](https://www.youtube.com/watch?v=F3XJNt21Ido) - Charles O’Farrell at YOW! Lambda Jam 2015.
 - [Property-Based Testing for Better Code](https://www.youtube.com/watch?v=shngiiBfD80) - Jessica Kerr at Midwest.io 2014.
 - [I Dream of Gen’ning: ScalaCheck Beyond the Basics](http://functional.tv/post/97738967579) - Kelsey Gilmore-Innis at Scala By The Bay 2014.
 - [Testing the Hard Stuff and Staying Sane](http://www.infoq.com/presentations/testing-techniques-case-study) - John Hughes on property-based testing using Quviq QuickCheck.
-- [Testing Stateful Systems with ScalaCheck](http://parleys.com/play/53a7d2d0e4b0543940d9e566) - Rickard Nilsson at ScalaDays 2014 (slides available here).
+- [Testing Stateful Systems with ScalaCheck](http://parleys.com/play/53a7d2d0e4b0543940d9e566) - Rickard Nilsson at ScalaDays 2014.
 
 ### Books
 
