@@ -21,8 +21,8 @@ object GenTest extends Properties {
 
   def testFrequency: Result = {
     val g = Gen.frequency1((1, Gen.constant("a")), (1, Gen.constant("b")))
-    val r1 = g.run(Size(1), Seed.fromLong(3)).run.value.value._2
-    val r2 = g.run(Size(1), Seed.fromLong(1)).run.value.value._2
+    val r1 = g.run(Size(1), Seed.fromLong(3)).run.value._2
+    val r2 = g.run(Size(1), Seed.fromLong(1)).run.value._2
 
     r1 ==== Some("a") and r2 ==== Some("b")
   }

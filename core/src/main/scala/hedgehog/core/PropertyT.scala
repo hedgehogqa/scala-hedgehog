@@ -93,14 +93,14 @@ trait PropertyTReporting[M[_]] {
           if (n.value >= slimit.value) {
             F.point(Status.failed(n, w ++ r.map(_.logs).getOrElse(Nil)))
           } else {
-            F.map(findMapM(t.children)(m =>
-              F.bind(m.run)(node =>
-                node.value match {
+            F.map(F.bind(t.children)(x =>
+              findMapM(x)(m =>
+                m.run.value match {
                   case Some((_, None)) =>
-                    F.map(takeSmallest(n.inc, slimit, node))(some)
+                    F.map(takeSmallest(n.inc, slimit, m.run))(some)
                   case Some((_, Some(r2))) =>
                     if (!r2.success)
-                      F.map(takeSmallest(n.inc, slimit, node))(some)
+                      F.map(takeSmallest(n.inc, slimit, m.run))(some)
                     else
                       F.point(Option.empty[Status])
                   case None =>
@@ -126,22 +126,22 @@ trait PropertyTReporting[M[_]] {
         F.point(Report(successes, discards, OK))
       else if (discards.value >= config.discardLimit.value)
         F.point(Report(successes, discards, GaveUp))
-      else
-        F.bind(p.run.run(size, seed).run)(x =>
-          x.value._2 match {
-            case None =>
-              loop(successes, discards.inc, size.incBy(sizeInc), x.value._1)
+      else {
+        val x = p.run.run(size, seed).run
+        x.value._2 match {
+          case None =>
+            loop(successes, discards.inc, size.incBy(sizeInc), x.value._1)
 
-            case Some((_, None)) =>
+          case Some((_, None)) =>
+            F.map(takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2)))(y => Report(successes, discards, y))
+
+          case Some((_, Some(r))) =>
+            if (!r.success)
               F.map(takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2)))(y => Report(successes, discards, y))
-
-            case Some((_, Some(r))) =>
-              if (!r.success)
-                F.map(takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2)))(y => Report(successes, discards, y))
-              else
-                loop(successes.inc, discards, size.incBy(sizeInc), x.value._1)
-          }
-        )
+            else
+              loop(successes.inc, discards, size.incBy(sizeInc), x.value._1)
+        }
+      }
     loop(SuccessCount(0), DiscardCount(0), size0.getOrElse(sizeInit), seed0)
   }
 
