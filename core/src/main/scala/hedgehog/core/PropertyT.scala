@@ -83,7 +83,7 @@ object PropertyT {
 
 trait PropertyTReporting[M[_]] {
 
-  def takeSmallest(n: ShrinkCount, slimit: ShrinkLimit, t: Node[M, Option[(List[Log], Option[Result])]])(implicit F: Monad[M]): M[Status] =
+  def takeSmallest(n: ShrinkCount, slimit: ShrinkLimit, t: Tree[M, Option[(List[Log], Option[Result])]])(implicit F: Monad[M]): M[Status] =
     t.value match {
       case None =>
         F.point(Status.gaveUp)
@@ -95,12 +95,12 @@ trait PropertyTReporting[M[_]] {
           } else {
             F.map(F.bind(t.children)(x =>
               findMapM(x)(m =>
-                m.run.value match {
+                m.value match {
                   case Some((_, None)) =>
-                    F.map(takeSmallest(n.inc, slimit, m.run))(some)
+                    F.map(takeSmallest(n.inc, slimit, m))(some)
                   case Some((_, Some(r2))) =>
                     if (!r2.success)
-                      F.map(takeSmallest(n.inc, slimit, m.run))(some)
+                      F.map(takeSmallest(n.inc, slimit, m))(some)
                     else
                       F.point(Option.empty[Status])
                   case None =>
@@ -127,7 +127,7 @@ trait PropertyTReporting[M[_]] {
       else if (discards.value >= config.discardLimit.value)
         F.point(Report(successes, discards, GaveUp))
       else {
-        val x = p.run.run(size, seed).run
+        val x = p.run.run(size, seed)
         x.value._2 match {
           case None =>
             loop(successes, discards.inc, size.incBy(sizeInc), x.value._1)
