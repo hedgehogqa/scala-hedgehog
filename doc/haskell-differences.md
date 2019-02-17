@@ -5,6 +5,7 @@ This page documents where the Scala Hedgehog API deviates significantly from the
 
 - [Result](#result)
   - [Property Plus Example](#property-plus-example)
+- [Monadic Gen](#monadic-gen)
 
 ## Result
 
@@ -85,3 +86,17 @@ Here is an example of re-using the same method with both a property and a "golde
     , example(propReverse.test(List('a', 'b', 'c')))
     )
 ```
+
+
+## Monadic Gen
+
+One of the original goals of the Haskell implementation was to support completely generic monadic values.
+
+> Generators allow monadic effects.
+
+For example you could use a `StateT` as part of the generator. In a strict language like Scala the Monad is also
+_critical_ for providing a lazy tree. However, putting the laziness on _each_ tree node results in _serious_ memory
+problems. For now we have had to move this laziness to the tree children.
+
+In practice I doubt that many people are seriously using monadic effects for generated values, and I'm happy to revisit
+this if/when an issue is raised.
