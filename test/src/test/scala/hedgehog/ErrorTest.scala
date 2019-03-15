@@ -15,7 +15,7 @@ object ErrorTest extends Properties {
   def noGen: Result = {
     val e = new RuntimeException()
     val prop = Test("", throw e)
-    val r = Property.checkRandom(PropertyConfig.default, prop.result).value
+    val r = Property.checkRandom(PropertyConfig.default, prop.result.property).value
     getErrorLog(r.status) ==== List(Error(e))
   }
 

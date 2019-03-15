@@ -18,6 +18,9 @@ class PropertyR[A](
 
 object PropertyR {
 
+  def fromProperty(gen: PropertyT[Identity, Result]): PropertyR[Result] =
+    new PropertyR(gen, identity)
+
   /** Constructor function with split arguments to help type-inference */
   def apply[A](gen: PropertyT[Identity, A])(test: A => Result): PropertyR[A] =
     new PropertyR[A](gen, test)

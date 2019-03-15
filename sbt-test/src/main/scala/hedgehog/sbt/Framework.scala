@@ -71,7 +71,7 @@ class Task(
         c.getDeclaredConstructor().newInstance()
     properties.tests.foreach(t => {
       val startTime = System.currentTimeMillis
-      val report = Property.check(t.withConfig(config), t.result, seed).value
+      val report = Property.check2(t.withConfig(config), t.result, seed, None).value
       val endTime = System.currentTimeMillis
       eventHandler.handle(Event.fromReport(taskDef, new sbtt.TestSelector(t.name), report, endTime - startTime))
 

@@ -12,7 +12,7 @@ abstract class Properties {
     val config = PropertyConfig.default
     val seed = Seed.fromTime()
     tests.foreach(t => {
-      val report = Property.check(t.withConfig(config), t.result, seed).value
+      val report = Property.check2(t.withConfig(config), t.result, seed, None).value
       println(Test.renderReport(this.getClass.getName, t, report, ansiCodesSupported = true))
     })
   }
@@ -21,7 +21,7 @@ abstract class Properties {
 class Test(
     val name: String
   , val withConfig: PropertyConfig => PropertyConfig
-  , val result: Property
+  , val result: core.PropertyR[_]
   ) {
 
   def config(f: PropertyConfig => PropertyConfig): Test =
@@ -39,10 +39,10 @@ object Test {
   /** Wrap the actual constructor so we can catch any exceptions thrown */
   def apply(name: String, result: => Property): Test =
     try {
-      new Test(name, identity, result)
+      new Test(name, identity, core.PropertyR.fromProperty(result))
     } catch {
       case e: Exception =>
-        new Test(name, identity, Property.error(e))
+        new Test(name, identity, core.PropertyR.fromProperty(Property.error(e)))
     }
 
   def renderReport(className: String, t: Test, report: Report, ansiCodesSupported: Boolean): String = {
