@@ -5,8 +5,12 @@ import hedgehog.predef._
 /**
  * NOTE: This differs from the Haskell version by not having an effect on the `Node` for performance reasons.
  * See `haskell-difference.md` for more information.
+ *
+ * FIXME The `LazyList` here is critical to avoid running extra tests during shrinking.
+ * The alternative might be something like:
+ * https://github.com/hedgehogqa/scala-hedgehog/compare/topic/issue-66-lazy-shrinking
  */
-case class Tree[M[_], A](value: A, children: M[List[Tree[M, A]]]) {
+case class Tree[M[_], A](value: A, children: M[LazyList[Tree[M, A]]]) {
 
   def map[B](f: A => B)(implicit F: Functor[M]): Tree[M, B] =
     Tree.TreeFunctor[M].map(this)(f)
@@ -20,7 +24,7 @@ case class Tree[M[_], A](value: A, children: M[List[Tree[M, A]]]) {
     )
 
   def prune(implicit F: Applicative[M]): Tree[M, A] =
-    Tree(this.value, F.point(List()))
+    Tree(this.value, F.point(LazyList()))
 }
 
 abstract class TreeImplicits1 {
@@ -37,7 +41,7 @@ abstract class TreeImplicits2 extends TreeImplicits1 {
   implicit def TreeApplicative[M[_]](implicit F: Monad[M]): Applicative[Tree[M, ?]] =
     new Applicative[Tree[M, ?]] {
       def point[A](a: => A): Tree[M, A] =
-        Tree(a, F.point(List()))
+        Tree(a, F.point(LazyList()))
       def ap[A, B](fa: => Tree[M, A])(f: => Tree[M, A => B]): Tree[M, B] =
         // FIX This isn't ideal, but if it's good enough for the Haskell implementation it's good enough for us
         // https://github.com/hedgehogqa/haskell-hedgehog/pull/173
@@ -67,7 +71,7 @@ object Tree extends TreeImplicits2 {
   def unfoldTree[M[_], A, B](f: B => A, g: B => List[B], x: B)(implicit F: Applicative[M]): Tree[M, A] =
     Tree(f(x), F.point(unfoldForest(f, g, x)))
 
-  def unfoldForest[M[_], A, B](f: B => A, g: B => List[B], x: B)(implicit F: Applicative[M]): List[Tree[M, A]] =
-    g(x).map(y => unfoldTree(f, g, y)(F))
+  def unfoldForest[M[_], A, B](f: B => A, g: B => List[B], x: B)(implicit F: Applicative[M]): LazyList[Tree[M, A]] =
+    LazyList.fromList(g(x).map(y => unfoldTree(f, g, y)(F)))
 }
 

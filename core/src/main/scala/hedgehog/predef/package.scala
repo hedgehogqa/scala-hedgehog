@@ -16,12 +16,12 @@ package object predef {
   def some[A](a: A): Option[A] =
     Some(a)
 
-  def findMapM[M[_], A, B](fa: List[A])(f: A => M[Option[B]])(implicit F: Monad[M]): M[Option[B]] = {
+  def findMapM[M[_], A, B](fa: LazyList[A])(f: A => M[Option[B]])(implicit F: Monad[M]): M[Option[B]] = {
     fa match {
-      case Nil =>
+      case LazyList.Nil() =>
         F.point(None)
-      case h :: t =>
-        F.bind(f(h)) {
+      case LazyList.Cons(h, t) =>
+        F.bind(f(h())) {
           case Some(b) =>
             F.point(Some(b))
           case None =>
