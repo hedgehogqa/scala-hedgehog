@@ -83,34 +83,38 @@ object PropertyT {
 
 trait PropertyTReporting[M[_]] {
 
-  def takeSmallest(n: ShrinkCount, slimit: ShrinkLimit, t: Tree[Identity, Option[(List[Log], Option[Result])]]): Identity[Status] =
+  @annotation.tailrec
+  final def takeSmallest(n: ShrinkCount, slimit: ShrinkLimit, t: Tree[Identity, Option[(List[Log], Option[Result])]]): Status =
     t.value match {
       case None =>
-        F.point(Status.gaveUp)
+        Status.gaveUp
 
       case Some((w, r)) =>
         if (r.forall(!_.success)) {
           if (n.value >= slimit.value) {
-            F.point(Status.failed(n, w ++ r.map(_.logs).getOrElse(Nil)))
+            Status.failed(n, w ++ r.map(_.logs).getOrElse(Nil))
           } else {
-            F.map(F.bind(t.children)(x =>
-              findMapM(x)(m =>
-                m.value match {
-                  case Some((_, None)) =>
-                    F.map(takeSmallest(n.inc, slimit, m))(some)
-                  case Some((_, Some(r2))) =>
-                    if (!r2.success)
-                      F.map(takeSmallest(n.inc, slimit, m))(some)
-                    else
-                      F.point(Option.empty[Status])
-                  case None =>
-                    F.point(Option.empty[Status])
-                }
-              )
-            ))(_.getOrElse(Status.failed(n, w ++ r.map(_.logs).getOrElse(Nil))))
+            findMap(t.children.value)(m =>
+              m.value match {
+                case Some((_, None)) =>
+                  some(m)
+                case Some((_, Some(r2))) =>
+                  if (!r2.success)
+                    some(m)
+                  else
+                    Option.empty
+                case None =>
+                  Option.empty
+              }
+            ) match {
+              case Some(m) =>
+                takeSmallest(n.inc, slimit, m)
+              case None =>
+                Status.failed(n, w ++ r.map(_.logs).getOrElse(Nil))
+            }
           }
         } else {
-          F.point(Status.ok)
+          Status.ok
         }
     }
 
@@ -134,12 +138,12 @@ trait PropertyTReporting[M[_]] {
             loop(successes, discards.inc, size.incBy(sizeInc), x.value._1)
 
           case Some((_, None)) =>
-            F.map(takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2)))(y => Report(successes, discards, y))
+            F.map(Identity(takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2))))(y => Report(successes, discards, y))
 
           case Some((_, Some(r))) =>
-            if (!r.success)
-              F.map(takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2)))(y => Report(successes, discards, y))
-            else
+            if (!r.success){
+              F.map(Identity(takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2))))(y => Report(successes, discards, y))
+            } else
               loop(successes.inc, discards, size.incBy(sizeInc), x.value._1)
         }
       }
