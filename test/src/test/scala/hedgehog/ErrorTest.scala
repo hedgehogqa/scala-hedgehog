@@ -15,7 +15,7 @@ object ErrorTest extends Properties {
   def noGen: Result = {
     val e = new RuntimeException()
     val prop = Test("", throw e)
-    val r = Property.checkRandom(PropertyConfig.default, prop.result).value
+    val r = Property.checkRandom(PropertyConfig.default, prop.result)
     getErrorLog(r.status) ==== List(Error(e))
   }
 
@@ -24,7 +24,7 @@ object ErrorTest extends Properties {
     val p = Gen.int(Range.linear(0, 100)).forAll.map(i =>
       if (i > 5) throw e else Result.success
     )
-    val r = Property.checkRandom(PropertyConfig.default, p).value
+    val r = Property.checkRandom(PropertyConfig.default, p)
     getErrorLog(r.status) ==== List(Info("6"), Error(e))
   }
 
@@ -33,7 +33,7 @@ object ErrorTest extends Properties {
     val p = Gen.int(Range.linear(0, 100)).forAll.flatMap(i =>
       if (i > 5) throw e else Property.point(Result.success)
     )
-    val r = Property.checkRandom(PropertyConfig.default, p).value
+    val r = Property.checkRandom(PropertyConfig.default, p)
     getErrorLog(r.status) ==== List(Info("6"), Error(e))
   }
 

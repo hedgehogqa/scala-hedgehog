@@ -16,18 +16,25 @@ package object predef {
   def some[A](a: A): Option[A] =
     Some(a)
 
-  def findMapM[M[_], A, B](fa: LazyList[A])(f: A => M[Option[B]])(implicit F: Monad[M]): M[Option[B]] = {
-    fa match {
-      case LazyList.Nil() =>
-        F.point(None)
-      case LazyList.Cons(h, t) =>
-        F.bind(f(h())) {
-          case Some(b) =>
-            F.point(Some(b))
-          case None =>
-            findMapM(t())(f)
-        }
+  def findMap[M[_], A, B](fa: LazyList[A])(f: A => Option[B]): Option[B] = {
+    // FIXME This should be tailrec but we seem to hit this bug
+    // https://github.com/scala/bug/issues/9647
+    var l = fa
+    var o: Option[B] = null
+    while (o == null) {
+      l match {
+        case LazyList.Nil() =>
+          o = None
+        case LazyList.Cons(h, t) =>
+          f(h()) match {
+            case Some(b) =>
+              o = Some(b)
+            case None =>
+              l = t()
+          }
+      }
     }
+    o
   }
 
   /** Performs the action `n` times, returning the list of results. */
