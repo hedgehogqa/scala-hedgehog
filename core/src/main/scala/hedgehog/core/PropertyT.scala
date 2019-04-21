@@ -119,18 +119,18 @@ trait PropertyTReporting[M[_]] {
     }
 
   def report(config: PropertyConfig, size0: Option[Size], seed0: Seed, p: PropertyT[Identity, Result]): Identity[Report] = {
-    val F = Identity.IdentityMonad
     // Increase the size proportionally to the number of tests to ensure better coverage of the desired range
     val sizeInc = Size(Math.max(1, Size.max / config.testLimit.value))
     // Start the size at whatever remainder we have to ensure we run with "max" at least once
     val sizeInit = Size(Size.max % Math.min(config.testLimit.value, Size.max)).incBy(sizeInc)
-    def loop(successes: SuccessCount, discards: DiscardCount, size: Size, seed: Seed): Identity[Report] =
+    @annotation.tailrec
+    def loop(successes: SuccessCount, discards: DiscardCount, size: Size, seed: Seed): Report =
       if (size.value > Size.max)
         loop(successes, discards, sizeInit, seed)
       else if (successes.value >= config.testLimit.value)
-        F.point(Report(successes, discards, OK))
+        Report(successes, discards, OK)
       else if (discards.value >= config.discardLimit.value)
-        F.point(Report(successes, discards, GaveUp))
+        Report(successes, discards, GaveUp)
       else {
         val x = p.run.run(size, seed)
         x.value._2 match {
@@ -138,16 +138,16 @@ trait PropertyTReporting[M[_]] {
             loop(successes, discards.inc, size.incBy(sizeInc), x.value._1)
 
           case Some((_, None)) =>
-            F.map(Identity(takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2))))(y => Report(successes, discards, y))
+            Report(successes, discards, takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2)))
 
           case Some((_, Some(r))) =>
             if (!r.success){
-              F.map(Identity(takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2))))(y => Report(successes, discards, y))
+              Report(successes, discards, takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2)))
             } else
               loop(successes.inc, discards, size.incBy(sizeInc), x.value._1)
         }
       }
-    loop(SuccessCount(0), DiscardCount(0), size0.getOrElse(sizeInit), seed0)
+    Identity(loop(SuccessCount(0), DiscardCount(0), size0.getOrElse(sizeInit), seed0))
   }
 
   def recheck(config: PropertyConfig, size: Size, seed: Seed)(p: PropertyT[Identity, Result]): Identity[Report] =
