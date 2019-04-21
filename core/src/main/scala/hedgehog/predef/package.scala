@@ -25,7 +25,7 @@ package object predef {
           case Some(b) =>
             F.point(Some(b))
           case None =>
-            findMapM(t)(f)
+            findMapM(t())(f)
         }
     }
   }
