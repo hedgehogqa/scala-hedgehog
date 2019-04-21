@@ -36,7 +36,7 @@ sealed trait Result {
   def or(other: Result): Result =
     this match {
       case Success =>
-        other
+        Success
       case Failure(logs) =>
         other match {
           case Success =>
