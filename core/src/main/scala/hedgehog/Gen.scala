@@ -3,7 +3,7 @@ package hedgehog
 import hedgehog.core._
 import hedgehog.predef._
 
-trait GenTOps[M[_]] {
+trait GenTOps {
 
   /**********************************************************************/
   // Combinators
@@ -13,7 +13,7 @@ trait GenTOps[M[_]] {
    *
    * This is implemented using `filter` and has the same caveats.
    */
-  def fromSome[A](gen: GenT[M, Option[A]])(implicit F: Monad[M]): GenT[M, A] =
+  def fromSome[A](gen: GenT[Option[A]]): GenT[A] =
     gen.filter(_.isDefined).map(
       _.getOrElse(sys.error("fromSome: internal error, unexpected None"))
     )
@@ -21,7 +21,7 @@ trait GenTOps[M[_]] {
   /**
    * Construct a generator that depends on the size parameter.
    */
-  def generate[A](f: (Size, Seed) => (Seed, A))(implicit F: Monad[M]): GenT[M, A] =
+  def generate[A](f: (Size, Seed) => (Seed, A)): GenT[A] =
     GenT((size, seed) => {
       val (s2, a) = f(size, seed)
       Tree.TreeApplicative.point((s2, some(a)))
@@ -33,7 +33,7 @@ trait GenTOps[M[_]] {
   /**
    * Construct a generator that depends on the size parameter.
    */
-  def sized[A](f: Size => GenT[M, A]): GenT[M, A] =
+  def sized[A](f: Size => GenT[A]): GenT[A] =
     GenT((size, seed) => f(size).run(size, seed))
 
   /**********************************************************************/
@@ -75,7 +75,7 @@ trait GenTOps[M[_]] {
    * 2060
    * }}}
    */
-  def integral[A : Integral](range: Range[A], fromLong : Long => A)(implicit F: Monad[M]): GenT[M, A] =
+  def integral[A : Integral](range: Range[A], fromLong : Long => A): GenT[A] =
     integral_(range, fromLong).shrink(Shrink.towards(range.origin, _))
 
   /**
@@ -84,26 +84,26 @@ trait GenTOps[M[_]] {
    * ''This generator does not shrink.''
    *
    */
-  def integral_[A](range: Range[A], fromLong : Long => A)(implicit F: Monad[M], I: Integral[A]): GenT[M, A] =
-    genT.generate((size, seed) => {
+  def integral_[A](range: Range[A], fromLong : Long => A)(implicit I: Integral[A]): GenT[A] =
+    Gen.generate((size, seed) => {
       val (x, y) = range.bounds(size)
       val (s2, a) = seed.chooseLong(I.toLong(x), I.toLong(y))
       (s2, fromLong(a))
     })
 
-  def int(range: Range[Int])(implicit F: Monad[M]): GenT[M, Int] =
+  def int(range: Range[Int]): GenT[Int] =
     integral(range, _.toInt)
 
-  def short(range: Range[Short])(implicit F: Monad[M]): GenT[M, Short] =
+  def short(range: Range[Short]): GenT[Short] =
     integral(range, _.toShort)
 
-  def long(range: Range[Long])(implicit F: Monad[M]): GenT[M, Long] =
+  def long(range: Range[Long]): GenT[Long] =
     integral(range, identity)
 
-  def byte(range: Range[Byte])(implicit F: Monad[M]): GenT[M, Byte] =
+  def byte(range: Range[Byte]): GenT[Byte] =
     integral(range, _.toByte)
 
-  def char(lo: Char, hi: Char)(implicit F: Monad[M]): GenT[M, Char] =
+  def char(lo: Char, hi: Char): GenT[Char] =
     long(Range.constant(lo.toLong, hi.toLong)).map(_.toChar)
 
   /**********************************************************************/
@@ -114,17 +114,17 @@ trait GenTOps[M[_]] {
    *
    * _This generator shrinks to 'False'._
    */
-  def boolean(implicit F: Monad[M]): GenT[M, Boolean] =
+  def boolean: GenT[Boolean] =
     element1(false, true)
 
   /**********************************************************************/
   // Combinators - Fractional
 
-  def double(range: Range[Double])(implicit F: Monad[M]): GenT[M, Double] =
+  def double(range: Range[Double]): GenT[Double] =
     double_(range).shrink(Shrink.towardsFloat(range.origin, _))
 
-  def double_(range: Range[Double])(implicit F: Monad[M]): GenT[M, Double] =
-    genT.generate((size, seed) => {
+  def double_(range: Range[Double]): GenT[Double] =
+    Gen.generate((size, seed) => {
       val (x, y) = range.bounds(size)
       seed.chooseDouble(x, y)
     })
@@ -135,7 +135,7 @@ trait GenTOps[M[_]] {
   /**
    * Trivial generator that always produces the same element.
    */
-  def constant[A](x: => A)(implicit F: Monad[M]): GenT[M, A] =
+  def constant[A](x: => A): GenT[A] =
     GenT.GenApplicative.point(x)
 
   /**
@@ -143,7 +143,7 @@ trait GenTOps[M[_]] {
    *
    * This generator shrinks towards the first element in the list.
    */
-  def element1[A](x: A, xs: A*)(implicit F: Monad[M]): GenT[M, A] =
+  def element1[A](x: A, xs: A*): GenT[A] =
     element(x, xs.toList)
 
   /**
@@ -151,7 +151,7 @@ trait GenTOps[M[_]] {
    *
    * This generator shrinks towards the first element in the list.
    */
-  def element[A](x: A, xs: List[A])(implicit F: Monad[M]): GenT[M, A] =
+  def element[A](x: A, xs: List[A]): GenT[A] =
     int(Range.constant(0, xs.length)).map(i => (x :: xs)(i))
 
   /**
@@ -159,7 +159,7 @@ trait GenTOps[M[_]] {
    *
    * This generator shrinks towards the first generator in the list.
    */
-  def choice1[A](x: GenT[M, A], xs: GenT[M, A]*)(implicit F: Monad[M]): GenT[M, A] =
+  def choice1[A](x: GenT[A], xs: GenT[A]*): GenT[A] =
     choice(x, xs.toList)
 
   /**
@@ -167,7 +167,7 @@ trait GenTOps[M[_]] {
    *
    * This generator shrinks towards the first generator in the list.
    */
-  def choice[A](x: GenT[M, A], xs: List[GenT[M, A]])(implicit F: Monad[M]): GenT[M, A] =
+  def choice[A](x: GenT[A], xs: List[GenT[A]]): GenT[A] =
     int(Range.constant(0, xs.length)).flatMap(i => (x :: xs)(i))
 
   /**
@@ -175,7 +175,7 @@ trait GenTOps[M[_]] {
    *
    * This generator shrinks towards the first generator in the list.
    */
-   def frequency1[A](a: (Int, GenT[M, A]), l: (Int, GenT[M, A])*)(implicit F: Monad[M]): GenT[M, A] =
+   def frequency1[A](a: (Int, GenT[A]), l: (Int, GenT[A])*): GenT[A] =
      frequency(a, l.toList)
 
    /**
@@ -183,9 +183,9 @@ trait GenTOps[M[_]] {
     *
     * This generator shrinks towards the first generator in the list.
     */
-   def frequency[A](a: (Int, GenT[M, A]), l: List[(Int, GenT[M, A])])(implicit F: Monad[M]): GenT[M, A] = {
+   def frequency[A](a: (Int, GenT[A]), l: List[(Int, GenT[A])]): GenT[A] = {
      @annotation.tailrec
-     def pick(n: Int, x: (Int, GenT[M, A]), xs: List[(Int, GenT[M, A])]): GenT[M, A] =
+     def pick(n: Int, x: (Int, GenT[A]), xs: List[(Int, GenT[A])]): GenT[A] =
        if (n <= x._1)
          x._2
        else
@@ -208,6 +208,6 @@ trait GenTOps[M[_]] {
   /**
    * Discards the whole generator.
    */
-  def discard[A](implicit F: Monad[M]): GenT[M, A] =
-    GenT((_, seed) => Tree.TreeApplicative(F).point((seed, None)))
+  def discard[A]: GenT[A] =
+    GenT((_, seed) => Tree.TreeApplicative.point((seed, None)))
 }

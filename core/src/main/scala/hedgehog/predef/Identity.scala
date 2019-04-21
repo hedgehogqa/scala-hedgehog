@@ -9,6 +9,12 @@ package hedgehog.predef
 abstract class Identity[A] {
 
   def value: A
+
+  def map[B](f: A => B): Identity[B] =
+    Identity(f(value))
+
+  def flatMap[B](f: A => Identity[B]): Identity[B] =
+    Identity(f(value).value)
 }
 
 object Identity {
@@ -17,19 +23,5 @@ object Identity {
     new Identity[A] {
       def value: A =
         a
-    }
-
-  implicit def IdentityMonad: Monad[Identity] =
-    new Monad[Identity] {
-
-      // NOTE: It's critical to override the free Applicative version, otherwise we get stack overflows
-      override def map[A, B](fa: Identity[A])(f: A => B) =
-        Identity(f(fa.value))
-
-      override def point[A](a: => A): Identity[A] =
-        Identity(a)
-
-      override def bind[A, B](fa: Identity[A])(f: A => Identity[B]): Identity[B] =
-        Identity(f(fa.value).value)
     }
 }

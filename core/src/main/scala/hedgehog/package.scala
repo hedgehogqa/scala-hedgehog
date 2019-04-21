@@ -4,27 +4,19 @@ import hedgehog.predef.ApplicativeSyntax
 
 package object hedgehog extends ApplicativeSyntax {
 
-  type HM[A] = predef.Identity[A]
-
   /**
    * This is _purely_ to make consuming this library a nicer experience,
    * mainly due to Scala's type inference problems and higher kinds.
    */
   object Gen
-    extends GenTOps[HM]
-    with ByteOps[HM]
-    with CharacterOps[HM]
-    with StringOps[HM]
-  type Gen[A] = GenT[HM, A]
+    extends GenTOps
+    with ByteOps
+    with CharacterOps
+    with StringOps
+  type Gen[A] = GenT[A]
 
-  def genT[M[_]] =
-    new GenTOps[M]
-    with ByteOps[M]
-    with CharacterOps[M]
-    with StringOps[M] {}
-
-  type Property = PropertyT[HM, Result]
-  object Property extends PropertyTOps[HM]
+  type Property = PropertyT[Result]
+  object Property extends PropertyTOps
 
   type PropertyR[A] = core.PropertyR[A]
   val PropertyR = core.PropertyR
@@ -32,8 +24,8 @@ package object hedgehog extends ApplicativeSyntax {
   type Result = hedgehog.core.Result
   val Result = hedgehog.core.Result
 
-  def propertyT[M[_]]: PropertyTOps[M] =
-    new PropertyTOps[M] {}
+  def propertyT[M[_]]: PropertyTOps =
+    new PropertyTOps {}
 
   implicit class Syntax[A](a1: A) {
 

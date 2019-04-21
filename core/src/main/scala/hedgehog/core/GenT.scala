@@ -6,17 +6,17 @@ import hedgehog.predef._
 /**
  * Generator for random values of `A`.
  */
-case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
+case class GenT[A](run: (Size, Seed) => Tree[(Seed, Option[A])]) {
 
-  def map[B](f: A => B)(implicit F: Functor[M]): GenT[M, B] =
+  def map[B](f: A => B): GenT[B] =
     GenT((size, seed) => run(size, seed).map(t => t.copy(_2 = t._2.map(f))))
 
-  def flatMap[B](f: A => GenT[M, B])(implicit F: Monad[M]): GenT[M, B] =
+  def flatMap[B](f: A => GenT[B]): GenT[B] =
     GenT((size, seed) => run(size, seed).flatMap(x =>
-      x._2.fold(Tree.TreeApplicative(F).point(x.copy(_2 = Option.empty[B])))(a => f(a).run(size, x._1))
+      x._2.fold(Tree.TreeApplicative.point(x.copy(_2 = Option.empty[B])))(a => f(a).run(size, x._1))
     ))
 
-  def mapTree[N[_], B](f: Tree[M, (Seed, Option[A])] => Tree[N, (Seed, Option[B])]): GenT[N, B] =
+  def mapTree[B](f: Tree[(Seed, Option[A])] => Tree[(Seed, Option[B])]): GenT[B] =
     GenT((size, seed) => f(run(size, seed)))
 
   /**********************************************************************/
@@ -25,7 +25,7 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
   /**
    * Apply a shrinking function to a generator.
    */
-  def shrink(f: A => List[A])(implicit F: Monad[M]): GenT[M, A] =
+  def shrink(f: A => List[A]): GenT[A] =
     mapTree(_.expand(x =>
       x._2.fold(List.empty[(Seed, Option[A])])(a => f(a).map(y => (x._1, Some(y))))
     ))
@@ -33,28 +33,28 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
   /**
    * Throw away a generator's shrink tree.
    */
-  def prune(implicit F: Monad[M]): GenT[M, A] =
+  def prune: GenT[A] =
     mapTree(_.prune)
 
   /**********************************************************************/
   // Combinators - Property
 
-  def log(name: Name)(implicit F: Monad[M]): PropertyT[M, A] =
+  def log(name: Name): PropertyT[A] =
     for {
       x <- propertyT.fromGen(this)
       // TODO Add better render, although I don't really like Show
-      _ <- propertyT[M].writeLog(ForAll(name, x.toString))
+      _ <- propertyT.writeLog(ForAll(name, x.toString))
     } yield x
 
-  def forAll(implicit F: Monad[M]): PropertyT[M, A] =
+  def forAll: PropertyT[A] =
     for {
       x <- propertyT.fromGen(this)
       // TODO Add better render, although I don't really like Show
-      _ <- propertyT[M].writeLog(Info(x.toString))
+      _ <- propertyT.writeLog(Info(x.toString))
     } yield x
 
   // Different from Haskell version, which uses the MonadGen typeclass
-  def lift(implicit F: Monad[M]): PropertyT[M, A] =
+  def lift: PropertyT[A] =
     propertyT.fromGen(this)
 
   /**********************************************************************/
@@ -64,7 +64,7 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
    * Override the size parameter. Returns a generator which uses the given size
    * instead of the runtime-size parameter.
    */
-  def resize(size: Size): GenT[M, A] =
+  def resize(size: Size): GenT[A] =
     if (size.value < 0)
       sys.error("Hedgehog.Random.resize: negative size")
     else
@@ -73,13 +73,13 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
   /**
    * Adjust the size parameter by transforming it with the given function.
    */
-  def scale(f: Size => Size): GenT[M, A] =
-    genT.sized(n => resize(f(n)))
+  def scale(f: Size => Size): GenT[A] =
+    Gen.sized(n => resize(f(n)))
 
   /**
    * Make a generator smaller by scaling its size parameter.
    */
-  def small: GenT[M, A] =
+  def small: GenT[A] =
     scale(_.golden)
 
   /**********************************************************************/
@@ -88,8 +88,8 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
   /**
    * Discards the generator if the generated value does not satisfy the predicate.
    */
-  def ensure(p: A => Boolean)(implicit F: Monad[M]): GenT[M, A] =
-    this.flatMap(x => if (p(x)) genT.constant(x) else genT.discard)
+  def ensure(p: A => Boolean): GenT[A] =
+    this.flatMap(x => if (p(x)) Gen.constant(x) else Gen.discard)
 
   /**
    * Generates a value that satisfies a predicate.
@@ -97,14 +97,14 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
    * We keep some state to avoid looping forever.
    * If we trigger these limits then the whole generator is discarded.
    */
-  def filter(p: A => Boolean)(implicit F: Monad[M]): GenT[M, A] = {
-    def try_(k: Int): GenT[M, A] =
+  def filter(p: A => Boolean): GenT[A] = {
+    def try_(k: Int): GenT[A] =
       if (k > 100)
-        genT.discard
+        Gen.discard
       else
         this.scale(s => Size(2 * k + s.value)).flatMap(x =>
           if (p(x))
-            genT.constant(x)
+            Gen.constant(x)
           else
             try_(k + 1)
         )
@@ -115,18 +115,18 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
   // Combinators - Collections
 
   /** Generates a 'None' some of the time. */
-  def option(implicit F: Monad[M]): GenT[M, Option[A]] =
-    genT.sized(size =>
-      genT.frequency1(
-        2 -> genT.constant(Option.empty[A])
+  def option: GenT[Option[A]] =
+    Gen.sized(size =>
+      Gen.frequency1(
+        2 -> Gen.constant(Option.empty[A])
       , 1 + size.value -> this.map(some)
       )
     )
 
   /** Generates a list using a 'Range' to determine the length. */
-  def list(range: Range[Int])(implicit F: Monad[M]): GenT[M, List[A]] =
-    genT.sized(size =>
-      genT.integral_(range, _.toInt).flatMap(k => replicateM[GenT[M, ?], A](k, this))
+  def list(range: Range[Int]): GenT[List[A]] =
+    Gen.sized(size =>
+      Gen.integral_(range, _.toInt).flatMap(k => replicateM[GenT[?], A](k, this))
         .shrink(Shrink.list)
         .ensure(Range.atLeast(range.lowerBound(size), _))
     )
@@ -134,20 +134,20 @@ case class GenT[M[_], A](run: (Size, Seed) => Tree[M, (Seed, Option[A])]) {
 
 abstract class GenImplicits1 {
 
-  implicit def GenFunctor[M[_]](implicit F: Functor[M]): Functor[GenT[M, ?]] =
-    new Functor[GenT[M, ?]] {
-      override def map[A, B](fa: GenT[M, A])(f: A => B): GenT[M, B] =
+  implicit def GenFunctor[M[_]]: Functor[GenT] =
+    new Functor[GenT] {
+      override def map[A, B](fa: GenT[A])(f: A => B): GenT[B] =
         fa.map(f)
     }
 }
 
 abstract class GenImplicits2 extends GenImplicits1 {
 
-  implicit def GenApplicative[M[_]](implicit F: Monad[M]): Applicative[GenT[M, ?]] =
-    new Applicative[GenT[M, ?]] {
-      def point[A](a: => A): GenT[M, A] =
-        GenT((_, s) => Tree.TreeApplicative(F).point((s, Some(a))))
-      def ap[A, B](fa: => GenT[M, A])(f: => GenT[M, A => B]): GenT[M, B] =
+  implicit def GenApplicative[M[_]]: Applicative[GenT] =
+    new Applicative[GenT] {
+      def point[A](a: => A): GenT[A] =
+        GenT((_, s) => Tree.TreeApplicative.point((s, Some(a))))
+      def ap[A, B](fa: => GenT[A])(f: => GenT[A => B]): GenT[B] =
         for {
           ab <- f
           a <- fa

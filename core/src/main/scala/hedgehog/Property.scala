@@ -1,41 +1,40 @@
 package hedgehog
 
 import hedgehog.core._
-import hedgehog.predef._
 
-trait PropertyTOps[M[_]] extends PropertyTReporting[M] {
+trait PropertyTOps extends PropertyTReporting {
 
-  def point[A](value: A)(implicit F: Monad[M]): PropertyT[M, A] =
-    fromGen(genT.constant(value))
+  def point[A](value: A): PropertyT[A] =
+    fromGen(Gen.constant(value))
 
-  def fromGen[A](gen: GenT[M, A])(implicit F: Monad[M]): PropertyT[M, A] =
+  def fromGen[A](gen: GenT[A]): PropertyT[A] =
     PropertyT(gen.map(x => (Nil, Some(x))))
 
-  def hoist[A](a: (List[Log], A))(implicit F: Monad[M]): PropertyT[M, A] =
-    PropertyT(GenT.GenApplicative(F).point(a.copy(_2 = Some(a._2))))
+  def hoist[A](a: (List[Log], A)): PropertyT[A] =
+    PropertyT(GenT.GenApplicative.point(a.copy(_2 = Some(a._2))))
 
-  def writeLog(log: Log)(implicit F: Monad[M]): PropertyT[M, Unit] =
+  def writeLog(log: Log): PropertyT[Unit] =
     hoist((List(log), ()))
 
-  def info(log: String)(implicit F: Monad[M]): PropertyT[M, Unit] =
+  def info(log: String): PropertyT[Unit] =
     writeLog(Info(log))
 
-  def discard(implicit F: Monad[M]): PropertyT[M, Unit] =
-    fromGen(genT.discard)
+  def discard: PropertyT[Unit] =
+    fromGen(Gen.discard)
 
-  def failure(implicit F: Monad[M]): PropertyT[M, Unit] =
+  def failure: PropertyT[Unit] =
     failureA[Unit]
 
-  def failureA[A](implicit F: Monad[M]): PropertyT[M, A] =
-    PropertyT(GenT.GenApplicative(F).point((Nil, None)))
+  def failureA[A]: PropertyT[A] =
+    PropertyT(GenT.GenApplicative.point((Nil, None)))
 
-  def error[A](e: Exception)(implicit F: Monad[M]): PropertyT[M, A] =
+  def error[A](e: Exception): PropertyT[A] =
     writeLog(Error(e)).flatMap(_ => failureA[A])
 
-  def check(config: PropertyConfig, p: PropertyT[Identity, Result], seed: Seed): Report =
+  def check(config: PropertyConfig, p: PropertyT[Result], seed: Seed): Report =
     propertyT.report(config, None, seed, p)
 
-  def checkRandom(config: PropertyConfig, p: PropertyT[Identity, Result]): Report =
+  def checkRandom(config: PropertyConfig, p: PropertyT[Result]): Report =
     // FIX: predef MonadIO
     check(config, p, Seed.fromTime())
 }
