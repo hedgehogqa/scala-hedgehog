@@ -30,7 +30,7 @@ object ShrinkTest extends Properties {
         failed = failed + 1
       }
       Result.assert(b)
-    }, Seed.fromTime()).value
+    }, Seed.fromTime())
 
     r.status match {
       case Failed(s, _) =>

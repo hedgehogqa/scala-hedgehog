@@ -12,7 +12,7 @@ abstract class Properties {
     val config = PropertyConfig.default
     val seed = Seed.fromTime()
     tests.foreach(t => {
-      val report = Property.check(t.withConfig(config), t.result, seed).value
+      val report = Property.check(t.withConfig(config), t.result, seed)
       println(Test.renderReport(this.getClass.getName, t, report, ansiCodesSupported = true))
     })
   }

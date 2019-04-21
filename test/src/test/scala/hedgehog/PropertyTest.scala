@@ -19,7 +19,7 @@ object PropertyTest extends Properties {
       x <- Gen.char('a', 'z').log("x")
       y <- int(Range.linear(0, 50)).log("y")
       _ <- if (y % 2 == 0) Property.discard else Property.point(())
-    } yield Result.assert(y < 87 && x <= 'r'), seed).value
+    } yield Result.assert(y < 87 && x <= 'r'), seed)
     r ==== Report(SuccessCount(2), DiscardCount(4), Failed(ShrinkCount(2), List(
         ForAll("x", "s")
       , ForAll("y", "1"))
@@ -64,7 +64,7 @@ object PropertyTest extends Properties {
       x <- order(cheap).log("cheap")
       y <- order(expensive).log("expensive")
     } yield Result.assert(merge(x, y).total.value == x.total.value + y.total.value)
-      , seed).value
+      , seed)
     r ==== Report(SuccessCount(1), DiscardCount(0), Failed(ShrinkCount(4), List(
         ForAll("cheap", "Order(List())")
       , ForAll("expensive", "Order(List(Item(oculus,USD(1000))))"
@@ -72,5 +72,5 @@ object PropertyTest extends Properties {
   }
 
   def fail: Result =
-    Property.checkRandom(PropertyConfig.default, Property.point(Result.failure)).value.status ==== Failed(ShrinkCount(0), Nil)
+    Property.checkRandom(PropertyConfig.default, Property.point(Result.failure)).status ==== Failed(ShrinkCount(0), Nil)
 }

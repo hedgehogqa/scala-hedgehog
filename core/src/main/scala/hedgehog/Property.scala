@@ -32,10 +32,10 @@ trait PropertyTOps[M[_]] extends PropertyTReporting[M] {
   def error[A](e: Exception)(implicit F: Monad[M]): PropertyT[M, A] =
     writeLog(Error(e)).flatMap(_ => failureA[A])
 
-  def check(config: PropertyConfig, p: PropertyT[Identity, Result], seed: Seed): Identity[Report] =
+  def check(config: PropertyConfig, p: PropertyT[Identity, Result], seed: Seed): Report =
     propertyT.report(config, None, seed, p)
 
-  def checkRandom(config: PropertyConfig, p: PropertyT[Identity, Result]): Identity[Report] =
+  def checkRandom(config: PropertyConfig, p: PropertyT[Identity, Result]): Report =
     // FIX: predef MonadIO
     check(config, p, Seed.fromTime())
 }
