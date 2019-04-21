@@ -35,11 +35,11 @@ object PropertyConfig {
     PropertyConfig(SuccessCount(100), DiscardCount(100), ShrinkLimit(1000))
 }
 
-case class PropertyT[M[_], A](
-    run: GenT[M, (List[Log], Option[A])]
+case class PropertyT[A](
+    run: GenT[(List[Log], Option[A])]
   ) {
 
-  def map[B](f: A => B)(implicit F: Monad[M]): PropertyT[M, B] =
+  def map[B](f: A => B): PropertyT[B] =
     copy(run = run.map(x =>
       try {
         x.copy(_2 = x._2.map(f))
@@ -51,10 +51,10 @@ case class PropertyT[M[_], A](
       }
     ))
 
-  def flatMap[B](f: A => PropertyT[M, B])(implicit F: Monad[M]): PropertyT[M, B] =
+  def flatMap[B](f: A => PropertyT[B]): PropertyT[B] =
     copy(run = run.flatMap(x =>
       x._2.fold(
-       GenT.GenApplicative(F).point((x._1, Option.empty[B]))
+       GenT.GenApplicative.point((x._1, Option.empty[B]))
       )(a =>
         try {
           f(a).run.map(y => (x._1 ++ y._1, y._2))
@@ -62,7 +62,7 @@ case class PropertyT[M[_], A](
           // Forgive me, I'm assuming this breaks the Monad laws
           // If there's a better and non-law breaking of handling this we should remove this
           case e: Exception =>
-            genT.constant((x._1 ++ List(Error(e)), None))
+            Gen.constant((x._1 ++ List(Error(e)), None))
         }
       )
     ))
@@ -70,21 +70,21 @@ case class PropertyT[M[_], A](
 
 object PropertyT {
 
-  implicit def PropertyMonad[M[_]](implicit F: Monad[M]): Monad[PropertyT[M, ?]] =
-    new Monad[PropertyT[M, ?]] {
-      override def map[A, B](fa: PropertyT[M, A])(f: A => B): PropertyT[M, B] =
+  implicit def PropertyMonad[M[_]]: Monad[PropertyT[?]] =
+    new Monad[PropertyT[?]] {
+      override def map[A, B](fa: PropertyT[A])(f: A => B): PropertyT[B] =
         fa.map(f)
-      override def point[A](a: => A): PropertyT[M, A] =
+      override def point[A](a: => A): PropertyT[A] =
         propertyT.hoist((Nil, a))
-      override def bind[A, B](fa: PropertyT[M, A])(f: A => PropertyT[M, B]): PropertyT[M, B] =
+      override def bind[A, B](fa: PropertyT[A])(f: A => PropertyT[B]): PropertyT[B] =
         fa.flatMap(f)
     }
 }
 
-trait PropertyTReporting[M[_]] {
+trait PropertyTReporting {
 
   @annotation.tailrec
-  final def takeSmallest(n: ShrinkCount, slimit: ShrinkLimit, t: Tree[Identity, Option[(List[Log], Option[Result])]]): Status =
+  final def takeSmallest(n: ShrinkCount, slimit: ShrinkLimit, t: Tree[Option[(List[Log], Option[Result])]]): Status =
     t.value match {
       case None =>
         Status.gaveUp
@@ -118,7 +118,7 @@ trait PropertyTReporting[M[_]] {
         }
     }
 
-  def report(config: PropertyConfig, size0: Option[Size], seed0: Seed, p: PropertyT[Identity, Result]): Report = {
+  def report(config: PropertyConfig, size0: Option[Size], seed0: Seed, p: PropertyT[Result]): Report = {
     // Increase the size proportionally to the number of tests to ensure better coverage of the desired range
     val sizeInc = Size(Math.max(1, Size.max / config.testLimit.value))
     // Start the size at whatever remainder we have to ensure we run with "max" at least once
@@ -150,7 +150,7 @@ trait PropertyTReporting[M[_]] {
     loop(SuccessCount(0), DiscardCount(0), size0.getOrElse(sizeInit), seed0)
   }
 
-  def recheck(config: PropertyConfig, size: Size, seed: Seed)(p: PropertyT[Identity, Result]): Report =
+  def recheck(config: PropertyConfig, size: Size, seed: Seed)(p: PropertyT[Result]): Report =
     report(config.copy(testLimit = SuccessCount(1)), Some(size), seed, p)
 }
 
