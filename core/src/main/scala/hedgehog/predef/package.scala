@@ -16,16 +16,17 @@ package object predef {
   def some[A](a: A): Option[A] =
     Some(a)
 
-  def findMapM[M[_], A, B](fa: LazyList[A])(f: A => M[Option[B]])(implicit F: Monad[M]): M[Option[B]] = {
+  @annotation.tailrec
+  def findMap[M[_], A, B](fa: LazyList[A])(f: A => Option[B]): Option[B] = {
     fa match {
       case LazyList.Nil() =>
-        F.point(None)
+        None
       case LazyList.Cons(h, t) =>
-        F.bind(f(h())) {
+        f(h()) match {
           case Some(b) =>
-            F.point(Some(b))
+            Some(b)
           case None =>
-            findMapM(t())(f)
+            findMap(t())(f)
         }
     }
   }
