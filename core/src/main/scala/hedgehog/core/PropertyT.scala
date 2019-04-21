@@ -83,7 +83,7 @@ object PropertyT {
 
 trait PropertyTReporting[M[_]] {
 
-  def takeSmallest(n: ShrinkCount, slimit: ShrinkLimit, t: Tree[M, Option[(List[Log], Option[Result])]])(implicit F: Monad[M]): M[Status] =
+  def takeSmallest(n: ShrinkCount, slimit: ShrinkLimit, t: Tree[Identity, Option[(List[Log], Option[Result])]]): Identity[Status] =
     t.value match {
       case None =>
         F.point(Status.gaveUp)
@@ -114,12 +114,13 @@ trait PropertyTReporting[M[_]] {
         }
     }
 
-  def report(config: PropertyConfig, size0: Option[Size], seed0: Seed, p: PropertyT[M, Result])(implicit F: Monad[M]): M[Report] = {
+  def report(config: PropertyConfig, size0: Option[Size], seed0: Seed, p: PropertyT[Identity, Result]): Identity[Report] = {
+    val F = Identity.IdentityMonad
     // Increase the size proportionally to the number of tests to ensure better coverage of the desired range
     val sizeInc = Size(Math.max(1, Size.max / config.testLimit.value))
     // Start the size at whatever remainder we have to ensure we run with "max" at least once
     val sizeInit = Size(Size.max % Math.min(config.testLimit.value, Size.max)).incBy(sizeInc)
-    def loop(successes: SuccessCount, discards: DiscardCount, size: Size, seed: Seed): M[Report] =
+    def loop(successes: SuccessCount, discards: DiscardCount, size: Size, seed: Seed): Identity[Report] =
       if (size.value > Size.max)
         loop(successes, discards, sizeInit, seed)
       else if (successes.value >= config.testLimit.value)
@@ -145,7 +146,7 @@ trait PropertyTReporting[M[_]] {
     loop(SuccessCount(0), DiscardCount(0), size0.getOrElse(sizeInit), seed0)
   }
 
-  def recheck(config: PropertyConfig, size: Size, seed: Seed)(p: PropertyT[M, Result])(implicit F: Monad[M]): M[Report] =
+  def recheck(config: PropertyConfig, size: Size, seed: Seed)(p: PropertyT[Identity, Result]): Identity[Report] =
     report(config.copy(testLimit = SuccessCount(1)), Some(size), seed, p)
 }
 
