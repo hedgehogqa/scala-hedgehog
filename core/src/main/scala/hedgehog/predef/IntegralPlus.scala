@@ -14,7 +14,7 @@ object IntegralPlus {
     new IntegralPlus[Byte] {
 
       override def toBigInt(a: Byte): BigInt =
-        BigInt(a)
+        BigInt(a.toInt)
 
       override def fromBigInt(a: BigInt): Byte =
         a.toByte
@@ -24,7 +24,7 @@ object IntegralPlus {
     new IntegralPlus[Short] {
 
       override def toBigInt(a: Short): BigInt =
-        BigInt(a)
+        BigInt(a.toInt)
 
       override def fromBigInt(a: BigInt): Short =
         a.toShort
