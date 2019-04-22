@@ -97,7 +97,7 @@ lazy val compilationSettings = Seq(
     )
   , scalacOptions in (Compile,console) := Seq("-language:_", "-feature")
   , scalacOptions in (Test,console) := Seq("-language:_", "-feature")
-  , libraryDependencies += compilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7" cross CrossVersion.binary)
+  , libraryDependencies += compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.0" cross CrossVersion.binary)
   )
 
 lazy val testingSettings = Seq(
