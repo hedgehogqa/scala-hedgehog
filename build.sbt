@@ -25,7 +25,7 @@ lazy val projectSettings = Seq(
     name := "hedgehog"
   , version in ThisBuild := "1.0.0"
   , organization := "hedgehog"
-  , scalaVersion := "2.12.7"
+  , scalaVersion := "2.12.8"
   , crossScalaVersions := Seq("2.10.7", "2.11.12", scalaVersion.value)
   , fork in run  := true
   )
@@ -97,7 +97,7 @@ lazy val compilationSettings = Seq(
     )
   , scalacOptions in (Compile,console) := Seq("-language:_", "-feature")
   , scalacOptions in (Test,console) := Seq("-language:_", "-feature")
-  , libraryDependencies += compilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7" cross CrossVersion.binary)
+  , libraryDependencies += compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.0" cross CrossVersion.binary)
   )
 
 lazy val testingSettings = Seq(
