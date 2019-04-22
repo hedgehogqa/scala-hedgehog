@@ -25,7 +25,7 @@ lazy val projectSettings = Seq(
     name := "hedgehog"
   , version in ThisBuild := "1.0.0"
   , organization := "hedgehog"
-  , scalaVersion := "2.12.7"
+  , scalaVersion := "2.12.8"
   , crossScalaVersions := Seq("2.10.7", "2.11.12", scalaVersion.value)
   , fork in run  := true
   )
