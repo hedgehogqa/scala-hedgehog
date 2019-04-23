@@ -4,7 +4,7 @@ import hedgehog.core._
 
 trait PropertyTOps extends PropertyTReporting {
 
-  def point[A](value: A): PropertyT[A] =
+  def point[A](value: => A): PropertyT[A] =
     fromGen(Gen.constant(value))
 
   def fromGen[A](gen: GenT[A]): PropertyT[A] =
