@@ -1,6 +1,6 @@
 package hedgehog.core
 
-object Shrink {
+object Shrink extends XCompat {
 
   /**
    * Shrink an integral number by edging towards a destination.
@@ -46,7 +46,7 @@ object Shrink {
       Nil
     } else {
       val diff = x - destination
-      Stream
+      StreamOrLazyList
         .iterate(diff)(_ / 2)
         .map(x - _)
         .takeWhile(y => y != x && !y.isNaN && !y.isInfinite)
@@ -107,7 +107,7 @@ object Shrink {
    * }}}
    */
   def halves[A](a: A)(implicit I: Integral[A]): List[A] =
-    Stream.iterate(a)(I.quot(_, I.fromInt(2))).takeWhile(_ != 0).toList
+    StreamOrLazyList.iterate(a)(I.quot(_, I.fromInt(2))).takeWhile(_ != 0).toList
 
   /**
    * Cons an element on to the front of a list unless it is already there.

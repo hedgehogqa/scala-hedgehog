@@ -26,7 +26,7 @@ lazy val projectSettings = Seq(
   , version in ThisBuild := "1.0.0"
   , organization := "hedgehog"
   , scalaVersion := "2.12.8"
-  , crossScalaVersions := Seq("2.10.7", "2.11.12", scalaVersion.value)
+  , crossScalaVersions := Seq("2.10.7", "2.11.12", scalaVersion.value, "2.13.0-RC1")
   , fork in run  := true
   )
 
@@ -84,19 +84,28 @@ lazy val compilationSettings = Seq(
     , "-feature"
     , "-language:_"
     , "-Ywarn-value-discard"
-    , "-Yno-adapted-args"
     , "-Xlint"
     , "-Xfatal-warnings"
     ) ++ (
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, 10)) =>
+          Seq("-Yno-adapted-args")
+        case Some((2, 13)) =>
           Seq.empty
         case _ =>
-          Seq("-Ywarn-unused-import")
+          Seq("-Yno-adapted-args", "-Ywarn-unused-import")
       }
     )
   , scalacOptions in (Compile,console) := Seq("-language:_", "-feature")
   , scalacOptions in (Test,console) := Seq("-language:_", "-feature")
+  , unmanagedSourceDirectories in Compile ++= {
+      (unmanagedSourceDirectories in Compile).value.map { dir =>
+        CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((2, 13)) => file(dir.getPath ++ "-2.13+")
+          case _             => file(dir.getPath ++ "-2.13-")
+        }
+      }
+    }
   , libraryDependencies += compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.0" cross CrossVersion.binary)
   )
 
