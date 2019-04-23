@@ -23,6 +23,17 @@ sealed trait LazyList[A] {
       case Cons(h, t) =>
         Cons(h, () => t() ++ b)
     }
+
+  def toList(length: Int): List[A] =
+    if (length <= 0)
+      List.empty[A]
+    else
+      this match {
+        case Nil() =>
+          List.empty[A]
+        case Cons(h, t) =>
+          h() :: t().toList(length - 1)
+      }
 }
 
 object LazyList {

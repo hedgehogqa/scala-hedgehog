@@ -11,6 +11,8 @@ object GenTest extends Properties {
     , example("frequency is random", testFrequency)
     , example("fromSome some", testFromSomeSome)
     , example("fromSome none", testFromSomeNone)
+    , example("applicative", testApplicative)
+    , example("monad", testMonad)
     )
 
   def testLong: Property = {
@@ -35,5 +37,27 @@ object GenTest extends Properties {
   def testFromSomeNone: Result = {
     val r = Property.checkRandom(PropertyConfig.default, Gen.fromSome(Gen.constant(Option.empty[Result])).forAll)
     r ==== Report(SuccessCount(0), DiscardCount(100), GaveUp)
+  }
+
+  def testApplicative: Result = {
+    val r = TTree.fromTree(100, 100, forTupled(
+      Gen.int(Range.linear(0, 1))
+    , Gen.int(Range.linear(0, 1))
+    ).run(Size(100), Seed.fromLong(0)).map(_._2.orNull))
+    r ==== TTree((1, 1), List(
+        TTree((0, 1), List(TTree((0, 0), List())))
+      , TTree((1, 0), List(TTree((0, 0), List())))
+      ))
+  }
+
+  def testMonad: Result = {
+    val r = TTree.fromTree(100, 100, (for {
+      x <- Gen.int(Range.linear(0, 1))
+      y <- Gen.int(Range.linear(0, 1))
+    } yield (x, y)).run(Size(100), Seed.fromLong(0)).map(_._2.orNull))
+    r ==== TTree((1, 1), List(
+        TTree((0, 1), List(TTree((0, 0), List())))
+      , TTree((1, 0), List())
+      ))
   }
 }

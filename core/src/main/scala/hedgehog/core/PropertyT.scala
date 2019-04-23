@@ -76,6 +76,10 @@ object PropertyT {
         fa.map(f)
       override def point[A](a: => A): PropertyT[A] =
         propertyT.hoist((Nil, a))
+      override def ap[A, B](fa: => PropertyT[A])(f: => PropertyT[A => B]): PropertyT[B] =
+        PropertyT(Applicative.zip(fa.run, f.run)
+          .map { case ((l1, oa), (l2, oab)) => (l2 ++ l1, oab.flatMap(y => oa.map(y(_)))) }
+        )
       override def bind[A, B](fa: PropertyT[A])(f: A => PropertyT[B]): PropertyT[B] =
         fa.flatMap(f)
     }

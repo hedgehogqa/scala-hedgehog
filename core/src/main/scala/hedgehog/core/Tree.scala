@@ -43,12 +43,13 @@ abstract class TreeImplicits2 extends TreeImplicits1 {
       def point[A](a: => A): Tree[A] =
         Tree(a, Identity(LazyList()))
       def ap[A, B](fa: => Tree[A])(f: => Tree[A => B]): Tree[B] =
-        // FIX This isn't ideal, but if it's good enough for the Haskell implementation it's good enough for us
-        // https://github.com/hedgehogqa/haskell-hedgehog/pull/173
-        Tree.TreeMonad.bind(f)(ab =>
-        Tree.TreeMonad.bind(fa)(a =>
-          point(ab(a))
-        ))
+        Tree(
+          f.value(fa.value)
+        , Identity(
+             f.children.value.map(fl => ap(fa)(fl))
+          ++ fa.children.value.map(fal => ap(fal)(f))
+          )
+        )
     }
 }
 
@@ -60,6 +61,8 @@ object Tree extends TreeImplicits2 {
         fa.map(f)
       override def point[A](a: => A): Tree[A] =
         TreeApplicative.point(a)
+      override def ap[A, B](fa: => Tree[A])(f: => Tree[A => B]): Tree[B] =
+        TreeApplicative.ap(fa)(f)
       override def bind[A, B](fa: Tree[A])(f: A => Tree[B]): Tree[B] = {
         val y = f(fa.value)
         Tree(
