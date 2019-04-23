@@ -126,7 +126,7 @@ case class GenT[A](run: (Size, Seed) => Tree[(Seed, Option[A])]) {
   /** Generates a list using a 'Range' to determine the length. */
   def list(range: Range[Int]): GenT[List[A]] =
     Gen.sized(size =>
-      Gen.integral_(range, _.toInt).flatMap(k => replicateM[GenT[?], A](k, this))
+      Gen.integral_(range, _.toInt).flatMap(k => replicateM[GenT, A](k, this))
         .shrink(Shrink.list)
         .ensure(Range.atLeast(range.lowerBound(size), _))
     )
@@ -134,7 +134,7 @@ case class GenT[A](run: (Size, Seed) => Tree[(Seed, Option[A])]) {
 
 abstract class GenImplicits1 {
 
-  implicit def GenFunctor[M[_]]: Functor[GenT] =
+  implicit def GenFunctor: Functor[GenT] =
     new Functor[GenT] {
       override def map[A, B](fa: GenT[A])(f: A => B): GenT[B] =
         fa.map(f)
@@ -143,7 +143,7 @@ abstract class GenImplicits1 {
 
 abstract class GenImplicits2 extends GenImplicits1 {
 
-  implicit def GenApplicative[M[_]]: Applicative[GenT] =
+  implicit def GenApplicative: Applicative[GenT] =
     new Applicative[GenT] {
       def point[A](a: => A): GenT[A] =
         GenT((_, s) => Tree.TreeApplicative.point((s, Some(a))))

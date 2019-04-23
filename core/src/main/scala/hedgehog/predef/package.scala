@@ -16,7 +16,7 @@ package object predef {
   def some[A](a: A): Option[A] =
     Some(a)
 
-  def findMap[M[_], A, B](fa: LazyList[A])(f: A => Option[B]): Option[B] = {
+  def findMap[A, B](fa: LazyList[A])(f: A => Option[B]): Option[B] = {
     // FIXME This should be tailrec but we seem to hit this bug
     // https://github.com/scala/bug/issues/9647
     var l = fa
