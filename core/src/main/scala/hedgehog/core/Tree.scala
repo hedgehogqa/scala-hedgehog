@@ -68,10 +68,10 @@ object Tree extends TreeImplicits2 {
       }
     }
 
-  def unfoldTree[M[_], A, B](f: B => A, g: B => List[B], x: B): Tree[A] =
+  def unfoldTree[A, B](f: B => A, g: B => List[B], x: B): Tree[A] =
     Tree(f(x), Identity(unfoldForest(f, g, x)))
 
-  def unfoldForest[M[_], A, B](f: B => A, g: B => List[B], x: B): LazyList[Tree[A]] =
+  def unfoldForest[A, B](f: B => A, g: B => List[B], x: B): LazyList[Tree[A]] =
     LazyList.fromList(g(x).map(y => unfoldTree(f, g, y)))
 }
 

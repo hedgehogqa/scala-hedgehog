@@ -24,7 +24,7 @@ package object hedgehog extends ApplicativeSyntax {
   type Result = hedgehog.core.Result
   val Result = hedgehog.core.Result
 
-  def propertyT[M[_]]: PropertyTOps =
+  def propertyT: PropertyTOps =
     new PropertyTOps {}
 
   implicit class Syntax[A](a1: A) {
