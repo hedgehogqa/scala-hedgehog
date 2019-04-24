@@ -147,11 +147,14 @@ abstract class GenImplicits2 extends GenImplicits1 {
     new Applicative[GenT] {
       def point[A](a: => A): GenT[A] =
         GenT((_, s) => Tree.TreeApplicative.point((s, Some(a))))
-      def ap[A, B](fa: => GenT[A])(f: => GenT[A => B]): GenT[B] =
-        for {
-          ab <- f
-          a <- fa
-        } yield ab(a)
+      override def ap[A, B](fa: => GenT[A])(f: => GenT[A => B]): GenT[B] =
+        GenT((size, seed) => {
+          val f2 = f.run(size, seed)
+          val fa2 = fa.run(size, f2.value._1)
+          Applicative.zip(fa2, f2).map { case ((seed2, oa), (_, o)) =>
+            (seed2, o.flatMap(y => oa.map(y(_))))
+          }
+        })
     }
 }
 
