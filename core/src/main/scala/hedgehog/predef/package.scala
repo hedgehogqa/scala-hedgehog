@@ -42,12 +42,14 @@ package object predef {
     sequence(List.fill(n)(fa))
 
   /** Strict sequencing in an applicative functor `M` that ignores the value in `fa`. */
-  def sequence[M[_], A](fa: List[M[A]])(implicit F: Applicative[M]): M[List[A]] = {
+  def sequence[M[_], A](fa: List[M[A]])(implicit F: Applicative[M]): M[List[A]] =
+    traverse(fa)(identity)
+
+  def traverse[M[_], A, B](fa: List[A])(f: A => M[B])(implicit F: Applicative[M]): M[List[B]] =
     fa match {
       case Nil =>
         F.point(Nil)
       case h :: t =>
-        F.ap(sequence(t))(F.ap(h)(F.point((h2 : A) => (t2 : List[A]) => h2 :: t2)))
+        F.ap(traverse(t)(f))(F.ap(f(h))(F.point((h2 : B) => (t2 : List[B]) => h2 :: t2)))
     }
-  }
 }
