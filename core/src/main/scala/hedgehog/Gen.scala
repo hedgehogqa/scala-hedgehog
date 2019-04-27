@@ -3,93 +3,13 @@ package hedgehog
 import hedgehog.core._
 import hedgehog.predef._
 
-trait GenTOps {
+trait GenTOps extends MonadGenOps[Gen] {
 
   /**********************************************************************/
   // Combinators
 
-  /**
-   * Runs a `Option` generator until it produces a `Some`.
-   *
-   * This is implemented using `filter` and has the same caveats.
-   */
-  def fromSome[A](gen: GenT[Option[A]]): GenT[A] =
-    gen.filter(_.isDefined).map(
-      _.getOrElse(sys.error("fromSome: internal error, unexpected None"))
-    )
-
-  /**
-   * Construct a generator that depends on the size parameter.
-   */
-  def generate[A](f: (Size, Seed) => (Seed, A)): GenT[A] =
-    GenT((size, seed) => {
-      val (s2, a) = f(size, seed)
-      Tree.TreeApplicative.point((s2, some(a)))
-    })
-
-  /**********************************************************************/
-  // Combinators - Size
-
-  /**
-   * Construct a generator that depends on the size parameter.
-   */
-  def sized[A](f: Size => GenT[A]): GenT[A] =
-    GenT((size, seed) => f(size).run(size, seed))
-
   /**********************************************************************/
   // Combinators - Integral
-
-  /**
-   * Generates a random integral number in the given `[inclusive,inclusive]` range.
-   *
-   * When the generator tries to shrink, it will shrink towards the
-   * [[Range.origin]] of the specified [[Range]].
-   *
-   * For example, the following generator will produce a number between `1970`
-   * and `2100`, but will shrink towards `2000`:
-   *
-   * {{{
-   * Gen.integral(Range.constantFrom(2000, 1970, 2100))
-   * }}}
-   *
-   * Some sample outputs from this generator might look like:
-   *
-   * {{{
-   * === Outcome ===
-   * 1973
-   * === Shrinks ===
-   * 2000
-   * 1987
-   * 1980
-   * 1976
-   * 1974
-   *
-   * === Outcome ===
-   * 2061
-   * === Shrinks ===
-   * 2000
-   * 2031
-   * 2046
-   * 2054
-   * 2058
-   * 2060
-   * }}}
-   */
-  def integral[A : Integral](range: Range[A], fromLong : Long => A): GenT[A] =
-    integral_(range, fromLong).shrink(Shrink.towards(range.origin, _))
-
-  /**
-   * Generates a random integral number in the `[inclusive,inclusive]` range.
-   *
-   * ''This generator does not shrink.''
-   *
-   */
-  def integral_[A](range: Range[A], fromLong : Long => A)(implicit I: Integral[A]): GenT[A] =
-    Gen.generate((size, seed) => {
-      val (x, y) = range.bounds(size)
-      val (s2, a) = seed.chooseLong(I.toLong(x), I.toLong(y))
-      (s2, fromLong(a))
-    })
 
   def int(range: Range[Int]): GenT[Int] =
     integral(range, _.toInt)
@@ -155,6 +75,22 @@ trait GenTOps {
     int(Range.constant(0, xs.length)).map(i => (x :: xs)(i))
 
   /**
+   * Randomly selects one of the elements in the list.
+   *
+   * This generator shrinks towards the first element in the list.
+   *
+   * WARNING: This may throw an exception if the list is empty,
+   * please use one of the other `element` variants if possible
+   */
+  def elementUnsafe[A](xs: List[A]): GenT[A] =
+    xs match {
+      case Nil =>
+        sys.error("element: used with empty list")
+      case h :: t =>
+        element(h, t)
+    }
+
+  /**
    * Randomly selects one of the generators in the list.
    *
    * This generator shrinks towards the first generator in the list.
@@ -201,6 +137,106 @@ trait GenTOps {
        x <- pick(n, a, l)
      } yield x
    }
+}
+
+trait MonadGenOps[M[_]] {
+
+  /**********************************************************************/
+  // Combinators
+
+  /**
+   * Runs a `Option` generator until it produces a `Some`.
+   *
+   * This is implemented using `filter` and has the same caveats.
+   */
+  def fromSome[A](gen: M[Option[A]])(implicit F: Monad[M], G: MonadGen[M]): M[A] =
+    F.map(filter(gen)(_.isDefined))(
+      _.getOrElse(sys.error("fromSome: internal error, unexpected None"))
+    )
+
+  /**
+   * Construct a generator that depends on the size parameter.
+   */
+  def generate[A](f: (Size, Seed) => (Seed, A))(implicit G: MonadGen[M]): M[A] =
+    G.lift(GenT((size, seed) => {
+      val (s2, a) = f(size, seed)
+      Tree.TreeApplicative.point((s2, some(a)))
+    }))
+
+  /** Generates a list using a 'Range' to determine the length. */
+  def list[A](gen: M[A], range: Range[Int])(implicit F: Monad[M], G: MonadGen[M]): M[List[A]] =
+    sized(size =>
+      ensure(
+        G.shrink(
+          F.bind(integral_(range, _.toInt))(k => replicateM[M, A](k, gen))
+        , Shrink.list
+        )
+      , Range.atLeast(range.lowerBound(size), _)
+      )
+    )
+
+  /**********************************************************************/
+  // Combinators - Size
+
+  /**
+   * Construct a generator that depends on the size parameter.
+   */
+  def sized[A](f: Size => M[A])(implicit F: Monad[M], G: MonadGen[M]): M[A] =
+    F.bind(generate((size, seed) => (seed, size)))(f)
+
+  /**********************************************************************/
+  // Combinators - Integral
+
+  /**
+   * Generates a random integral number in the given `[inclusive,inclusive]` range.
+   *
+   * When the generator tries to shrink, it will shrink towards the
+   * [[Range.origin]] of the specified [[Range]].
+   *
+   * For example, the following generator will produce a number between `1970`
+   * and `2100`, but will shrink towards `2000`:
+   *
+   * {{{
+   * Gen.integral(Range.constantFrom(2000, 1970, 2100))
+   * }}}
+   *
+   * Some sample outputs from this generator might look like:
+   *
+   * {{{
+   * === Outcome ===
+   * 1973
+   * === Shrinks ===
+   * 2000
+   * 1987
+   * 1980
+   * 1976
+   * 1974
+   *
+   * === Outcome ===
+   * 2061
+   * === Shrinks ===
+   * 2000
+   * 2031
+   * 2046
+   * 2054
+   * 2058
+   * 2060
+   * }}}
+   */
+  def integral[A : Integral](range: Range[A], fromLong : Long => A)(implicit F: MonadGen[M]): M[A] =
+    F.shrink(integral_[A](range, fromLong), Shrink.towards(range.origin, _))
+
+  /**
+   * Generates a random integral number in the `[inclusive,inclusive]` range.
+   *
+   * ''This generator does not shrink.''
+   */
+  def integral_[A](range: Range[A], fromLong : Long => A)(implicit G: MonadGen[M], I: Integral[A]): M[A] =
+    generate((size, seed) => {
+      val (x, y) = range.bounds(size)
+      val (s2, a) = seed.chooseLong(I.toLong(x), I.toLong(y))
+      (s2, fromLong(a))
+    })
 
   /**********************************************************************/
   // Combinators - Conditional
@@ -208,6 +244,34 @@ trait GenTOps {
   /**
    * Discards the whole generator.
    */
-  def discard[A]: GenT[A] =
-    GenT((_, seed) => Tree.TreeApplicative.point((seed, None)))
+  def discard[A](implicit G: MonadGen[M]): M[A] =
+    G.lift(
+      GenT((_, seed) => Tree.TreeApplicative.point((seed, None)))
+    )
+
+  /**
+   * Generates a value that satisfies a predicate.
+   *
+   * We keep some state to avoid looping forever.
+   * If we trigger these limits then the whole generator is discarded.
+   */
+  def filter[A](gen: M[A])(p: A => Boolean)(implicit F: Monad[M], G: MonadGen[M]): M[A] = {
+    def try_(k: Int): M[A] =
+      if (k > 100)
+        discard
+      else
+        F.bind(G.scale(gen, s => Size(2 * k + s.value)))(x =>
+          if (p(x))
+            F.point(x)
+          else
+            try_(k + 1)
+        )
+    try_(0)
+  }
+
+  /**
+   * Discards the generator if the generated value does not satisfy the predicate.
+   */
+  def ensure[A](gen: M[A], p: A => Boolean)(implicit F: Monad[M], G: MonadGen[M]): M[A] =
+    F.bind(gen)(x => if (p(x)) F.point(x) else discard)
 }

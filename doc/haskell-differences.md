@@ -6,6 +6,7 @@ This page documents where the Scala Hedgehog API deviates significantly from the
 - [Result](#result)
   - [Property Plus Example](#property-plus-example)
 - [Monadic Gen](#monadic-gen)
+- [State Vars](#state-vars)
 
 ## Result
 
@@ -100,3 +101,15 @@ problems. For now we have had to move this laziness to the tree children.
 
 In practice I doubt that many people are seriously using monadic effects for generated values, and I'm happy to revisit
 this if/when an issue is raised.
+
+
+## State Vars
+
+The Haskell State testing uses a very powerful `Symbolic` and `Concrete` [types][sc_types] to represent the different
+states of a variable when implementing the `Command` interface.
+
+While this is _technically_ possible in Scala, the types are quite intimidating, especially `HTraversable`.
+Instead we opt for a lower-level variable "lookup" by passing in the `Environment` map where concrete variables are
+available, so that users can resolve them manually.
+
+[sc_types]: https://github.com/hedgehogqa/haskell-hedgehog/blob/1c49c7aa82bc0012f0be3b213f03e84c5754d270/hedgehog/src/Hedgehog/Internal/State.hs#L93-L134
