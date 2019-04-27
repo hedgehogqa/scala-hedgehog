@@ -24,6 +24,10 @@ package object hedgehog extends ApplicativeSyntax {
   type Result = hedgehog.core.Result
   val Result = hedgehog.core.Result
 
+  type MonadGen[M[_]] = MonadGenT[M]
+  def MonadGen[M[_]] =
+    new MonadGenOps[M] {}
+
   def propertyT: PropertyTOps =
     new PropertyTOps {}
 

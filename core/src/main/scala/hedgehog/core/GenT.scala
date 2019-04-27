@@ -97,19 +97,8 @@ case class GenT[A](run: (Size, Seed) => Tree[(Seed, Option[A])]) {
    * We keep some state to avoid looping forever.
    * If we trigger these limits then the whole generator is discarded.
    */
-  def filter(p: A => Boolean): GenT[A] = {
-    def try_(k: Int): GenT[A] =
-      if (k > 100)
-        Gen.discard
-      else
-        this.scale(s => Size(2 * k + s.value)).flatMap(x =>
-          if (p(x))
-            Gen.constant(x)
-          else
-            try_(k + 1)
-        )
-    try_(0)
-  }
+  def filter(p: A => Boolean): GenT[A] =
+    Gen.filter(this)(p)
 
   /**********************************************************************/
   // Combinators - Collections
@@ -125,11 +114,7 @@ case class GenT[A](run: (Size, Seed) => Tree[(Seed, Option[A])]) {
 
   /** Generates a list using a 'Range' to determine the length. */
   def list(range: Range[Int]): GenT[List[A]] =
-    Gen.sized(size =>
-      Gen.integral_(range, _.toInt).flatMap(k => replicateM[GenT, A](k, this))
-        .shrink(Shrink.list)
-        .ensure(Range.atLeast(range.lowerBound(size), _))
-    )
+    Gen.list(this, range)
 }
 
 abstract class GenImplicits1 {
