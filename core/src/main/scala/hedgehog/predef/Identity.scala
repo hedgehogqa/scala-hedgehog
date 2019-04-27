@@ -24,4 +24,21 @@ object Identity {
       def value: A =
         a
     }
+
+  implicit def IdentityMonad: Monad[Identity] =
+    new Monad[Identity] {
+
+      // NOTE: It's critical to override the free Applicative version, otherwise we get stack overflows
+      override def map[A, B](fa: Identity[A])(f: A => B) =
+        Identity(f(fa.value))
+
+      override def point[A](a: => A): Identity[A] =
+        Identity(a)
+
+      override def ap[A, B](fa: => Identity[A])(f: => Identity[A => B]): Identity[B] =
+        Identity(f.value(fa.value))
+
+      override def bind[A, B](fa: Identity[A])(f: A => Identity[B]): Identity[B] =
+        Identity(f(fa.value).value)
+    }
 }
