@@ -18,8 +18,7 @@ object StateTest extends Properties {
     , propertyFails("registry (parallel)", testRegistryParallel)
     , propertyFails("accumulator (sequential)", testAccumulatorSequential)
     , property("get-and-set (parallel) good", testGetAndSetParallelGood)
-    // FIXME This is flakey and doesn't always fail on travis
-    // , propertyFails("get-and-set (parallel) bad", testGetAndSetParallelBad)
+    , propertyFails("get-and-set (parallel) bad", testGetAndSetParallelBad)
     )
 
   def testRegistrySequential: Property = {
@@ -300,6 +299,8 @@ object GetAndSet {
         } else {
           val s0 = ref.get
           if (s0 < s) {
+            // A little helping hand for Travis
+            Thread.sleep(1)
             ref.set(s)
           }
           Right(s0)
