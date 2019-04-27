@@ -155,6 +155,22 @@ trait GenTOps {
     int(Range.constant(0, xs.length)).map(i => (x :: xs)(i))
 
   /**
+   * Randomly selects one of the elements in the list.
+   *
+   * This generator shrinks towards the first element in the list.
+   *
+   * WARNING: This may throw an exception if the list is empty,
+   * please use one of the other `element` variants if possible
+   */
+  def elementUnsafe[A](xs: List[A]): GenT[A] =
+    xs match {
+      case Nil =>
+        sys.error("element: used with empty list")
+      case h :: t =>
+        element(h, t)
+    }
+
+  /**
    * Randomly selects one of the generators in the list.
    *
    * This generator shrinks towards the first generator in the list.
