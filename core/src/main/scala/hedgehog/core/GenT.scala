@@ -40,17 +40,17 @@ case class GenT[A](run: (Size, Seed) => Tree[(Seed, Option[A])]) {
   // Combinators - Property
 
   def log(name: Name): PropertyT[A] =
-    for {
-      x <- propertyT.fromGen(this)
-      // TODO Add better render, although I don't really like Show
-      _ <- propertyT.writeLog(ForAll(name, x.toString))
-    } yield x
+    // TODO Add better render, although I don't really like Show
+    forAllWithLog(x => ForAll(name, x.toString))
 
   def forAll: PropertyT[A] =
+    // TODO Add better render, although I don't really like Show
+    forAllWithLog(x => x.toString)
+
+  def forAllWithLog(f: A => Log): PropertyT[A] =
     for {
       x <- propertyT.fromGen(this)
-      // TODO Add better render, although I don't really like Show
-      _ <- propertyT.writeLog(Info(x.toString))
+      _ <- propertyT.writeLog(f(x))
     } yield x
 
   // Different from Haskell version, which uses the MonadGen typeclass
