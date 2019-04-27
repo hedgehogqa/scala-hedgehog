@@ -158,4 +158,21 @@ abstract class GenImplicits2 extends GenImplicits1 {
     }
 }
 
-object GenT extends GenImplicits2
+object GenT extends GenImplicits2 {
+
+  implicit def GenMonad: Monad[GenT] =
+    new Monad[GenT] {
+
+     override def map[A, B](fa: GenT[A])(f: A => B): GenT[B] =
+       fa.map(f)
+
+     override def point[A](a: => A): GenT[A] =
+       GenApplicative.point(a)
+
+     override def ap[A, B](fa: => GenT[A])(f: => GenT[A => B]): GenT[B] =
+       GenApplicative.ap(fa)(f)
+
+      override def bind[A, B](fa: GenT[A])(f: A => GenT[B]): GenT[B] =
+        fa.flatMap(f)
+    }
+}
