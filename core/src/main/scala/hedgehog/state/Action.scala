@@ -195,13 +195,10 @@ object Action {
  */
 case class Parallel[S](
 
-    /** The sequential prefix. */
     prefix: List[Action[S]]
 
-    /** The first branch. */
   , branch1: List[Action[S]]
 
-    /** The second branch. */
   , branch2: List[Action[S]]
   )
 

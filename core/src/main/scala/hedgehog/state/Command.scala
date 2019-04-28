@@ -19,7 +19,7 @@ trait Command[S, I, O] extends CommandIO[S] {
 
   /**
    * A generator which provides random arguments for a command.
-   * If the command cannot be executed in the current state, it should return [[None]].
+   * If the command cannot be executed in the current state, it should return `None`.
    */
   def gen(s: S): Option[GenT[Input]]
 
