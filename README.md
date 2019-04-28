@@ -104,7 +104,7 @@ NOTE: This requires the test to be an `object` and _not_ a `class`.
 
 ## Example
 
-See the [examples](example/src/test/scala/hedgehog/examples/) module for working versions.
+See the [examples](example/src/main/scala/hedgehog/examples/) module for working versions.
 
 ```scala
 import hedgehog._

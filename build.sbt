@@ -13,7 +13,7 @@ lazy val hedgehog = Project(
   )
   .settings(standardSettings)
   .settings(noPublish)
-  .aggregate(core, runner, sbtTest, test)
+  .aggregate(core, runner, sbtTest, test, example)
 
 lazy val standardSettings = Seq(
     Defaults.coreDefaultSettings
