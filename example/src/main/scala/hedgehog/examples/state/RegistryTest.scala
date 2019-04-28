@@ -3,7 +3,7 @@
  *
  * https://github.com/hedgehogqa/haskell-hedgehog/blob/master/hedgehog-example/src/Test/Example/Registry.hs
  */
-package hedgehog.examples
+package hedgehog.examples.state
 
 import java.util.function.UnaryOperator
 import java.util.concurrent.atomic.AtomicReference

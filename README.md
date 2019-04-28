@@ -36,7 +36,7 @@ Please drop us a line if you start using scala-hedgehog in anger, we'd love to h
 ## Features
 
 - Integrated shrinking, shrinks obey invariants by construction.
-- Generators allow monadic effects.
+- [Abstract state machine testing.](example/src/test/scala/hedgehog/examples/state)
 - Range combinators for full control over the scope of generated numbers and collections.
 - [SBT test runner](#sbt-testing)
 - Currently _no_ external dependencies in the core module
@@ -104,7 +104,7 @@ NOTE: This requires the test to be an `object` and _not_ a `class`.
 
 ## Example
 
-See the [examples](example/src/test/scala/hedgehog/examples/) module for working versions.
+See the [examples](example/src/main/scala/hedgehog/examples/) module for working versions.
 
 ```scala
 import hedgehog._
