@@ -8,6 +8,8 @@ object ShrinkTest extends Properties {
   def tests: List[Test] =
     List(
       example("test that shrinking only 'runs' the test once per shrink", testLazy)
+    , property("testTowardsFloat is always in range", testTowardsFloatShrinkingRange.property)
+    , example("testTowardsFloat is always in range", testTowardsFloatShrinkingRange.test((Double.MinPositiveValue, 0.1)))
     )
 
   // https://github.com/hedgehogqa/scala-hedgehog/issues/66
@@ -38,6 +40,18 @@ object ShrinkTest extends Properties {
         ShrinkCount(failed - 1) ==== s
       case _ =>
         Result.failure.log("Test failed incorrectly")
+    }
+  }
+
+  def testTowardsFloatShrinkingRange: PropertyR[(Double, Double)] = {
+    PropertyR(for {
+      d <- Gen.double(Range.linearFracFrom(0, Double.MinValue, Double.MaxValue)).filter(!_.isInfinity).log("d")
+      x <- Gen.double(Range.linearFrac(d, Double.MaxValue)).log("x")
+    } yield (d, x)){ case (d, x) =>
+      val fs = Shrink.towardsFloat(d, x)
+      Result.all(fs.map(f =>
+        Result.assert(d <= f) and Result.assert(f <= x)
+      ))
     }
   }
 }

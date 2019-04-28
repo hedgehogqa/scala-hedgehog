@@ -50,6 +50,8 @@ object Shrink extends XCompat {
         .iterate(diff)(_ / 2)
         .map(x - _)
         .takeWhile(y => y != x && !y.isNaN && !y.isInfinite)
+        // In _extremely_ rare cases it's possible to generate a value outside of our range if the diff is very very small
+        .filter(y => if (destination < x) destination <= y && y <= x else x <= y && y <= destination)
         .toList
     }
 
