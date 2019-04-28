@@ -36,6 +36,7 @@ Please drop us a line if you start using scala-hedgehog in anger, we'd love to h
 ## Features
 
 - Integrated shrinking, shrinks obey invariants by construction.
+- [Abstract state machine testing.](example/src/test/scala/hedgehog/examples/state)
 - Range combinators for full control over the scope of generated numbers and collections.
 - [SBT test runner](#sbt-testing)
 - Currently _no_ external dependencies in the core module
