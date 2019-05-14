@@ -20,7 +20,7 @@ sealed trait Result {
         l
     }
 
-  def and(other: Result): Result =
+  def and(other: => Result): Result =
     this match {
       case Success =>
         other
@@ -33,7 +33,7 @@ sealed trait Result {
         }
     }
 
-  def or(other: Result): Result =
+  def or(other: => Result): Result =
     this match {
       case Success =>
         Success
@@ -46,7 +46,7 @@ sealed trait Result {
         }
     }
 
-  def log(info: Log): Result =
+  def log(info: => Log): Result =
     this match {
       case Success =>
         Success
