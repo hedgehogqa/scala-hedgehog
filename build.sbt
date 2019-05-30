@@ -106,7 +106,7 @@ lazy val compilationSettings = Seq(
         }
       }
     }
-  , libraryDependencies += compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.1" cross CrossVersion.binary)
+  , libraryDependencies += compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.2" cross CrossVersion.binary)
   )
 
 lazy val testingSettings = Seq(
