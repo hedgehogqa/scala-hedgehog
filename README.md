@@ -169,7 +169,8 @@ are still relevant despite whatever language they are presented with.
 
 ### Presentations
 
-- [Property-Based Testing The Ugly Parts: Case Studies from Komposition](https://www.youtube.com/watch?v=z2ete8VZnZY) - Oskar Wickström at flatMap (Oslo) 2019 
+- [Property-Based Testing The Ugly Parts: Case Studies from Komposition](https://www.youtube.com/watch?v=z2ete8VZnZY) - Oskar Wickström at flatMap (Oslo) 2019
+- [Types vs Tests](https://skillsmatter.com/skillscasts/12648-types-vs-tests) - Julien Truffaut at Scala eXchange 2018
 - [Appetite for dysfunction](https://www.youtube.com/watch?v=k8k2rwWImy8) - Andrew McCluskey at Compose Melbourne 2018
 - [Property-based State Machine Testing](https://www.youtube.com/watch?v=boBD1qhCQ94) - Andrew McCluskey at YOW! Lambda Jam 2018.
 - [Gens N’ Roses: Appetite for Reduction](https://www.youtube.com/watch?v=AIv_9T0xKEo) - Jacob Stanley at YOW! Lambda Jam 2017.
