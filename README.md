@@ -208,8 +208,3 @@ In Scala there are other property-testing alternatives:
 - https://github.com/japgolly/nyaya
 
   Another fast data generator and property testing library in Scala.
-
-- https://github.com/scalaz/testz
-
-  A more general FP testing library, with
-  [plans to implementing hedgehog-like shrinking](https://github.com/scalaz/testz/issues/5)
