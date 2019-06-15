@@ -52,19 +52,12 @@ trait CharacterOps {
 
   /** Generates a Unicode character, excluding noncharacters and invalid standalone surrogates: */
   def unicode: GenT[Char] =
-    unicodeAll
-      .filter(!isSurrogate(_))
-      .filter(!isNoncharacter(_))
+    genT.frequencyUnsafe(
+      List(0 -> 55295, 57344 -> 65533)
+        .map(x => (1 + x._2 - x._1, genT.char(x._1.toChar, x._2.toChar)))
+    )
 
   /** Generates a Unicode character, including noncharacters and invalid standalone surrogates */
   def unicodeAll: GenT[Char] =
     genT.char(0, Integer.MAX_VALUE.toChar)
-
-  /** Check if a character is in the surrogate category. */
-  def isSurrogate(x: Char): Boolean =
-    x >= 55296 && x <= 57343
-
-  /** Check if a character is one of the noncharacters. */
-  def isNoncharacter(x: Char): Boolean =
-    x == 65534 || x == 65535
 }
