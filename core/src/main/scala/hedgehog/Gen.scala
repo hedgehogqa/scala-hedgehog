@@ -137,6 +137,22 @@ trait GenTOps extends MonadGenOps[Gen] {
        x <- pick(n, a, l)
      } yield x
    }
+
+  /**
+    * Uses a weighted distribution to randomly select one of the generators in the list.
+    *
+    * This generator shrinks towards the first generator in the list.
+    *
+    * WARNING: This may throw an exception if the list is empty,
+    * please use one of the other `frequency` variants if possible.
+    */
+  def frequencyUnsafe[A](xs: List[(Int, GenT[A])]): GenT[A] =
+    xs match {
+      case Nil =>
+        sys.error("frequency: used with empty list")
+      case h :: t =>
+        frequency(h, t)
+    }
 }
 
 trait MonadGenOps[M[_]] {
