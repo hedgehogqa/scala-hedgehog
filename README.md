@@ -90,7 +90,7 @@ Scala Hedgehog comes with a _very_ primitive runner interface, and supports the
 [SBT testing extension](https://www.scala-sbt.org/1.x/docs/Testing.html#Using+Extensions).
 
 ```
-testFrameworks := Seq(TestFramework("hedgehog.sbt.Framework"))
+testFrameworks += TestFramework("hedgehog.sbt.Framework")
 ```
 
 ### IntelliJ
