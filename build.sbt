@@ -71,8 +71,7 @@ lazy val test = Project(
     , base = file("test")
   ).settings(standardSettings ++ noPublish ++ Seq(
     name := "hedgehog-test"
-  , testFrameworks := Seq(TestFramework("hedgehog.sbt.Framework"))
-  ) ++ Seq(libraryDependencies ++= Seq(
+  ) ++ testingSettings ++ Seq(libraryDependencies ++= Seq(
     ))
   ).dependsOn(core, runner, sbtTest)
 
@@ -110,7 +109,7 @@ lazy val compilationSettings = Seq(
   )
 
 lazy val testingSettings = Seq(
-    testFrameworks := Seq(TestFramework("hedgehog.sbt.HedgehogFramework"))
+    testFrameworks += TestFramework("hedgehog.sbt.Framework")
   )
 
 lazy val bintrarySettings = Seq(
