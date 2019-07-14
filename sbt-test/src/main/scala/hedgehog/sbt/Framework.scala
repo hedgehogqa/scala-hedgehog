@@ -1,5 +1,7 @@
 package hedgehog.sbt
 
+import java.io.{PrintStream, PrintWriter}
+
 import hedgehog._
 import hedgehog.core._
 import hedgehog.runner._
@@ -98,14 +100,28 @@ case class Event(
 object Event {
 
   def fromReport(taskDef: sbtt.TaskDef, selector: sbtt.Selector, report: Report, duration: Long): Event = {
-    val status = report.status match {
-      case Failed(_, _) =>
-        sbtt.Status.Failure
+    val (status, maybeThrowable) = report.status match {
+      case Failed(_, log) =>
+        (sbtt.Status.Failure, Some[Throwable](new MessageOnlyException(log.map(Test.renderLog).mkString("\n"))))
       case GaveUp =>
-        sbtt.Status.Error
+        (sbtt.Status.Error, None)
       case OK =>
-        sbtt.Status.Success
+        (sbtt.Status.Success, None)
     }
-    Event(taskDef.fullyQualifiedName, taskDef.fingerprint, selector, status, None, duration)
+    Event(taskDef.fullyQualifiedName, taskDef.fingerprint, selector, status, maybeThrowable, duration)
   }
+}
+
+/**
+  * This exception ignores printStackTrace with the given PrintStream or PrintWriter argument
+  * in order to avoid printing noisy and meaningless stacktrace
+  * which is done in writing a JUnit test report XML file.
+  *
+  * Reference:
+  * - https://github.com/hedgehogqa/scala-hedgehog/pull/93#issuecomment-512032204
+  * - https://github.com/sbt/sbt/blob/d4df289f2d6a0b8f6582346f331cd44408112c95/testing/src/main/scala/sbt/JUnitXmlTestsListener.scala#L128
+  */
+class MessageOnlyException(message: String) extends Exception(message) {
+  override def printStackTrace(err: PrintStream): Unit = ()
+  override def printStackTrace(err: PrintWriter): Unit = ()
 }
