@@ -86,7 +86,9 @@ Check it!
 - Spec$.property: Falsified after 8 passed tests
 > -1
 > === Not Equal ===
+> --- lhs ---
 > 1.0
+> --- rhs ---
 > -1.0
 ```
 
@@ -180,15 +182,66 @@ def testAdd: Result =
 ```
 
 ```
-Spec$.add: Falsified after 1 passed tests
+Spec$.testAdd: Falsified after 1 passed tests
 > === Not Equal ===
+> --- lhs ---
 > 3
+> --- rhs ---
 > 7
 ```
 
 That's a little better. But what happens if we don't just want to check
 equality?
 
+There is a method called `diff` which is similar to `Result.assert` but it gives the similar message to `====` operator's.
+
+`diff` takes two arguments and the comparison function so that you can do any comparison operation you want on those two arguments.
+
+```scala
+def testAdd: Result =
+  Result.diff(1 + 2, 3 + 4)(_ == _)
+```
+
+```
+Spec$.testAdd: Falsified after 1 passed tests
+> === Failed ===
+> --- lhs ---
+> 3
+> --- rhs ---
+> 7
+```
+*** 
+```scala
+def a1GtA2: Result =
+  Result.diff(1 + 2, 3 + 4)(_ > _)
+```
+
+```
+Spec$.a1GtA2: Falsified after 0 passed tests
+> === Failed ===
+> --- lhs ---
+> 3
+> --- rhs ---
+> 7
+```
+
+If you want to change the log name (i.e. `=== Failed ===`) to something else, you can use `diffNamed` instead.
+
+e.g.)
+
+```scala
+Result.diffNamed("=== Not Equal ===", 1 + 2, 3 + 4)(_ == _)
+```
+```
+Spec$.testAdd: Falsified after 1 passed tests
+> === Not Equal ===
+> --- lhs ---
+> 3
+> --- rhs ---
+> 7
+```
+
+In fact, `====` internally uses the `diffNamed` method.
 
 #### Logging
 
@@ -547,7 +600,9 @@ Now, run the tests:
 - Spec$.example: Falsified after 5 passed tests
 > l: List(0,0)
 > === Not Equal ===
+> --- lhs ---
 > List(0,0)
+> --- rhs ---
 > List(0)
 ```
 
