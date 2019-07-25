@@ -11,26 +11,32 @@ package object state {
       range: Range[Int]
     , initial: S
     , commands: List[CommandIO[S]]
-    , reset: () => Unit
+    , cleanup: () => Unit
     ): Property =
     genActions(range, commands, Context.create(initial)).map(_._2)
       .forAllWithLog(Runner.renderActions(_))
-      .map(actions => {
-        reset()
-        executeSequential(initial, actions)
-      })
+      .map(actions =>
+        try {
+          executeSequential(initial, actions)
+        } finally {
+          cleanup()
+        }
+      )
 
   def parallel[S](
       prefixN: Range[Int]
     , parallelN: Range[Int]
     , initial: S
     , commands: List[CommandIO[S]]
-    , reset: () => Unit
+    , cleanup: () => Unit
     )(implicit E: ExecutionContext): Property =
     genParallel(prefixN, parallelN, initial, commands)
       .forAllWithLog(Runner.renderParallel(_))
-      .map(actions => {
-        reset()
-        Await.result(executeParallel(initial, actions), Duration.Inf)
-      })
+      .map(actions =>
+        try {
+          Await.result(executeParallel(initial, actions), Duration.Inf)
+        } finally {
+          cleanup()
+        }
+      )
 }
