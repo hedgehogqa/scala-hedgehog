@@ -45,6 +45,14 @@ trait Command[S, I, O] extends CommandIO[S] {
    */
   def ensure(env: Environment, before: S, after: S, i: Input, o: Output): Result
 
+  /**
+   * Render the input for displaying in test output.
+   *
+   * The default is to use `toString`, but optionally can support being overridden.
+   */
+  def renderInput(i: Input): String =
+    String.valueOf(i)
+
   final override def command: Command[S, Input, Output] =
     this
 }
