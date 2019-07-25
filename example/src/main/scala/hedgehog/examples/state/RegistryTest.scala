@@ -94,9 +94,6 @@ object Spawn {
   def command(pid: AtomicReference[Pid]): CommandIO[State] =
     new Command[State, Spawn, Pid] {
 
-      override def vars(i: Spawn): List[Var[_]] =
-        Nil
-
       override def gen(s: State): Option[Gen[Spawn]] =
         Some(Gen.constant(Spawn()))
 
@@ -105,9 +102,6 @@ object Spawn {
           def apply(x: Pid): Pid =
             Pid(x.value + 1)
         }))
-
-      def require(state: State, input: Spawn): Boolean =
-        true
 
       def update(s: State, i: Spawn, o: Var[Pid]): State =
         s.copy(pids = s.pids + o)
@@ -149,7 +143,7 @@ object Register {
             Right(())
         }
 
-      def require(state: State, input: Register): Boolean =
+      override def require(state: State, input: Register): Boolean =
         !state.regs.contains(input.name) && !state.regs.exists(x => x._2 == input.value)
 
       def update(s: State, i: Register, o: Var[Unit]): State =
@@ -167,9 +161,6 @@ object Unregister {
   def command(procTable: concurrent.Map[Name, Pid]): CommandIO[State] =
     new Command[State, Unregister, Unit] {
 
-      override def vars(i: Unregister): List[Var[_]] =
-        Nil
-
       override def gen(s: State): Option[Gen[Unregister]] =
         s.regs.keys.toList match {
           case Nil =>
@@ -186,7 +177,7 @@ object Unregister {
             Right(())
         }
 
-      def require(state: State, input: Unregister): Boolean =
+      override def require(state: State, input: Unregister): Boolean =
         state.regs.contains(input.name)
 
       def update(s: State, i: Unregister, o: Var[Unit]): State =
