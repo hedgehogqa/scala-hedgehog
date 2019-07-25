@@ -15,7 +15,8 @@ trait Command[S, I, O] extends CommandIO[S] {
    *
    * Failure to do this correctly will result in missing variable errors during shrinking.
    */
-  def vars(i: Input): List[Var[_]]
+  def vars(i: Input): List[Var[_]] =
+    Nil
 
   /**
    * A generator which provides random arguments for a command.
@@ -33,7 +34,8 @@ trait Command[S, I, O] extends CommandIO[S] {
    * This is mainly used during shrinking to ensure that it is still OK to run a command
    * despite the fact that some previously executed commands may have been removed from the sequence.
    */
-  def require(s: S, i: Input): Boolean
+  def require(s: S, i: Input): Boolean =
+    true
 
   /**
    * Updates the model state, given the input and output of the command.

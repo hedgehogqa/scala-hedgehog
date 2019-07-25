@@ -141,9 +141,6 @@ object Registry {
   def spawnCommand(pid: AtomicReference[Pid]): CommandIO[State] =
     new Command[State, Spawn, Pid] {
 
-      override def vars(i: Spawn): List[Var[_]] =
-        Nil
-
       override def gen(s: State): Option[Gen[Spawn]] =
         Some(Gen.constant(Spawn()))
 
@@ -152,9 +149,6 @@ object Registry {
           def apply(x: Pid): Pid =
             Pid(x.value + 1)
         }))
-
-      def require(state: State, input: Spawn): Boolean =
-        true
 
       def update(s: State, i: Spawn, o: Var[Pid]): State =
         s.copy(pids = s.pids + o)
@@ -191,7 +185,7 @@ object Registry {
             Right(())
         }
 
-      def require(state: State, input: Register): Boolean =
+      override def require(state: State, input: Register): Boolean =
         !state.regs.contains(input.name) && !state.regs.exists(x => x._2 == input.value)
 
       def update(s: State, i: Register, o: Var[Unit]): State =
@@ -203,9 +197,6 @@ object Registry {
 
   def unregisterCommand(procTable: concurrent.Map[Name, Pid]): CommandIO[State] =
     new Command[State, Unregister, Unit] {
-
-      override def vars(i: Unregister): List[Var[_]] =
-        Nil
 
       override def gen(s: State): Option[Gen[Unregister]] =
         s.regs.keys.toList match {
@@ -223,7 +214,7 @@ object Registry {
             Right(())
         }
 
-      def require(state: State, input: Unregister): Boolean =
+      override def require(state: State, input: Unregister): Boolean =
         state.regs.contains(input.name)
 
       def update(s: State, i: Unregister, o: Var[Unit]): State =
@@ -248,9 +239,6 @@ object Accumulator {
   def command(name: Int, expected: Int, ref: AtomicReference[Int]): CommandIO[Int] =
     new Command[Int, Register, Boolean] {
 
-      override def vars(i: Register): List[Var[_]] =
-        Nil
-
       override def gen(s: Int): Option[Gen[Register]] =
         Some(Gen.constant(Register(name)))
 
@@ -261,9 +249,6 @@ object Accumulator {
               if (x + 1 == s.name) s.name else x
           }) == s.name
         )
-
-      def require(state: Int, input: Register): Boolean =
-        true
 
       def update(s: Int, i: Register, o: Var[Boolean]): Int =
         if (s + 1 == i.name) i.name else s
@@ -284,9 +269,6 @@ object GetAndSet {
   def command(ref: AtomicReference[String], goodBoy: Boolean): CommandIO[String] =
     new Command[String, String, String] {
 
-      override def vars(i: String): List[Var[_]] =
-        Nil
-
       override def gen(s: String): Option[Gen[String]] =
         Some(Gen.element1("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"))
 
@@ -306,9 +288,6 @@ object GetAndSet {
           Right(s0)
         }
       }
-
-      def require(state: String, input: String): Boolean =
-        true
 
       def update(s: String, i: String, o: Var[String]): String =
         if (s < i) i else s
