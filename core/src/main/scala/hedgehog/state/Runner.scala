@@ -20,7 +20,7 @@ object Runner {
   def renderAction[S](a: Action[S]): String = {
     val prefix0 = s"${a.output.toString} = "
     val prefix = prefix0.map(_ => ' ')
-    a.input.toString.split('\n').toList match {
+    a.command.renderInput(a.input).split('\n').toList match {
       case Nil =>
         prefix0 + "?"
       case x :: xs =>
