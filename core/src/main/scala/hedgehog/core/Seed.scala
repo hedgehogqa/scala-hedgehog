@@ -33,8 +33,12 @@ case class Seed(seed: MersenneTwister64) {
   }
 
   def chooseDouble(from: Double, to: Double): (Seed, Double) = {
+    // Previously was doing something like:
+    // https://github.com/rickynils/scalacheck/blob/86bd34e20ef4ce91a5f3ae5d70b6d96bfac885cf/src/main/scala/org/scalacheck/Gen.scala#L366-L379
+    // Have updated to use the more stable haskell version
+    // http://hackage.haskell.org/package/random-1.1/docs/src/System.Random.html#randomRFloating
     val (s2, next) = seed.nextDouble
-    (Seed(s2), next * (to - from) + from)
+    (Seed(s2), 2.0 * (0.5 * from + next * (0.5 * to - 0.5 * from)))
   }
 }
 

@@ -8,6 +8,7 @@ object RangeTest extends Properties {
     List(
       example("integral", testIntegral)
     , example("double", testFractional)
+    , property("double should not generate values outside of the range", testDoubleWithinRange).withTests(1000)
     )
 
   def testIntegral: Result = {
@@ -37,4 +38,14 @@ object RangeTest extends Properties {
     , r1.bounds(Size(100))._2 ==== 1.7976931348623157E308
     ))
   }
+
+  def testDoubleWithinRange: Property =
+    for {
+      d <- Gen.double(Range.linearFracFrom(0, Double.MinValue, Double.MaxValue)).forAll
+    } yield
+      Result.all(List(
+        Result.assert(!d.isInfinite).log("infinite")
+      , Result.assert(d >= Double.MinValue).log("min_value")
+      , Result.assert(d <= Double.MaxValue).log("max_value")
+      ))
 }
