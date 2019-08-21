@@ -115,6 +115,5 @@ lazy val testingSettings = Seq(
 lazy val bintrarySettings = Seq(
     bintrayOrganization := Some("hedgehogqa")
   , bintrayRepository := "scala-hedgehog"
-  , publishMavenStyle := false
   , licenses += ("Apache-2.0", url("https://opensource.org/licenses/Apache-2.0"))
   )
