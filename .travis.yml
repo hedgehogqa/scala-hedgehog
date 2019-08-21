@@ -8,4 +8,4 @@ script:
   - sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$(git log --format=%H -1)'"' test
 after_success:
   - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$(git log --format=%H -1)'"' publish
-  - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$(git log --format=%H -1)'"' "set publishMavenStyle := true" publish
+  - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$(git log --format=%H -1)'"' "set publishMavenStyle in ThisBuild := true" publish
