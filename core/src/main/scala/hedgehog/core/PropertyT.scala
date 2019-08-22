@@ -19,6 +19,13 @@ case class Error(value: Exception) extends Log
 
 object Log {
 
+  // FIXME I'm not convinced these shouldn't be kept separately in something like `Journal` like it was originally
+  // https://github.com/hedgehogqa/haskell-hedgehog/pull/253/files
+  // I've done this for now to:
+  // 1. Keep it the same as Haskell
+  // 2. Avoid having to replace the log appending everywhere
+  case class LabelX(value: Label[Cover]) extends Log
+
   implicit def String2Log(s: String): Log =
     Info(s)
 }
@@ -66,6 +73,31 @@ case class PropertyT[A](
         }
       )
     ))
+
+  /** Records the proportion of tests which satisfy a given condition. */
+  def cover(minimum: CoverPercentage, name: LabelName, covered: A => Cover): PropertyT[A] =
+    flatMap(a =>
+      propertyT.writeLog(Log.LabelX(Label(name, minimum, covered(a))))
+        .map(_ => a)
+    )
+
+  /** Records the proportion of tests which satisfy a given condition. */
+  def classify(name: LabelName, covered: A => Cover): PropertyT[A] =
+    cover(0, name, covered)
+
+  /**
+   * Add a label for each test run.
+   * It produces a table showing the percentage of test runs that produced each label.
+   */
+  def label(name: LabelName): PropertyT[A] =
+    cover(0, name, _ => true)
+
+  /** Like 'label', but uses the `toString` value as the label. */
+  def collect: PropertyT[A] =
+    flatMap(a =>
+      propertyT.writeLog(Log.LabelX(Label(a.toString, 0, Cover.Cover)))
+        .map(_ => a)
+    )
 }
 
 object PropertyT {
@@ -128,30 +160,37 @@ trait PropertyTReporting {
     // Start the size at whatever remainder we have to ensure we run with "max" at least once
     val sizeInit = Size(Size.max % Math.min(config.testLimit.value, Size.max)).incBy(sizeInc)
     @annotation.tailrec
-    def loop(successes: SuccessCount, discards: DiscardCount, size: Size, seed: Seed): Report =
+    def loop(successes: SuccessCount, discards: DiscardCount, size: Size, seed: Seed, coverage: Coverage[CoverCount]): Report =
       if (size.value > Size.max)
-        loop(successes, discards, sizeInit, seed)
+        loop(successes, discards, sizeInit, seed, coverage)
       else if (successes.value >= config.testLimit.value)
-        Report(successes, discards, OK)
+        // we've hit the test limit
+        Coverage.split(coverage, successes) match {
+          case (_, Nil) =>
+            Report(successes, discards, coverage, OK)
+          case _ =>
+            Report(successes, discards, coverage, Status.failed(ShrinkCount(0), List("Insufficient coverage.")))
+        }
       else if (discards.value >= config.discardLimit.value)
-        Report(successes, discards, GaveUp)
+        Report(successes, discards, coverage, GaveUp)
       else {
         val x = p.run.run(size, seed)
         x.value._2 match {
           case None =>
-            loop(successes, discards.inc, size.incBy(sizeInc), x.value._1)
+            loop(successes, discards.inc, size.incBy(sizeInc), x.value._1, coverage)
 
           case Some((_, None)) =>
-            Report(successes, discards, takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2)))
+            Report(successes, discards, coverage, takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2)))
 
-          case Some((_, Some(r))) =>
+          case Some((logs, Some(r))) =>
             if (!r.success){
-              Report(successes, discards, takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2)))
+              Report(successes, discards, coverage, takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2)))
             } else
-              loop(successes.inc, discards, size.incBy(sizeInc), x.value._1)
+              loop(successes.inc, discards, size.incBy(sizeInc), x.value._1,
+                Coverage.union(Coverage.fromLogs(logs), coverage)(_ + _))
         }
       }
-    loop(SuccessCount(0), DiscardCount(0), size0.getOrElse(sizeInit), seed0)
+    loop(SuccessCount(0), DiscardCount(0), size0.getOrElse(sizeInit), seed0, Coverage.empty)
   }
 
   def recheck(config: PropertyConfig, size: Size, seed: Seed)(p: PropertyT[Result]): Report =
@@ -214,4 +253,4 @@ object Status {
     OK
 }
 
-case class Report(tests: SuccessCount, discards: DiscardCount, status: Status)
+case class Report(tests: SuccessCount, discards: DiscardCount, coverage: Coverage[CoverCount], status: Status)
