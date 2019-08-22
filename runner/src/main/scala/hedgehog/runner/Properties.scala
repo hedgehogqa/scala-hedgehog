@@ -60,7 +60,8 @@ object Test {
 
     report.status match {
       case Failed(shrinks, log) =>
-        render(false, s"Falsified after ${report.tests.value} passed tests", log.map(renderLog))
+        render(false, s"Falsified after ${report.tests.value} passed tests",
+          log.flatMap(renderLog) ++ renderCoverage(report.coverage, report.tests))
       case GaveUp =>
         render(false, s"Gave up after only ${report.tests.value} passed test. " +
           s"${report.discards.value} were discarded", Nil)
@@ -69,15 +70,28 @@ object Test {
     }
   }
 
-  def renderLog(log: Log): String =
+  def renderLog(log: Log): List[String] =
     log match {
       case ForAll(name, value) =>
-        s"${name.value}: $value"
+        List(s"${name.value}: $value")
       case Info(value) =>
-        value
+        List(value)
       case Error(e) =>
         val sw = new java.io.StringWriter()
         e.printStackTrace(new java.io.PrintWriter(sw))
-        sw.toString
+        List(sw.toString)
+      case Log.LabelX(_) =>
+        // FIXME I think this is a smell that labels don't belong in log
+        Nil
     }
+
+  def renderCoverage(coverage: Coverage[CoverCount], tests: SuccessCount): List[String] = {
+    val (c, un) = Coverage.split(coverage, tests)
+    def renderLabel(l: Label[CoverCount]): String =
+      s"${l.annotation.percentage(tests).toDouble.toInt.toString}% ${l.name.render} ${l.minimum.toDouble.toInt.toString}%"
+    List(
+      c.map(l => "+ " + renderLabel(l))
+    , un.map(l =>"- " + renderLabel(l))
+    ).flatten
+  }
 }
