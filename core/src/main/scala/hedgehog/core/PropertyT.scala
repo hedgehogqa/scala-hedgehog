@@ -19,13 +19,6 @@ case class Error(value: Exception) extends Log
 
 object Log {
 
-  // FIXME I'm not convinced these shouldn't be kept separately in something like `Journal` like it was originally
-  // https://github.com/hedgehogqa/haskell-hedgehog/pull/253/files
-  // I've done this for now to:
-  // 1. Keep it the same as Haskell
-  // 2. Avoid having to replace the log appending everywhere
-  case class LabelX(value: Label[Cover]) extends Log
-
   implicit def String2Log(s: String): Log =
     Info(s)
 }
@@ -33,10 +26,11 @@ object Log {
 /** A record containing the details of a test run. */
 case class Journal(
     logs: List[Log]
+  , coverage: Coverage[Cover]
   ) {
 
   def ++(o: Journal): Journal =
-    Journal(logs ++ o.logs)
+    Journal(logs ++ o.logs, Coverage.union(coverage, o.coverage)(_ ++ _))
 
   def log(log: Log): Journal =
     copy(logs = logs ++ List(log))
@@ -45,7 +39,7 @@ case class Journal(
 object Journal {
 
   def empty: Journal =
-    Journal(Nil)
+    Journal(Nil, Coverage.empty)
 }
 
 case class PropertyConfig(
@@ -95,7 +89,7 @@ case class PropertyT[A](
   /** Records the proportion of tests which satisfy a given condition. */
   def cover(minimum: CoverPercentage, name: LabelName, covered: A => Cover): PropertyT[A] =
     flatMap(a =>
-      propertyT.writeLog(Log.LabelX(Label(name, minimum, covered(a))))
+      propertyT.cover(Label(name, minimum, covered(a)))
         .map(_ => a)
     )
 
@@ -113,7 +107,7 @@ case class PropertyT[A](
   /** Like 'label', but uses the `toString` value as the label. */
   def collect: PropertyT[A] =
     flatMap(a =>
-      propertyT.writeLog(Log.LabelX(Label(a.toString, 0, Cover.Cover)))
+      propertyT.cover(Label(a.toString, 0, Cover.Cover))
         .map(_ => a)
     )
 }
@@ -206,7 +200,7 @@ trait PropertyTReporting {
               Report(successes, discards, coverage, takeSmallest(ShrinkCount(0), config.shrinkLimit, t))
             } else
               loop(successes.inc, discards, size.incBy(sizeInc), x.value._1,
-                Coverage.union(Coverage.fromLogs(j.logs), coverage)(_ + _))
+                Coverage.union(Coverage.count(j.coverage), coverage)(_ + _))
         }
       }
     loop(SuccessCount(0), DiscardCount(0), size0.getOrElse(sizeInit), seed0, Coverage.empty)
