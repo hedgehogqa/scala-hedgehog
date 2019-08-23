@@ -30,6 +30,24 @@ object Log {
     Info(s)
 }
 
+/** A record containing the details of a test run. */
+case class Journal(
+    logs: List[Log]
+  ) {
+
+  def ++(o: Journal): Journal =
+    Journal(logs ++ o.logs)
+
+  def log(log: Log): Journal =
+    copy(logs = logs ++ List(log))
+}
+
+object Journal {
+
+  def empty: Journal =
+    Journal(Nil)
+}
+
 case class PropertyConfig(
     testLimit: SuccessCount
   , discardLimit: DiscardCount
@@ -43,7 +61,7 @@ object PropertyConfig {
 }
 
 case class PropertyT[A](
-    run: GenT[(List[Log], Option[A])]
+    run: GenT[(Journal, Option[A])]
   ) {
 
   def map[B](f: A => B): PropertyT[B] =
@@ -54,7 +72,7 @@ case class PropertyT[A](
         // Forgive me, I'm assuming this breaks the Functor laws
         // If there's a better and non-law breaking of handling this we should remove this
         case e: Exception =>
-          (x._1 ++ List(Error(e)), None)
+          (x._1.log(Error(e)), None)
       }
     ))
 
@@ -69,7 +87,7 @@ case class PropertyT[A](
           // Forgive me, I'm assuming this breaks the Monad laws
           // If there's a better and non-law breaking of handling this we should remove this
           case e: Exception =>
-            Gen.constant((x._1 ++ List(Error(e)), None))
+            Gen.constant((x._1.log(Error(e)), None))
         }
       )
     ))
@@ -107,7 +125,7 @@ object PropertyT {
       override def map[A, B](fa: PropertyT[A])(f: A => B): PropertyT[B] =
         fa.map(f)
       override def point[A](a: => A): PropertyT[A] =
-        propertyT.hoist((Nil, a))
+        propertyT.hoist((Journal.empty, a))
       override def ap[A, B](fa: => PropertyT[A])(f: => PropertyT[A => B]): PropertyT[B] =
         PropertyT(Applicative.zip(fa.run, f.run)
           .map { case ((l1, oa), (l2, oab)) => (l2 ++ l1, oab.flatMap(y => oa.map(y(_)))) }
@@ -175,19 +193,20 @@ trait PropertyTReporting {
         Report(successes, discards, coverage, GaveUp)
       else {
         val x = p.run.run(size, seed)
+        val t = x.map(_._2.map { case (l, r) => (l.logs, r) })
         x.value._2 match {
           case None =>
             loop(successes, discards.inc, size.incBy(sizeInc), x.value._1, coverage)
 
           case Some((_, None)) =>
-            Report(successes, discards, coverage, takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2)))
+            Report(successes, discards, coverage, takeSmallest(ShrinkCount(0), config.shrinkLimit, t))
 
-          case Some((logs, Some(r))) =>
+          case Some((j, Some(r))) =>
             if (!r.success){
-              Report(successes, discards, coverage, takeSmallest(ShrinkCount(0), config.shrinkLimit, x.map(_._2)))
+              Report(successes, discards, coverage, takeSmallest(ShrinkCount(0), config.shrinkLimit, t))
             } else
               loop(successes.inc, discards, size.incBy(sizeInc), x.value._1,
-                Coverage.union(Coverage.fromLogs(logs), coverage)(_ + _))
+                Coverage.union(Coverage.fromLogs(j.logs), coverage)(_ + _))
         }
       }
     loop(SuccessCount(0), DiscardCount(0), size0.getOrElse(sizeInit), seed0, Coverage.empty)
