@@ -16,6 +16,9 @@ trait PropertyTOps extends PropertyTReporting {
   def writeLog(log: Log): PropertyT[Unit] =
     hoist((Journal.empty.log(log), ()))
 
+  def cover(label: Label[Cover]): PropertyT[Unit] =
+    hoist((Journal(Nil, Coverage(Map(label.name -> label))), ()))
+
   def info(log: String): PropertyT[Unit] =
     writeLog(Info(log))
 

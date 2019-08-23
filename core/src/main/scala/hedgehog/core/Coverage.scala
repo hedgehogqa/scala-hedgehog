@@ -89,21 +89,10 @@ object Coverage {
   def empty[A]: Coverage[A] =
     Coverage(Map.empty[LabelName, Label[A]])
 
-  def fromLogs(logs: List[Log]): Coverage[CoverCount] =
-    fromLabels(logs.flatMap {
-      case Log.LabelX(l) =>
-        List(l)
-      case _ =>
-        Nil
-    })
-
-  def fromLabels(labels: List[Label[Cover]]): Coverage[CoverCount] = {
-    val cv = labels.map(l => Coverage(Map(l.name -> l)))
-      .foldLeft(Coverage.empty[Cover])(union(_, _)(_ ++ _))
+  def count(cv: Coverage[Cover]): Coverage[CoverCount] =
     cv.copy(labels = cv.labels.map { case (k, l) =>
       k -> l.copy(annotation = CoverCount.fromCover(l.annotation))
     })
-  }
 
   def union[A](a: Coverage[A], b: Coverage[A])(append: (A, A) => A): Coverage[A] =
     Coverage(b.labels.toList.foldLeft(a.labels) { case (m, (k, v)) =>
