@@ -8,13 +8,13 @@ trait PropertyTOps extends PropertyTReporting {
     fromGen(Gen.constant(value))
 
   def fromGen[A](gen: GenT[A]): PropertyT[A] =
-    PropertyT(gen.map(x => (Nil, Some(x))))
+    PropertyT(gen.map(x => (Journal.empty, Some(x))))
 
-  def hoist[A](a: (List[Log], A)): PropertyT[A] =
+  def hoist[A](a: (Journal, A)): PropertyT[A] =
     PropertyT(GenT.GenApplicative.point(a.copy(_2 = Some(a._2))))
 
   def writeLog(log: Log): PropertyT[Unit] =
-    hoist((List(log), ()))
+    hoist((Journal.empty.log(log), ()))
 
   def info(log: String): PropertyT[Unit] =
     writeLog(Info(log))
@@ -26,7 +26,7 @@ trait PropertyTOps extends PropertyTReporting {
     failureA[Unit]
 
   def failureA[A]: PropertyT[A] =
-    PropertyT(GenT.GenApplicative.point((Nil, None)))
+    PropertyT(GenT.GenApplicative.point((Journal.empty, None)))
 
   def error[A](e: Exception): PropertyT[A] =
     writeLog(Error(e)).flatMap(_ => failureA[A])
