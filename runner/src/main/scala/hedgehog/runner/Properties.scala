@@ -58,15 +58,15 @@ object Test {
       }
     }
 
+    val coverage = renderCoverage(report.coverage, report.tests)
     report.status match {
       case Failed(shrinks, log) =>
-        render(false, s"Falsified after ${report.tests.value} passed tests",
-          log.map(renderLog) ++ renderCoverage(report.coverage, report.tests))
+        render(false, s"Falsified after ${report.tests.value} passed tests", log.map(renderLog) ++ coverage)
       case GaveUp =>
         render(false, s"Gave up after only ${report.tests.value} passed test. " +
-          s"${report.discards.value} were discarded", Nil)
+          s"${report.discards.value} were discarded", coverage)
       case OK =>
-        render(true, s"OK, passed ${report.tests.value} tests", Nil)
+        render(true, s"OK, passed ${report.tests.value} tests", coverage)
     }
   }
 
@@ -82,13 +82,17 @@ object Test {
         sw.toString
     }
 
-  def renderCoverage(coverage: Coverage[CoverCount], tests: SuccessCount): List[String] = {
-    val (c, un) = Coverage.split(coverage, tests)
-    def renderLabel(l: Label[CoverCount]): String =
-      s"${l.annotation.percentage(tests).toDouble.toInt.toString}% ${l.name.render} ${l.minimum.toDouble.toInt.toString}%"
-    List(
-      c.map(l => "+ " + renderLabel(l))
-    , un.map(l =>"- " + renderLabel(l))
-    ).flatten
-  }
+  def renderCoverage(coverage: Coverage[CoverCount], tests: SuccessCount): List[String] =
+    coverage.labels.values.toList
+      .sortBy(_.annotation.percentage(tests).toDouble.toInt * -1)
+      .map(l => {
+        List(
+          List(l.annotation.percentage(tests).toDouble.toInt.toString + "%")
+        , List(l.name.render)
+        , if (l.minimum.toDouble > 0) List(
+            l.minimum.toDouble.toInt.toString + "%"
+          , if (Label.covered(l, tests)) "✓" else "✗"
+          ) else Nil
+        ).flatten.mkString(" ")
+      })
 }
