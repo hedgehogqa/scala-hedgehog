@@ -10,6 +10,25 @@ import hedgehog.state._
 import scala.concurrent.ExecutionContext.Implicits._
 
 /**
+ * An effectful turnstile
+ *
+ *             Coin
+ *    Push    +-------------+
+ *  +-----+   |             |     +-----+
+ *  |     |   |             v     v     |
+ *  |   +-+---+--+       +--+-----+-+   |
+ *  |   |        |       |          |   |
+ *  |   | Locked |       | Unlocked |   |
+ *  |   |        |       |          |   |
+ *  |   +-+---+--+       +--+-----+-+   |
+ *  |     ^   ^             |     |     |
+ *  +-----+   |             |     +-----+
+ *            +-------------+      Coin
+ *                      Push
+ *
+ * - States: Locked/Unlocked (represented by the boxes)
+ * - Transitions: Coin/Push (represented by the arrows)
+ *
  * https://teh.id.au/posts/2017/07/15/state-machine-testing/index.html
  */
 object TurnstileTest extends Properties {
@@ -157,7 +176,7 @@ object TurnstileTest extends Properties {
   object State {
 
     def default: State =
-      State(TurnstileState.inititalState)
+      State(TurnstileState.initialState)
   }
 }
 
@@ -168,7 +187,7 @@ object TurnstileState {
   case object Locked extends TurnstileState
   case object Unlocked extends TurnstileState
 
-  def inititalState: TurnstileState =
+  def initialState: TurnstileState =
     Locked
 }
 
@@ -177,7 +196,7 @@ case class Turnstile(
   ) {
 
   def reset(): Unit = {
-    state.set(TurnstileState.inititalState)
+    state.set(TurnstileState.initialState)
   }
 
   def insertCoin(): Unit = {
@@ -203,5 +222,5 @@ case class Turnstile(
 object Turnstile {
 
   def create: Turnstile =
-    Turnstile(new AtomicReference(TurnstileState.inititalState))
+    Turnstile(new AtomicReference(TurnstileState.initialState))
 }
