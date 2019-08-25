@@ -157,7 +157,7 @@ object TurnstileTest extends Properties {
   object State {
 
     def default: State =
-      State(TurnstileState.inititalState)
+      State(TurnstileState.initialState)
   }
 }
 
@@ -168,7 +168,7 @@ object TurnstileState {
   case object Locked extends TurnstileState
   case object Unlocked extends TurnstileState
 
-  def inititalState: TurnstileState =
+  def initialState: TurnstileState =
     Locked
 }
 
@@ -177,7 +177,7 @@ case class Turnstile(
   ) {
 
   def reset(): Unit = {
-    state.set(TurnstileState.inititalState)
+    state.set(TurnstileState.initialState)
   }
 
   def insertCoin(): Unit = {
@@ -203,5 +203,5 @@ case class Turnstile(
 object Turnstile {
 
   def create: Turnstile =
-    Turnstile(new AtomicReference(TurnstileState.inititalState))
+    Turnstile(new AtomicReference(TurnstileState.initialState))
 }
