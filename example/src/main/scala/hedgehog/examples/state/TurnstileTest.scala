@@ -10,6 +10,25 @@ import hedgehog.state._
 import scala.concurrent.ExecutionContext.Implicits._
 
 /**
+ * An effectful turnstile
+ *
+ *             Coin
+ *    Push    +-------------+
+ *  +-----+   |             |     +-----+
+ *  |     |   |             v     v     |
+ *  |   +-+---+--+       +--+-----+-+   |
+ *  |   |        |       |          |   |
+ *  |   | Locked |       | Unlocked |   |
+ *  |   |        |       |          |   |
+ *  |   +-+---+--+       +--+-----+-+   |
+ *  |     ^   ^             |     |     |
+ *  +-----+   |             |     +-----+
+ *            +-------------+      Coin
+ *                      Push
+ *
+ * - States: Locked/Unlocked (represented by the boxes)
+ * - Transitions: Coin/Push (represented by the arrows)
+ *
  * https://teh.id.au/posts/2017/07/15/state-machine-testing/index.html
  */
 object TurnstileTest extends Properties {
