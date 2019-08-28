@@ -164,11 +164,15 @@ are still relevant despite whatever language they are presented with.
 
 ### Blogs
 
-- [Choosing properties for property-based testing](https://fsharpforfunandprofit.com/posts/property-based-testing-2/)
-- [An introduction to property-based testing](https://fsharpforfunandprofit.com/posts/property-based-testing/)
+- [Choosing properties for property-based testing](https://fsharpforfunandprofit.com/posts/property-based-testing-2/) (sharpforfunandprofit.com)
+- [An introduction to property-based testing](https://fsharpforfunandprofit.com/posts/property-based-testing/) (sharpforfunandprofit.com)
+- [Integrated versus Manual Shrinking](https://www.well-typed.com/blog/2019/05/integrated-shrinking/) (well-typed.com)
+- [Property-Based Testing in a Screencast Editor](https://wickstrom.tech/programming/2019/03/02/property-based-testing-in-a-screencast-editor-introduction.html) (wickstrom.tech)
 
 ### Presentations
 
+- [Introduction to stateful property based testing](https://www.youtube.com/watch?v=owHmYA52SIM) - Tomasz Kowal at Lambda Days 2019
+- [Building on Developers' Intuitions to Create Effective Property-Based Tests](https://www.infoq.com/presentations/property-based-testing-haskell/) - John Hughes at Lambda Days 2019
 - [Property-Based Testing The Ugly Parts: Case Studies from Komposition](https://www.youtube.com/watch?v=z2ete8VZnZY) - Oskar Wickström at flatMap (Oslo) 2019
 - [Types vs Tests](https://skillsmatter.com/skillscasts/12648-types-vs-tests) - Julien Truffaut at Scala eXchange 2018
 - [Appetite for dysfunction](https://www.youtube.com/watch?v=k8k2rwWImy8) - Andrew McCluskey at Compose Melbourne 2018
@@ -185,8 +189,9 @@ are still relevant despite whatever language they are presented with.
 
 ### Books
 
-- [ScalaCheck: The Definitive Guide](https://www.artima.com/shop/scalacheck) by Rickard Nilsson (2014)
+- [Property-Based Testing in a Screencast Editor](https://leanpub.com/property-based-testing-in-a-screencast-editor) by Oskar Wickström (2019)
 - [Property-Based Testing with PropEr, Erlang, and Elixir](https://pragprog.com/book/fhproper/property-based-testing-with-proper-erlang-and-elixir) by Fred Hebert (2018)
+- [ScalaCheck: The Definitive Guide](https://www.artima.com/shop/scalacheck) by Rickard Nilsson (2014)
 
 
 ## Alternatives
