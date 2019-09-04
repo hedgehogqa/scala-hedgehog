@@ -19,6 +19,7 @@ object StateTest extends Properties {
     , propertyFails("accumulator (sequential)", testAccumulatorSequential)
     , property("get-and-set (parallel) good", testGetAndSetParallelGood)
     , propertyFails("get-and-set (parallel) bad", testGetAndSetParallelBad)
+    , property("vars (parallel)", testVarsParallel)
     )
 
   def testRegistrySequential: Property = {
@@ -76,6 +77,17 @@ object StateTest extends Properties {
       , ""
       , commands(ref, goodBoy = false)
       , () => ref.set("")
+      )
+  }
+
+  def testVarsParallel: Property = {
+    import Vars._
+    parallel(
+        Range.linear(1, 100)
+      , Range.linear(1, 10)
+      , State(Nil)
+      , commands
+      , () => ()
       )
   }
 
@@ -297,3 +309,32 @@ object GetAndSet {
           .log(s"$s0 $s $i $o")
     }
   }
+
+object Vars {
+
+  case class State(vars: List[Var[Unit]])
+
+  def commands: List[CommandIO[State]] =
+    List(
+      command
+    )
+
+  def command: CommandIO[State] =
+    new Command[State, Unit, Unit] {
+
+      override def gen(s: State): Option[Gen[Input]] =
+        Some(Gen.constant(()))
+
+      override def execute(env: Environment, s: Input): Either[String, Output] =
+        Right(s)
+
+      override def update(s: State, i: Input, o: Var[Output]): State =
+        s.copy(vars = s.vars ++ List(o))
+
+      override def ensure(env: Environment, s0: State, s: State, i: Input, o: Output): Result = {
+        // Make sure we don't throw an exception accessing all the vars
+        s.vars.foreach(_.get(env))
+        Result.success
+      }
+    }
+}

@@ -23,7 +23,7 @@ trait Action[S] {
 
 object Action {
 
-  type ActionCheck[S] = State[S, Result]
+  type ActionCheck[S] = State[(S, Environment), Result]
 
   def action[S, I, O](command: Command[S, I, O], context: Context[S]): StateT[GenT, Context[S], Option[Action[S]]] =
     for {
@@ -84,33 +84,29 @@ object Action {
     State.traverse(actions)(loop).map(_.flatMap(_.toList))
   }
 
-  def execute[S](action: Action[S]): StateT[Either[ExecutionError, ?], Environment, ActionCheck[S]] =
-    stateT[Either[ExecutionError, ?]](env0 =>
-      // Apologies, we're going to assume that environment variables are uncommon enough we don't want to force
-      // users to have to pass back the exceptions, instead we'll catch them here. Dodgy.
-      (try {
-        action.command.execute(env0, action.input)
-          .leftMap(ExecutionError.execute)
-      } catch {
-        case e: EnvironmentError =>
-          Left(ExecutionError.environment(e))
-        case e: Exception =>
-          Left(ExecutionError.unknown(e))
-      }).rightMap(output => {
-        val env = Environment(env0.value + (action.output.name -> output))
-        (env, State.state(s0 => {
-          val s = action.command.update(s0, action.input, action.output)
-          (s, action.command.ensure(env, s0, s, action.input, output))
-        }))
-        }
-      )
+  def execute[S](action: Action[S], env0: Environment): Either[ExecutionError, ActionCheck[S]] =
+    // Apologies, we're going to assume that environment variables are uncommon enough we don't want to force
+    // users to have to pass back the exceptions, instead we'll catch them here. Dodgy.
+    (try {
+      action.command.execute(env0, action.input)
+        .leftMap(ExecutionError.execute)
+    } catch {
+      case e: EnvironmentError =>
+        Left(ExecutionError.environment(e))
+      case e: Exception =>
+        Left(ExecutionError.unknown(e))
+    }).rightMap(output =>
+      State.state { case (s0, env1) =>
+        val env = Environment(env1.value + (action.output.name -> output))
+        val s = action.command.update(s0, action.input, action.output)
+        ((s, env), action.command.ensure(env, s0, s, action.input, output))
+      }
     )
 
   def executeUpdateEnsure[S](action: Action[S]): State[(S, Environment), Result] =
     stateT.state { case (state0, env0) =>
-      execute(action).run(env0).rightMap { case (env, check) =>
-        val (state, r) = check.run(state0).value
-        ((state, env), r)
+      execute(action, env0).rightMap { check =>
+        check.run((state0, env0)).value
       }.fold(e => ((state0, env0), Runner.executionErrorToResult(e)), identity)
     }
 
@@ -145,13 +141,14 @@ object Action {
     val (e, r) = stateT.traverse(parallel.prefix)(executeUpdateEnsure)
       .run((initial, Environment(Map())))
       .value
-    Future(stateT[Either[ExecutionError, ?]].traverse(parallel.branch1)(execute).eval(e._2))
-      .zip(Future(stateT[Either[ExecutionError, ?]].traverse(parallel.branch2)(execute).eval(e._2)))
+    println(e)
+    Future(sequence[Either[ExecutionError, ?], ActionCheck[S]](parallel.branch1.map(execute(_, e._2))))
+      .zip(Future(sequence[Either[ExecutionError, ?], ActionCheck[S]](parallel.branch2.map(execute(_, e._2)))))
       .map { case (xs, ys) =>
         Applicative.zip[Either[ExecutionError, ?], List[ActionCheck[S]], List[ActionCheck[S]]](xs, ys)
           .fold[Result](
             e => Runner.executionErrorToResult(e)
-          , x => Result.all(r).and(linearize(e._1, x._1, x._2))
+          , x => Result.all(r).and(linearize(e._1, e._2, x._1, x._2))
           )
       }
   }
@@ -171,11 +168,11 @@ object Action {
         ).flatten
     }
 
-  def linearize[S](initial: S, branch1: List[ActionCheck[S]], branch2: List[ActionCheck[S]]): Result =
+  def linearize[S](initial: S, env: Environment, branch1: List[ActionCheck[S]], branch2: List[ActionCheck[S]]): Result =
     Result.any(
       interleave(branch1, branch2).zipWithIndex.map { case (bs, i) =>
         Result.all(
-          State.traverse(bs)(identity).eval(initial).value
+          State.traverse(bs)(identity).eval((initial, env)).value
         ).log(s"=== Counterexample ${i.toString} ===")
       }
     ).log("no valid interleaving")
