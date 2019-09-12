@@ -16,6 +16,7 @@ Tutorial
     - [Filtering](#filtering)
     - [Sized](#sized)
   - [Shrinking](#shrinking)
+- [State](#state)
 
 ## Thanks
 
@@ -637,3 +638,9 @@ List(0)
 
 You can see after a few tries Hedgehog finds an invalid example `List(1, 4, 1)`,
 and starts to shrink both the values down to `0` and also the list size.
+
+
+## State
+
+For a separate tutorial on state-based property testing please continue
+[here](state-tutorial.md).

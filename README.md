@@ -18,6 +18,7 @@ so shrinks obey the invariants of generated values by construction.
 - [Example](#example)
 - [Guides](#guides)
   - [Tutorial](doc/tutorial.md)
+  - [State Tutorial](doc/state-tutorial.md)
   - [Migration from ScalaCheck](doc/migration-scalacheck.md)
 - [Motivation](#motivation)
   - [Design Considerations](#design-considerations)
