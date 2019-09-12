@@ -409,4 +409,4 @@ properties like we just did.
   - [Don't Write Tests](https://www.youtube.com/watch?v=hXnS_Xjwk2Y)
 - https://teh.id.au/posts/2017/07/15/state-machine-testing/index.html
 - https://github.com/qfpl/state-machine-testing-course
- [Introduction to stateful property based testing](https://www.youtube.com/watch?v=owHmYA52SIM)
+- [Introduction to stateful property based testing](https://www.youtube.com/watch?v=owHmYA52SIM)
