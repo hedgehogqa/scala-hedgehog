@@ -141,7 +141,6 @@ object Action {
     val (e, r) = stateT.traverse(parallel.prefix)(executeUpdateEnsure)
       .run((initial, Environment(Map())))
       .value
-    println(e)
     Future(sequence[Either[ExecutionError, ?], ActionCheck[S]](parallel.branch1.map(execute(_, e._2))))
       .zip(Future(sequence[Either[ExecutionError, ?], ActionCheck[S]](parallel.branch2.map(execute(_, e._2)))))
       .map { case (xs, ys) =>
