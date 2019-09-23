@@ -84,28 +84,34 @@ object Action {
     State.traverse(actions)(loop).map(_.flatMap(_.toList))
   }
 
-  def execute[S](action: Action[S], env0: Environment): Either[ExecutionError, ActionCheck[S]] =
-    // Apologies, we're going to assume that environment variables are uncommon enough we don't want to force
-    // users to have to pass back the exceptions, instead we'll catch them here. Dodgy.
-    (try {
-      action.command.execute(env0, action.input)
-        .leftMap(ExecutionError.execute)
-    } catch {
-      case e: EnvironmentError =>
-        Left(ExecutionError.environment(e))
-      case e: Exception =>
-        Left(ExecutionError.unknown(e))
-    }).rightMap(output =>
-      State.state { case (s0, env1) =>
-        val env = Environment(env1.value + (action.output.name -> output))
-        val s = action.command.update(s0, action.input, action.output)
-        ((s, env), action.command.ensure(env, s0, s, action.input, output))
-      }
+  def execute[S](action: Action[S]): StateT[Either[ExecutionError, ?], Environment, ActionCheck[S]] =
+    stateT[Either[ExecutionError, ?]](env0 =>
+      // Apologies, we're going to assume that environment variables are uncommon enough we don't want to force
+      // users to have to pass back the exceptions, instead we'll catch them here. Dodgy.
+      (try {
+        action.command.execute(env0, action.input)
+          .leftMap(ExecutionError.execute)
+      } catch {
+        case e: EnvironmentError =>
+          Left(ExecutionError.environment(e))
+        case e: Exception =>
+          Left(ExecutionError.unknown(e))
+      }).rightMap(output => {
+        // NOTE: We need to update the environment in different contexts, once for the original execution
+        // and then later again for linearization
+        val env = Environment(env0.value + (action.output.name -> output))
+        (env, State.state { case (s0, env1) =>
+          val env2 = Environment(env1.value + (action.output.name -> output))
+          val s = action.command.update(s0, action.input, action.output)
+          ((s, env2), action.command.ensure(env2, s0, s, action.input, output))
+        })
+        }
+      )
     )
 
   def executeUpdateEnsure[S](action: Action[S]): State[(S, Environment), Result] =
     stateT.state { case (state0, env0) =>
-      execute(action, env0).rightMap { check =>
+      execute(action).eval(env0).rightMap { check =>
         check.run((state0, env0)).value
       }.fold(e => ((state0, env0), Runner.executionErrorToResult(e)), identity)
     }
@@ -141,8 +147,8 @@ object Action {
     val (e, r) = stateT.traverse(parallel.prefix)(executeUpdateEnsure)
       .run((initial, Environment(Map())))
       .value
-    Future(sequence[Either[ExecutionError, ?], ActionCheck[S]](parallel.branch1.map(execute(_, e._2))))
-      .zip(Future(sequence[Either[ExecutionError, ?], ActionCheck[S]](parallel.branch2.map(execute(_, e._2)))))
+    Future(stateT[Either[ExecutionError, ?]].traverse(parallel.branch1)(execute).eval(e._2))
+      .zip(Future(stateT[Either[ExecutionError, ?]].traverse(parallel.branch2)(execute).eval(e._2)))
       .map { case (xs, ys) =>
         Applicative.zip[Either[ExecutionError, ?], List[ActionCheck[S]], List[ActionCheck[S]]](xs, ys)
           .fold[Result](
