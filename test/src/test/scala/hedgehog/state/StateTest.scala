@@ -313,10 +313,12 @@ object GetAndSet {
 object Vars {
 
   case class State(vars: List[Var[Unit]])
+  case class Execute(v: Var[Unit])
 
   def commands: List[CommandIO[State]] =
     List(
       command
+    , commandExecute
     )
 
   def command: CommandIO[State] =
@@ -336,5 +338,27 @@ object Vars {
         s.vars.foreach(_.get(env))
         Result.success
       }
+    }
+
+  def commandExecute: CommandIO[State] =
+    new Command[State, Execute, Unit] {
+
+      override def gen(s: State): Option[Gen[Input]] =
+        s.vars match {
+          case Nil =>
+            None
+          case h :: t =>
+            Some(Gen.element(h, t).map(Execute))
+        }
+
+      override def execute(env: Environment, s: Input): Either[String, Output] =
+        // Make sure we don't throw an exception accessing all the vars
+        Right(s.v.get(env))
+
+      override def update(s: State, i: Input, o: Var[Output]): State =
+        s
+
+      override def ensure(env: Environment, s0: State, s: State, i: Input, o: Output): Result =
+        Result.success
     }
 }
