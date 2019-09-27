@@ -172,6 +172,7 @@ are still relevant despite whatever language they are presented with.
 
 ### Presentations
 
+- [Much Ado About Testing](https://www.youtube.com/watch?v=Jhzc7fxY5lw) - Nicolas Rinaudo at ScalaWorld 2019
 - [Introduction to stateful property based testing](https://www.youtube.com/watch?v=owHmYA52SIM) - Tomasz Kowal at Lambda Days 2019
 - [Building on Developers' Intuitions to Create Effective Property-Based Tests](https://www.infoq.com/presentations/property-based-testing-haskell/) - John Hughes at Lambda Days 2019
 - [Property-Based Testing The Ugly Parts: Case Studies from Komposition](https://www.youtube.com/watch?v=z2ete8VZnZY) - Oskar Wickström at flatMap (Oslo) 2019
