@@ -10,6 +10,7 @@ object ErrorTest extends Properties {
       example("tests with no generators don't throw exceptions", noGen)
     , example("tests with generators that throw exception in map will shrink", shrinkMap)
     , example("tests with generators that throw exception in flatMap will shrink", shrinkFlatMap)
+    , example("tests with generators that throw exceptions in map fail gracefully", genNoError)
     )
 
   def noGen: Result = {
@@ -35,6 +36,15 @@ object ErrorTest extends Properties {
     )
     val r = Property.checkRandom(PropertyConfig.default, p)
     getErrorLog(r.status) ==== List(Info("6"), Error(e))
+  }
+
+  def genNoError: Result = {
+    val e = new RuntimeException()
+    val p = Gen.int(Range.linear(0, 100))
+      .map[Result](_ => throw e)
+      .forAll
+    val r = Property.checkRandom(PropertyConfig.default, p)
+    getErrorLog(r.status) ==== List(Error(e))
   }
 
   def getErrorLog(status: Status): List[Log] =
