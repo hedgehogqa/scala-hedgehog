@@ -186,7 +186,13 @@ trait PropertyTReporting {
       else if (discards.value >= config.discardLimit.value)
         Report(successes, discards, coverage, GaveUp)
       else {
-        val x = p.run.run(size, seed)
+        val x =
+          try {
+            p.run.run(size, seed)
+          } catch {
+            case e: Exception =>
+              Property.error(e).run.run(size, seed)
+          }
         val t = x.map(_._2.map { case (l, r) => (l.logs, r) })
         x.value._2 match {
           case None =>
