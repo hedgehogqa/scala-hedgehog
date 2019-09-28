@@ -5,7 +5,16 @@ scala:
  - 2.12.8
  - 2.13.0
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$(git log --format=%H -1)'"' test
+  - |
+    if [ "${TRAVIS_TAG:-}" != "" ]; then
+      VERSION=$(echo "$TRAVIS_TAG" | sed 's/^v//')
+    else
+      VERSION=$(git log --format=%H -1)
+    fi
+  - sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$VERSION'"' test
 after_success:
-  - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$(git log --format=%H -1)'"' "set publishMavenStyle in ThisBuild := false" publish
-  - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$(git log --format=%H -1)'"' "set publishMavenStyle in ThisBuild := true" publish
+  - |
+    if [ $TRAVIS_PULL_REQUEST == "false" ] && ([ "${TRAVIS_BRANCH:-}" == "master" || [ "${TRAVIS_TAG:-}" != "" ]); then
+      sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$VERSION'"' "set publishMavenStyle in ThisBuild := false" publish
+      sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$VERSION'"' "set publishMavenStyle in ThisBuild := true" publish
+    fi
