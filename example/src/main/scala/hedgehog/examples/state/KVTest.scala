@@ -43,7 +43,7 @@ object KVTest extends Properties {
         Range.linear(1, 100)
       , State.default
       , commands(kv)
-      , () => deleteRecursively(root)
+      , () => TestUtil.deleteRecursively(root)
       )
   }
 
@@ -55,7 +55,7 @@ object KVTest extends Properties {
       , Range.linear(1, 10)
       , State.default
       , commands(kv)
-      , () => deleteRecursively(root)
+      , () => TestUtil.deleteRecursively(root)
       )
   }
 
@@ -129,14 +129,6 @@ object KVTest extends Properties {
       override def ensure(env: Environment, s0: State, s1: State, i: Get, o: Option[String]): Result =
         s1.map.get(i.key) ==== o
     }
-
-  def deleteRecursively(file: File): Unit = {
-    if (file.isDirectory) {
-      file.listFiles.foreach(deleteRecursively)
-    }
-    file.delete
-    ()
-  }
 }
 
 object KV {

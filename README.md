@@ -19,6 +19,7 @@ so shrinks obey the invariants of generated values by construction.
 - [Guides](#guides)
   - [Tutorial](doc/tutorial.md)
   - [State Tutorial](doc/state-tutorial.md)
+  - [State Tutorial - Vars](doc/state-tutorial-vars.md)
   - [Migration from ScalaCheck](doc/migration-scalacheck.md)
 - [Motivation](#motivation)
   - [Design Considerations](#design-considerations)
@@ -128,6 +129,8 @@ object PropertyTest extends Properties {
 ## Guides
 
 - [Tutorial](doc/tutorial.md)
+- [State Tutorial](doc/state-tutorial.md)
+- [State Tutorial - Vars](doc/state-tutorial-vars.md)
 - [Migration from ScalaCheck](doc/migration-scalacheck.md)
 
 
