@@ -397,7 +397,8 @@ def ensure(env: Environment, s0: State, s1: State, i: Input, o: Output): Result
 ```
 
 For the tests we just wrote we actually don't need them, but they are useful in
-more complex testing scenarios. I might leave that for another post.
+more complex testing scenarios. Please see the [next
+tutorial](state-tutorial-vars.md) to learn more.
 
 For now just ignore them, you can still get started and write some reasonable
 properties like we just did.
