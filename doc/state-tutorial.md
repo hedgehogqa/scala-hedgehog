@@ -411,3 +411,4 @@ properties like we just did.
 - https://teh.id.au/posts/2017/07/15/state-machine-testing/index.html
 - https://github.com/qfpl/state-machine-testing-course
 - [Introduction to stateful property based testing](https://www.youtube.com/watch?v=owHmYA52SIM)
+- [State-based Testing Tutorial](https://www.youtube.com/watch?v=YhAxC_VI2dc)
