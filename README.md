@@ -58,14 +58,12 @@ You can find the [bintray repository here](https://bintray.com/hedgehogqa/scala-
 val hedgehogVersion = "${COMMIT}"
 
 libraryDependencies ++= Seq(
-  "hedgehog" %% "hedgehog-core" % hedgehogVersion,
-  "hedgehog" %% "hedgehog-runner" % hedgehogVersion,
-  "hedgehog" %% "hedgehog-sbt" % hedgehogVersion
+  "qa.hedgehog" %% "hedgehog-core" % hedgehogVersion,
+  "qa.hedgehog" %% "hedgehog-runner" % hedgehogVersion,
+  "qa.hedgehog" %% "hedgehog-sbt" % hedgehogVersion
 )
 
-resolvers += Resolver.url("bintray-scala-hedgehog",
-    url("https://dl.bintray.com/hedgehogqa/scala-hedgehog")
-  )(Resolver.ivyStylePatterns)
+resolvers += "bintray-scala-hedgehog" at "https://dl.bintray.com/hedgehogqa/scala-hedgehog"
 ```
 
 ### SBT Source Dependency
