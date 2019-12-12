@@ -100,6 +100,14 @@ case class GenT[A](run: (Size, Seed) => Tree[(Seed, Option[A])]) {
   def filter(p: A => Boolean): GenT[A] =
     Gen.filter(this)(p)
 
+  /**
+   * Generates a value that satisfies a predicate.
+   *
+   * Equivalent to `filter` and is used in for-comprehensions.
+   */
+  def withFilter(p: A => Boolean): GenT[A] =
+    filter(p)
+
   /**********************************************************************/
   // Combinators - Collections
 
