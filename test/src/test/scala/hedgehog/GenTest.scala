@@ -8,11 +8,13 @@ object GenTest extends Properties {
   def tests: List[Test] =
     List(
       property("long generates correctly", testLong)
+    , property("withFilter filters values", testWithFilter)
     , example("frequency is random", testFrequency)
     , example("fromSome some", testFromSomeSome)
     , example("fromSome none", testFromSomeNone)
     , example("applicative", testApplicative)
     , example("monad", testMonad)
+    , example("withFilter is lazy", testWithFilterIsLazy)
     )
 
   def testLong: Property = {
@@ -59,5 +61,22 @@ object GenTest extends Properties {
         TTree((0, 1), List(TTree((0, 0), List())))
       , TTree((1, 0), List())
       ))
+  }
+
+  def testWithFilter: Property = {
+    val genEvens = for {
+      n <- Gen.int(Range.linear(0, 1))
+      if n % 2 == 0
+    } yield n
+    for {
+      n <- genEvens.forAll
+    } yield n % 2 ==== 0
+  }
+
+  def testWithFilterIsLazy: Result = {
+    val _ = Gen.constant("Better watch out...").withFilter { _ =>
+      throw new IllegalStateException("I told you so!")
+    }
+    Result.success
   }
 }
