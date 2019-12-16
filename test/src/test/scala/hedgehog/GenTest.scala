@@ -10,6 +10,8 @@ object GenTest extends Properties {
       property("long generates correctly", testLong)
     , property("withFilter filters values", testWithFilter)
     , example("frequency is random", testFrequency)
+    , property("frequency handles large weights", testFrequencyLargeWeights)
+        .config(c => c.copy(testLimit = SuccessCount(100000)))
     , example("fromSome some", testFromSomeSome)
     , example("fromSome none", testFromSomeNone)
     , example("applicative", testApplicative)
@@ -29,6 +31,17 @@ object GenTest extends Properties {
     val r2 = g.run(Size(1), Seed.fromLong(1)).value._2
 
     r1 ==== Some("a") and r2 ==== Some("b")
+  }
+
+  def testFrequencyLargeWeights: Property = {
+    for {
+      _ <- Gen.frequency1(
+        (Int.MaxValue, Gen.constant(true)),
+        (Int.MaxValue, Gen.constant(false))
+      ).forAll
+        .cover(CoverPercentage(0.50), LabelName("First generator"), Cover.Boolean2Cover)
+        .cover(CoverPercentage(0.50), LabelName("Second generator"), b => Cover.Boolean2Cover(!b))
+    } yield Result.success
   }
 
   def testFromSomeSome: Result = {
