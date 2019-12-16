@@ -13,6 +13,7 @@ object GenTest extends Properties {
     , property("frequency handles large weights", testFrequencyLargeWeights)
         .config(c => c.copy(testLimit = SuccessCount(100000)))
     , property("frequency ignores non-positive weights", testFrequencyNonPositiveWeights)
+    , property("frequency discards if no positive weights", testFrequencyNoPositiveWeights)
     , example("fromSome some", testFromSomeSome)
     , example("fromSome none", testFromSomeNone)
     , example("applicative", testApplicative)
@@ -54,6 +55,23 @@ object GenTest extends Properties {
         (positiveWeight, Gen.constant(true))
       ).forAll
     } yield trueOrFalse ==== true
+  }
+
+  def testFrequencyNoPositiveWeights: Property = {
+    val forAllNonPositive = Gen.int(Range.constant(0, Int.MinValue)).forAll
+    for {
+      nonPositiveWeightA <- forAllNonPositive
+      nonPositiveWeightB <- forAllNonPositive
+      seed <- Gen.long(Range.constant(Long.MinValue, Long.MaxValue)).forAll
+    } yield {
+      val p = Gen.frequency1(
+        (nonPositiveWeightA, Gen.constant(true)),
+        (nonPositiveWeightB, Gen.constant(true))
+      ).forAll.map(_ => Result.success)
+      val config = PropertyConfig.default
+      val report = Property.check(config, p, Seed.fromLong(seed))
+      report.status ==== GaveUp and report.discards ==== config.discardLimit
+    }
   }
 
   def testFromSomeSome: Result = {
