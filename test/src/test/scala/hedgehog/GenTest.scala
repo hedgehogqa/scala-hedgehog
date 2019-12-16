@@ -12,6 +12,7 @@ object GenTest extends Properties {
     , example("frequency is random", testFrequency)
     , property("frequency handles large weights", testFrequencyLargeWeights)
         .config(c => c.copy(testLimit = SuccessCount(100000)))
+    , property("frequency ignores non-positive weights", testFrequencyNonPositiveWeights)
     , example("fromSome some", testFromSomeSome)
     , example("fromSome none", testFromSomeNone)
     , example("applicative", testApplicative)
@@ -42,6 +43,17 @@ object GenTest extends Properties {
         .cover(CoverPercentage(0.50), LabelName("First generator"), Cover.Boolean2Cover)
         .cover(CoverPercentage(0.50), LabelName("Second generator"), b => Cover.Boolean2Cover(!b))
     } yield Result.success
+  }
+
+  def testFrequencyNonPositiveWeights: Property = {
+    for {
+      nonPositiveWeight <- Gen.int(Range.constant(0, Int.MinValue)).forAll
+      positiveWeight <- Gen.int(Range.constant(1, Int.MaxValue)).forAll
+      trueOrFalse <- Gen.frequency1(
+        (nonPositiveWeight, Gen.constant(false)),
+        (positiveWeight, Gen.constant(true))
+      ).forAll
+    } yield trueOrFalse ==== true
   }
 
   def testFromSomeSome: Result = {
