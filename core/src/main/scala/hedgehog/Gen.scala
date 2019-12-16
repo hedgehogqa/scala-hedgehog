@@ -137,8 +137,9 @@ trait GenTOps extends MonadGenOps[Gen] {
      }
      val total = nonNegative.map(_._1.toLong).sum
      for {
-       n <- long(Range.constant(1, total))
-       x <- pick(n, a, l)
+       // Ensure n is positive to avoid picking any generator if all weights are non-positive.
+       n <- long(Range.constant(1, math.max(1, total)))
+       x <- pick(n, nonNegative.head, nonNegative.tail)
      } yield x
    }
 
