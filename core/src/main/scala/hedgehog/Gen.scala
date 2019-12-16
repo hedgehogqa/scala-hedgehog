@@ -127,11 +127,15 @@ trait GenTOps extends MonadGenOps[Gen] {
        else
          xs match {
            case Nil =>
-             sys.error("Invariant: frequency hits an impossible code path")
+             Gen.discard
            case h :: t =>
              pick(n - x._1, h, t)
          }
-     val total = (a :: l).map(_._1.toLong).sum
+     // Treat negative weights as zero.
+     val nonNegative = (a :: l).map {
+       case (weight, gen) => math.max(weight, 0) -> gen
+     }
+     val total = nonNegative.map(_._1.toLong).sum
      for {
        n <- long(Range.constant(1, total))
        x <- pick(n, a, l)
