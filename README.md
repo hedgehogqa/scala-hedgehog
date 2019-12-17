@@ -101,6 +101,16 @@ While Hedgehog is obviously not included in that list, an may never  be, by exte
 `Properties` tests can be run as an application (as `Properties` includes a handy `main` function).
 NOTE: This requires the test to be an `object` and _not_ a `class`.
 
+### Runner Usage
+
+The runner `Properties` provides some basic options for running tests:
+```text
+Usage: PropertyTest [options]
+
+  -n, --name <value>  Only runs tests with the given name. Specify multiple times to run multiple tests.
+  -s, --seed <value>  Sets the seed value to use.
+  -h, --help
+```
 
 ## Example
 

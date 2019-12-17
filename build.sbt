@@ -53,6 +53,7 @@ lazy val runner = Project(
   ).settings(standardSettings ++ bintrarySettings ++ Seq(
     name := "hedgehog-runner"
   ) ++ Seq(libraryDependencies ++= Seq(
+      "com.github.scopt" %% "scopt" % "4.0.0-RC2"
     ))
   ).dependsOn(core)
 
