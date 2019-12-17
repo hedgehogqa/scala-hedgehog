@@ -127,7 +127,7 @@ trait GenTOps extends MonadGenOps[Gen] {
        else
          xs match {
            case Nil =>
-             Gen.discard
+             sys.error("Invariant: frequency hits an impossible code path")
            case h :: t =>
              pick(n - x._1, h, t)
          }
@@ -136,11 +136,14 @@ trait GenTOps extends MonadGenOps[Gen] {
        case (weight, gen) => math.max(weight, 0) -> gen
      }
      val total = nonNegative.map(_._1.toLong).sum
-     for {
-       // Ensure n is positive to avoid picking any generator if all weights are non-positive.
-       n <- long(Range.constant(1, math.max(1, total)))
-       x <- pick(n, nonNegative.head, nonNegative.tail)
-     } yield x
+     if (total > 0) {
+       for {
+         n <- long(Range.constant(1, total))
+         x <- pick(n, nonNegative.head, nonNegative.tail)
+       } yield x
+     } else {
+       sys.error("frequency: no positive weights were given so no value can be generated")
+     }
    }
 
   /**

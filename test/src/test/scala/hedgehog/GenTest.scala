@@ -3,6 +3,8 @@ package hedgehog
 import hedgehog.core._
 import hedgehog.runner._
 
+import scala.util.Try
+
 object GenTest extends Properties {
 
   def tests: List[Test] =
@@ -61,15 +63,16 @@ object GenTest extends Properties {
     for {
       nonPositiveWeightA <- forAllNonPositive
       nonPositiveWeightB <- forAllNonPositive
-      seed <- Gen.long(Range.constant(Long.MinValue, Long.MaxValue)).forAll
     } yield {
-      val p = Gen.frequency1(
+      val attempt = Try(Gen.frequency1(
         (nonPositiveWeightA, Gen.constant(true)),
         (nonPositiveWeightB, Gen.constant(true))
-      ).forAll.map(_ => Result.success)
-      val config = PropertyConfig.default
-      val report = Property.check(config, p, Seed.fromLong(seed))
-      report.status ==== GaveUp and report.discards ==== config.discardLimit
+      ))
+      val expected = new RuntimeException("frequency: no positive weights were given so no value can be generated")
+      Result.diffNamed("=== Failed With ===", attempt, expected) {
+        case (scala.util.Failure(ex), b) => ex.getMessage == b.getMessage
+        case _ => false
+      }
     }
   }
 
