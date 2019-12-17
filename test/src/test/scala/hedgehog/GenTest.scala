@@ -10,8 +10,7 @@ object GenTest extends Properties {
       property("long generates correctly", testLong)
     , property("withFilter filters values", testWithFilter)
     , example("frequency is random", testFrequency)
-    , property("frequency handles large weights", testFrequencyLargeWeights)
-        .config(c => c.copy(testLimit = SuccessCount(100000)))
+    , property("frequency handles large weights", testFrequencyLargeWeights).withTests(100000)
     , property("frequency ignores non-positive weights", testFrequencyNonPositiveWeights)
     , property("frequency discards if no positive weights", testFrequencyNoPositiveWeights)
     , example("fromSome some", testFromSomeSome)
@@ -41,8 +40,8 @@ object GenTest extends Properties {
         (Int.MaxValue, Gen.constant(true)),
         (Int.MaxValue, Gen.constant(false))
       ).forAll
-        .cover(CoverPercentage(0.50), LabelName("First generator"), Cover.Boolean2Cover)
-        .cover(CoverPercentage(0.50), LabelName("Second generator"), b => Cover.Boolean2Cover(!b))
+        .cover(CoverPercentage(45), LabelName("First generator"), Cover.Boolean2Cover)
+        .cover(CoverPercentage(45), LabelName("Second generator"), b => Cover.Boolean2Cover(!b))
     } yield Result.success
   }
 
