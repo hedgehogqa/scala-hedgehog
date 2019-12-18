@@ -1,0 +1,24 @@
+#!/bin/sh -eu
+
+: ${VERSION:?"VERSION"}
+
+BINTRAY_SUBJECT=hedgehogqa
+BINTRAY_REPO=scala-hedgehog-maven
+BINTRAY_PACKAGES="hedgehog-core hedgehog-runner hedgehog-sbt"
+
+echo "Sync to Maven Central..."
+
+for bintray_package in $BINTRAY_PACKAGES; do
+
+  echo "bintray_package: $bintray_package"
+
+  # https://bintray.com/docs/api/#_sync_version_artifacts_to_maven_central
+  curl \
+    -f \
+    --user "${BINTRAY_USER}:${BINTRAY_PASS}" \
+    -X POST \
+    -d '{}' \
+    -H "Content-type: application/json" \
+    "https://api.bintray.com/maven_central_sync/${BINTRAY_SUBJECT}/${BINTRAY_REPO}/${bintray_package}/versions/${VERSION}"
+
+done

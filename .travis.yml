@@ -23,4 +23,8 @@ after_success:
         'set publishMavenStyle in ThisBuild := true' \
         'set bintrayRepository in ThisBuild := "scala-hedgehog-maven"' \
         publish
+      if [ "${TRAVIS_TAG:-}" != "" ]; then
+        export VERSION
+        ./ci/bintray_maven_central_sync
+      fi
     fi
