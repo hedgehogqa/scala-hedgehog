@@ -3,6 +3,8 @@ package hedgehog
 import hedgehog.core._
 import hedgehog.runner._
 
+import scala.util.Try
+
 object GenTest extends Properties {
 
   def tests: List[Test] =
@@ -10,6 +12,8 @@ object GenTest extends Properties {
       property("long generates correctly", testLong)
     , property("withFilter filters values", testWithFilter)
     , example("frequency is random", testFrequency)
+    , property("frequency handles large weights", testFrequencyLargeWeights).withTests(100000)
+    , property("frequency fails if weight is non-positive", testFrequencyNonPositiveWeight)
     , example("fromSome some", testFromSomeSome)
     , example("fromSome none", testFromSomeNone)
     , example("applicative", testApplicative)
@@ -29,6 +33,39 @@ object GenTest extends Properties {
     val r2 = g.run(Size(1), Seed.fromLong(1)).value._2
 
     r1 ==== Some("a") and r2 ==== Some("b")
+  }
+
+  def testFrequencyLargeWeights: Property = {
+    for {
+      _ <- Gen.frequency1(
+        (Int.MaxValue, Gen.constant(true)),
+        (Int.MaxValue, Gen.constant(false))
+      ).forAll
+        .cover(CoverPercentage(45), LabelName("First generator"), Cover.Boolean2Cover)
+        .cover(CoverPercentage(45), LabelName("Second generator"), b => Cover.Boolean2Cover(!b))
+    } yield Result.success
+  }
+
+  def testFrequencyNonPositiveWeight: Property = {
+    val genPositive = Gen.int(Range.linear(1, Int.MaxValue))
+    val genNonPositive = Gen.int(Range.linear(0, Int.MinValue))
+    for {
+      positiveWeights <- Gen.list(genPositive, Range.linear(0, 10)).forAll
+      nonPositiveWeight <- genNonPositive.forAll
+      position <- Gen.int(Range.linear(0, positiveWeights.size)).forAll
+    } yield {
+      val weights = positiveWeights.take(position) ::: nonPositiveWeight :: positiveWeights.drop(position)
+      val frequencies = weights.map(_ -> Gen.constant(true))
+      val attempt = Try(Gen.frequency(
+        frequencies.head,
+        frequencies.tail
+      ))
+      val expected = new RuntimeException("Invariant: a non-positive weight was given")
+      Result.diffNamed("=== Failed With ===", attempt, expected) {
+        case (scala.util.Failure(ex), b) => ex.getMessage == b.getMessage
+        case _ => false
+      }
+    }
   }
 
   def testFromSomeSome: Result = {

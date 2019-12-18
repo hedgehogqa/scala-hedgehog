@@ -121,7 +121,7 @@ trait GenTOps extends MonadGenOps[Gen] {
     */
    def frequency[A](a: (Int, GenT[A]), l: List[(Int, GenT[A])]): GenT[A] = {
      @annotation.tailrec
-     def pick(n: Int, x: (Int, GenT[A]), xs: List[(Int, GenT[A])]): GenT[A] =
+     def pick(n: Long, x: (Int, GenT[A]), xs: List[(Int, GenT[A])]): GenT[A] =
        if (n <= x._1)
          x._2
        else
@@ -131,9 +131,13 @@ trait GenTOps extends MonadGenOps[Gen] {
            case h :: t =>
              pick(n - x._1, h, t)
          }
-     val total = (a :: l).map(_._1).sum
+     val hasNonPositive = (a :: l).exists {
+       case (weight, _) => weight <= 0
+     }
+     if (hasNonPositive) sys.error("Invariant: a non-positive weight was given")
+     val total = (a :: l).map(_._1.toLong).sum
      for {
-       n <- int(Range.constant(1, total))
+       n <- long(Range.constant(1, total))
        x <- pick(n, a, l)
      } yield x
    }
