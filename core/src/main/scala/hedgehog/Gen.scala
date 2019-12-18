@@ -131,19 +131,15 @@ trait GenTOps extends MonadGenOps[Gen] {
            case h :: t =>
              pick(n - x._1, h, t)
          }
-     // Treat negative weights as zero.
-     val nonNegative = (a :: l).map {
-       case (weight, gen) => math.max(weight, 0) -> gen
+     val hasNonPositive = (a :: l).exists {
+       case (weight, _) => weight <= 0
      }
-     val total = nonNegative.map(_._1.toLong).sum
-     if (total > 0) {
-       for {
-         n <- long(Range.constant(1, total))
-         x <- pick(n, nonNegative.head, nonNegative.tail)
-       } yield x
-     } else {
-       sys.error("frequency: no positive weights were given so no value can be generated")
-     }
+     if (hasNonPositive) sys.error("Invariant: a non-positive weight was given")
+     val total = (a :: l).map(_._1.toLong).sum
+     for {
+       n <- long(Range.constant(1, total))
+       x <- pick(n, a, l)
+     } yield x
    }
 
   /**

@@ -13,8 +13,7 @@ object GenTest extends Properties {
     , property("withFilter filters values", testWithFilter)
     , example("frequency is random", testFrequency)
     , property("frequency handles large weights", testFrequencyLargeWeights).withTests(100000)
-    , property("frequency ignores non-positive weights", testFrequencyNonPositiveWeights)
-    , property("frequency discards if no positive weights", testFrequencyNoPositiveWeights)
+    , property("frequency fails if weight is non-positive", testFrequencyNonPositiveWeight)
     , example("fromSome some", testFromSomeSome)
     , example("fromSome none", testFromSomeNone)
     , example("applicative", testApplicative)
@@ -47,28 +46,21 @@ object GenTest extends Properties {
     } yield Result.success
   }
 
-  def testFrequencyNonPositiveWeights: Property = {
+  def testFrequencyNonPositiveWeight: Property = {
+    val genPositive = Gen.int(Range.linear(1, Int.MaxValue))
+    val genNonPositive = Gen.int(Range.linear(0, Int.MinValue))
     for {
-      nonPositiveWeight <- Gen.int(Range.constant(0, Int.MinValue)).forAll
-      positiveWeight <- Gen.int(Range.constant(1, Int.MaxValue)).forAll
-      trueOrFalse <- Gen.frequency1(
-        (nonPositiveWeight, Gen.constant(false)),
-        (positiveWeight, Gen.constant(true))
-      ).forAll
-    } yield trueOrFalse ==== true
-  }
-
-  def testFrequencyNoPositiveWeights: Property = {
-    val forAllNonPositive = Gen.int(Range.constant(0, Int.MinValue)).forAll
-    for {
-      nonPositiveWeightA <- forAllNonPositive
-      nonPositiveWeightB <- forAllNonPositive
+      positiveWeights <- Gen.list(genPositive, Range.linear(0, 10)).forAll
+      nonPositiveWeight <- genNonPositive.forAll
+      position <- Gen.int(Range.linear(0, positiveWeights.size)).forAll
     } yield {
-      val attempt = Try(Gen.frequency1(
-        (nonPositiveWeightA, Gen.constant(true)),
-        (nonPositiveWeightB, Gen.constant(true))
+      val weights = positiveWeights.take(position) ::: nonPositiveWeight :: positiveWeights.drop(position)
+      val frequencies = weights.map(_ -> Gen.constant(true))
+      val attempt = Try(Gen.frequency(
+        frequencies.head,
+        frequencies.tail
       ))
-      val expected = new RuntimeException("frequency: no positive weights were given so no value can be generated")
+      val expected = new RuntimeException("Invariant: a non-positive weight was given")
       Result.diffNamed("=== Failed With ===", attempt, expected) {
         case (scala.util.Failure(ex), b) => ex.getMessage == b.getMessage
         case _ => false
