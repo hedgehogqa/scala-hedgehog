@@ -16,5 +16,12 @@ after_success:
   - |
     if [ $TRAVIS_PULL_REQUEST == "false" ] && ([ "${TRAVIS_BRANCH:-}" == "master" ] || [ "${TRAVIS_TAG:-}" != "" ]); then
       sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$VERSION'"' "set publishMavenStyle in ThisBuild := false" publish
+      # Keep publishing to the "generic" bintray repository
       sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$VERSION'"' "set publishMavenStyle in ThisBuild := true" publish
+      # Publish to the "maven" bintray repository as well
+      sbt ++$TRAVIS_SCALA_VERSION \
+        'set version in ThisBuild := "'$VERSION'"' \
+        'set publishMavenStyle in ThisBuild := true' \
+        'set bintrayRepository in ThisBuild := "scala-hedgehog-maven"' \
+        publish
     fi
