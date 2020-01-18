@@ -28,6 +28,13 @@ lazy val projectSettings = Seq(
   , scalaVersion := "2.12.8"
   , crossScalaVersions := Seq("2.10.7", "2.11.12", scalaVersion.value, "2.13.0")
   , fork in run  := true
+  , homepage := Some(url("https://hedgehog.qa"))
+  , scmInfo := Some(
+      ScmInfo(
+        url("https://github.com/hedgehogqa/scala-hedgehog"),
+        "scm:git@github.com:hedgehogqa/scala-hedgehog.git"
+      )
+    )
   )
 
 lazy val core = Project(
