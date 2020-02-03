@@ -8,6 +8,7 @@ object RangeTest extends Properties {
     List(
       example("integral", testIntegral)
     , example("double", testFractional)
+    , example("long", testLong)
     , property("double should not generate values outside of the range", testDoubleWithinRange).withTests(1000)
     )
 
@@ -25,6 +26,23 @@ object RangeTest extends Properties {
     , r2.bounds(Size(75))._2 ==== 1610612735
     , r2.bounds(Size(99))._2 ==== 2126008810
     , r2.bounds(Size(100))._2 ==== 2147483647
+    ))
+  }
+
+  def testLong: Result = {
+    val r1 = Range.linear(Long.MinValue, Long.MaxValue)
+    val r2 = Range.linear(1, Long.MaxValue)
+    Result.all(List(
+      r1.bounds(Size(1))._2 ==== -9038904596117680292L
+      , r1.bounds(Size(25))._2 ==== -4611686018427387905L
+      , r1.bounds(Size(75))._2 ==== 4611686018427387903L
+      , r1.bounds(Size(99))._2 ==== 9038904596117680290L
+      , r1.bounds(Size(100))._2 ==== Long.MaxValue
+      , r2.bounds(Size(1))._2 ==== 92233720368547759L
+      , r2.bounds(Size(25))._2 ==== 2305843009213693952L
+      , r2.bounds(Size(75))._2 ==== 6917529027641081855L
+      , r2.bounds(Size(99))._2 ==== 9131138316486228048L
+      , r2.bounds(Size(100))._2 ==== Long.MaxValue
     ))
   }
 

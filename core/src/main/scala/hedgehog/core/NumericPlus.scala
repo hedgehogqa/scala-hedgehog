@@ -32,7 +32,7 @@ object NumericPlus {
     new NumericPlus[Long] {
 
       override def timesDouble(a: Long, b: Double): Long =
-        (a.toDouble * b).toLong
+        (BigDecimal(a) * b).toLong
     }
 
   implicit def BigIntRatio: NumericPlus[BigInt] =
