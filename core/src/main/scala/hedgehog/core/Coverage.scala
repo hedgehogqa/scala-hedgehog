@@ -33,7 +33,7 @@ case class CoverCount(toInt: Int) {
     CoverCount(toInt + o.toInt)
 
   def percentage(tests: SuccessCount): CoverPercentage =
-    CoverPercentage(((toInt.toDouble / tests.value.toDouble) * 100 * 10).round / 10)
+    CoverPercentage(((toInt.toDouble / tests.value.toDouble) * 100 * 100).ceil / 100)
 }
 
 object CoverCount {
