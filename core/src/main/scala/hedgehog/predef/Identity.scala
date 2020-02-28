@@ -25,6 +25,8 @@ object Identity {
         a
     }
 
+  // FIXME: Ironically the one that we ought to be able to consider stack-safe for bind is not.
+  //  Why does this have to be call-by-need?
   implicit def IdentityMonad: Monad[Identity] =
     new Monad[Identity] with StackSafeMonad[Identity] {
 

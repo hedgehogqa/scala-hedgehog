@@ -170,7 +170,7 @@ trait PropertyTReporting {
     }
 
   def report(config: PropertyConfig, size0: Option[Size], seed0: Seed, p: PropertyT[Result]): Report = {
-    reportF(config, size0, seed0, p.map(Identity(_))).value
+    reportF(config, size0, seed0, p.map[Id[Result]](identity))
   }
 
   def reportF[F[_]](config: PropertyConfig, size0: Option[Size], seed0: Seed, p: PropertyT[F[Result]])(implicit m: Monad[F]): F[Report] = {

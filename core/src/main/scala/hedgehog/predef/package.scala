@@ -63,4 +63,13 @@ package object predef {
       case h :: t =>
         F.ap(traverse(t)(f))(F.ap(f(h))(F.point((h2 : B) => (t2 : List[B]) => h2 :: t2)))
     }
+
+  type Id[A] = A
+
+  implicit val IdMonad: Monad[Id] =
+    new Monad[Id] with StackSafeMonad[Id] {
+      override def bind[A, B](fa: Id[A])(f: A => Id[B]): Id[B] = f(fa)
+      override def point[A](a: => A): Id[A] = a
+      override def ap[A, B](fa: => Id[A])(f: => Id[A => B]): Id[B] = f(fa)
+    }
 }
