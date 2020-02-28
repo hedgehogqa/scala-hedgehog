@@ -153,8 +153,9 @@ abstract class GenImplicits2 extends GenImplicits1 {
 
 object GenT extends GenImplicits2 {
 
+  // TODO: Is bind stack-safe?
   implicit def GenMonad: Monad[GenT] =
-    new Monad[GenT] {
+    new Monad[GenT] with StackSafeMonad[GenT] {
 
      override def map[A, B](fa: GenT[A])(f: A => B): GenT[B] =
        fa.map(f)

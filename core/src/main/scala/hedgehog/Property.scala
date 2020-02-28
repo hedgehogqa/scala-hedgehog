@@ -1,6 +1,7 @@
 package hedgehog
 
 import hedgehog.core._
+import hedgehog.predef.Monad
 
 trait PropertyTOps extends PropertyTReporting {
 
@@ -36,6 +37,9 @@ trait PropertyTOps extends PropertyTReporting {
 
   def check(config: PropertyConfig, p: PropertyT[Result], seed: Seed): Report =
     propertyT.report(config, None, seed, p)
+
+  def checkF[F[_]: Monad](config: PropertyConfig, p: PropertyT[F[Result]], seed: Seed): F[Report] =
+    propertyT.reportF(config, None, seed, p)
 
   def checkRandom(config: PropertyConfig, p: PropertyT[Result]): Report =
     // FIX: predef MonadIO

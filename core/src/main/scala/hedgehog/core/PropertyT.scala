@@ -3,6 +3,8 @@ package hedgehog.core
 import hedgehog._
 import hedgehog.predef._
 
+import scala.language.higherKinds
+
 case class Name(value: String)
 
 object Name {
@@ -114,8 +116,9 @@ case class PropertyT[A](
 
 object PropertyT {
 
+  // TODO: Is bind stack-safe?
   implicit def PropertyMonad: Monad[PropertyT] =
-    new Monad[PropertyT] {
+    new Monad[PropertyT] with StackSafeMonad[PropertyT] {
       override def map[A, B](fa: PropertyT[A])(f: A => B): PropertyT[B] =
         fa.map(f)
       override def point[A](a: => A): PropertyT[A] =
@@ -167,25 +170,31 @@ trait PropertyTReporting {
     }
 
   def report(config: PropertyConfig, size0: Option[Size], seed0: Seed, p: PropertyT[Result]): Report = {
+    reportF(config, size0, seed0, p.map(Identity(_))).value
+  }
+
+  def reportF[F[_]](config: PropertyConfig, size0: Option[Size], seed0: Seed, p: PropertyT[F[Result]])(implicit m: Monad[F]): F[Report] = {
     // Increase the size proportionally to the number of tests to ensure better coverage of the desired range
     val sizeInc = Size(Math.max(1, Size.max / config.testLimit.value))
     // Start the size at whatever remainder we have to ensure we run with "max" at least once
     val sizeInit = Size(Size.max % Math.min(config.testLimit.value, Size.max)).incBy(sizeInc)
-    @annotation.tailrec
-    def loop(successes: SuccessCount, discards: DiscardCount, size: Size, seed: Seed, coverage: Coverage[CoverCount]): Report =
+    type Arguments = (SuccessCount, DiscardCount, Size, Seed, Coverage[CoverCount])
+    val zero: Arguments = (SuccessCount(0), DiscardCount(0), size0.getOrElse(sizeInit), seed0, Coverage.empty)
+    m.tailRecM(zero) { case (successes, discards, size, seed, coverage) =>
       if (size.value > Size.max)
-        loop(successes, discards, sizeInit, seed, coverage)
+        m.point(Left((successes, discards, sizeInit, seed, coverage)))
       else if (successes.value >= config.testLimit.value)
-        // we've hit the test limit
-        Coverage.split(coverage, successes) match {
-          case (_, Nil) =>
-            Report(successes, discards, coverage, OK)
-          case _ =>
-            Report(successes, discards, coverage, Status.failed(ShrinkCount(0), List("Insufficient coverage.")))
-        }
+      // we've hit the test limit
+      Coverage.split(coverage, successes) match {
+        case (_, Nil) =>
+          m.point(Right(Report(successes, discards, coverage, OK)))
+        case _ =>
+          m.point(Right(Report(successes, discards, coverage, Status.failed(ShrinkCount(0), List("Insufficient coverage.")))))
+      }
       else if (discards.value >= config.discardLimit.value)
-        Report(successes, discards, coverage, GaveUp)
+        m.point(Right(Report(successes, discards, coverage, GaveUp)))
       else {
+        // Tree[(Seed, Option[(Journal, Option[F[Result]])])]
         val x =
           try {
             p.run.run(size, seed)
@@ -193,27 +202,34 @@ trait PropertyTReporting {
             case e: Exception =>
               Property.error(e).run.run(size, seed)
           }
-        val t = x.map(_._2.map { case (l, r) => (l.logs, r) })
+        // Tree[Option[(List[Log], Option[F[Result]])]]
+        //        val t = x.map(_._2.map { case (l, r) => (l.logs, r) })
         x.value._2 match {
           case None =>
-            loop(successes, discards.inc, size.incBy(sizeInc), x.value._1, coverage)
+            m.point(Left((successes, discards.inc, size.incBy(sizeInc), x.value._1, coverage)))
 
           case Some((_, None)) =>
-            Report(successes, discards, coverage, takeSmallest(ShrinkCount(0), config.shrinkLimit, t))
+            val t = x.map(_._2.map { case (l, _) => (l.logs, Option.empty[Result]) })
+            m.point(Right(Report(successes, discards, coverage, takeSmallest(ShrinkCount(0), config.shrinkLimit, t))))
 
-          case Some((j, Some(r))) =>
-            if (!r.success){
-              Report(successes, discards, coverage, takeSmallest(ShrinkCount(0), config.shrinkLimit, t))
+          case Some((j, Some(fr))) => m.map(fr) { r =>
+            if (!r.success) {
+              val t = x.map(_._2.map { case (l, _) => (l.logs, Option(r)) })
+              Right(Report(successes, discards, coverage, takeSmallest(ShrinkCount(0), config.shrinkLimit, t)))
             } else
-              loop(successes.inc, discards, size.incBy(sizeInc), x.value._1,
-                Coverage.union(Coverage.count(j.coverage), coverage)(_ + _))
+              Left((successes.inc, discards, size.incBy(sizeInc), x.value._1,
+                Coverage.union(Coverage.count(j.coverage), coverage)(_ + _)))
+          }
         }
       }
-    loop(SuccessCount(0), DiscardCount(0), size0.getOrElse(sizeInit), seed0, Coverage.empty)
+    }
   }
 
   def recheck(config: PropertyConfig, size: Size, seed: Seed)(p: PropertyT[Result]): Report =
     report(config.copy(testLimit = SuccessCount(1)), Some(size), seed, p)
+
+  def recheckF[F[_]: Monad](config: PropertyConfig, size: Size, seed: Seed)(p: PropertyT[F[Result]]): F[Report] =
+    reportF(config.copy(testLimit = SuccessCount(1)), Some(size), seed, p)
 }
 
 /**********************************************************************/
