@@ -119,9 +119,8 @@ case class PropertyT[A](
 
 object PropertyT {
 
-  // TODO: Is bind stack-safe?
   implicit def PropertyMonad: Monad[PropertyT] =
-    new Monad[PropertyT] with StackSafeMonad[PropertyT] {
+    new Monad[PropertyT] {
       override def map[A, B](fa: PropertyT[A])(f: A => B): PropertyT[B] =
         fa.map(f)
 

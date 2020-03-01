@@ -62,7 +62,7 @@ package object predef {
   type Id[A] = A
 
   implicit val IdMonad: Monad[Id] =
-    new Monad[Id] with StackSafeMonad[Id] {
+    new Monad[Id] {
       override def bind[A, B](fa: A)(f: A => B): B = f(fa)
       override def point[A](a: => A): A = a
       override def ap[A, B](fa: => A)(f: => A => B): B = f(fa)

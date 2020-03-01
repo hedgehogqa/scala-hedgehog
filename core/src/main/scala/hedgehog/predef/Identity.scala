@@ -26,7 +26,7 @@ object Identity {
     }
 
   implicit def IdentityMonad: Monad[Identity] =
-    new Monad[Identity] with StackSafeMonad[Identity] {
+    new Monad[Identity] {
 
       // NOTE: It's critical to override the free Applicative version, otherwise we get stack overflows
       override def map[A, B](fa: Identity[A])(f: A => B) =

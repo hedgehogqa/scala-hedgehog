@@ -46,7 +46,7 @@ abstract class StateTImplicits2 extends StateTImplicits1 {
 object StateT extends StateTImplicits2 {
 
   implicit def StateTMonad[M[_], S](implicit F: Monad[M]): Monad[StateT[M, S, ?]] =
-    new Monad[StateT[M, S, ?]] with StackSafeMonad[StateT[M, S, ?]] {
+    new Monad[StateT[M, S, ?]] {
 
       override def map[A, B](fa: StateT[M, S, A])(f: A => B): StateT[M, S, B] =
         fa.map(f)

@@ -56,7 +56,7 @@ abstract class TreeImplicits2 extends TreeImplicits1 {
 object Tree extends TreeImplicits2 {
 
   implicit def TreeMonad: Monad[Tree] =
-    new Monad[Tree] with StackSafeMonad[Tree] {
+    new Monad[Tree] {
       override def map[A, B](fa: Tree[A])(f: A => B): Tree[B] =
         fa.map(f)
       override def point[A](a: => A): Tree[A] =

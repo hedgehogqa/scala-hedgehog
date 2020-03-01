@@ -93,13 +93,3 @@ object Monad {
         }
     }
 }
-
-// FIXME: Get rid of this. It isn't very stack safe in the general case.
-trait StackSafeMonad[F[_]] extends Monad[F] {
-
-  override def tailRecM[A, B](a: A)(f: A => F[Either[A, B]]): F[B] =
-    bind(f(a)) {
-      case Left(value) => tailRecM(value)(f)
-      case Right(value) => point(value)
-    }
-}
