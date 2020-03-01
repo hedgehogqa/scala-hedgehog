@@ -135,6 +135,13 @@ object PropertyT {
 
       override def bind[A, B](fa: PropertyT[A])(f: A => PropertyT[B]): PropertyT[B] =
         fa.flatMap(f)
+
+      // FIXME: This is not stack safe.
+      override def tailRecM[A, B](a: A)(f: A => PropertyT[Either[A, B]]): PropertyT[B] =
+        bind(f(a)) {
+          case Left(value) => tailRecM(value)(f)
+          case Right(value) => point(value)
+        }
     }
 }
 

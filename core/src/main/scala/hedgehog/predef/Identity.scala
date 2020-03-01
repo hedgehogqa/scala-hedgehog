@@ -25,8 +25,6 @@ object Identity {
         a
     }
 
-  // FIXME: Ironically the one that we ought to be able to consider stack-safe for bind is not.
-  //  Why does this have to be call-by-need?
   implicit def IdentityMonad: Monad[Identity] =
     new Monad[Identity] with StackSafeMonad[Identity] {
 
@@ -42,5 +40,12 @@ object Identity {
 
       override def bind[A, B](fa: Identity[A])(f: A => Identity[B]): Identity[B] =
         Identity(f(fa.value).value)
+
+      // FIXME: This is not stack safe.
+      override def tailRecM[A, B](a: A)(f: A => Identity[Either[A, B]]): Identity[B] =
+        bind(f(a)) {
+          case Left(value) => tailRecM(value)(f)
+          case Right(value) => point(value)
+        }
     }
 }
