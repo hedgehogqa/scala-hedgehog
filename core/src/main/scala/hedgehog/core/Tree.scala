@@ -69,6 +69,12 @@ object Tree extends TreeImplicits2 {
           y.value, fa.children.flatMap(x => y.children.map(ys => x.map(_.flatMap(f)) ++ ys))
         )
       }
+      // FIXME: This is not stack safe.
+      override def tailRecM[A, B](a: A)(f: A => Tree[Either[A, B]]): Tree[B] =
+        bind(f(a)) {
+          case Left(value) => tailRecM(value)(f)
+          case Right(value) => point(value)
+        }
     }
 
   def unfoldTree[A, B](f: B => A, g: B => List[B], x: B): Tree[A] =

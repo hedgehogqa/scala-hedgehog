@@ -1,5 +1,8 @@
 package hedgehog
 
+import scala.annotation.tailrec
+import scala.language.higherKinds
+
 /**
  * We have our own FP predef for 2 reasons.
  *
@@ -27,26 +30,18 @@ package object predef {
   def some[A](a: A): Option[A] =
     Some(a)
 
-  def findMap[A, B](fa: LazyList[A])(f: A => Option[B]): Option[B] = {
-    // FIXME This should be tailrec but we seem to hit this bug
-    // https://github.com/scala/bug/issues/9647
-    var l = fa
-    var o: Option[B] = null
-    while (o == null) {
-      l match {
-        case LazyList.Nil() =>
-          o = None
-        case LazyList.Cons(h, t) =>
-          f(h()) match {
-            case Some(b) =>
-              o = Some(b)
-            case None =>
-              l = t()
-          }
+  def findMap[A, B](fa: LazyList[A])(f: A => Option[B]): Option[B] =
+    // TODO: Can we cast this?
+    findMapF(fa)(f.andThen(identity[Id[Option[B]]]))
+
+  def findMapF[F[_], A, B](fa: LazyList[A])(f: A => F[Option[B]])(implicit M: Monad[F]): F[Option[B]] =
+    M.tailRecM(fa) {
+      case LazyList.Nil() => M.point(Right(None))
+      case LazyList.Cons(h, t) => M.map(f(h())) {
+        case some: Some[B] => Right(some)
+        case None => Left(t())
       }
     }
-    o
-  }
 
   /** Performs the action `n` times, returning the list of results. */
   def replicateM[M[_], A](n: Int, fa: M[A])(implicit F: Applicative[M]): M[List[A]] =
@@ -62,5 +57,20 @@ package object predef {
         F.point(Nil)
       case h :: t =>
         F.ap(traverse(t)(f))(F.ap(f(h))(F.point((h2 : B) => (t2 : List[B]) => h2 :: t2)))
+    }
+
+  type Id[A] = A
+
+  implicit val IdMonad: Monad[Id] =
+    new Monad[Id] {
+      override def bind[A, B](fa: A)(f: A => B): B = f(fa)
+      override def point[A](a: => A): A = a
+      override def ap[A, B](fa: => A)(f: => A => B): B = f(fa)
+      @tailrec
+      override def tailRecM[A, B](a: A)(f: A => Either[A, B]): B =
+        f(a) match {
+          case Left(value) => tailRecM(value)(f)
+          case Right(value) => value
+        }
     }
 }

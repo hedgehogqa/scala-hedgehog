@@ -1,5 +1,7 @@
 package hedgehog.predef
 
+import scala.language.higherKinds
+
 trait Functor[F[_]] {
 
   def map[A, B](fa: F[A])(f: A => B): F[B]
@@ -57,6 +59,8 @@ object Applicative {
 trait Monad[F[_]] extends Applicative[F] {
 
   def bind[A, B](fa: F[A])(f: A => F[B]): F[B]
+
+  def tailRecM[A, B](a: A)(f: A => F[Either[A, B]]): F[B]
 }
 
 object Monad {
@@ -75,5 +79,17 @@ object Monad {
 
       override def bind[A, B](fa: Either[L, A])(f: A => Either[L, B]): Either[L, B] =
         fa.rightFlatMap(f)
+
+      @scala.annotation.tailrec
+      override def tailRecM[A, B](a: A)(f: A => Either[L, Either[A, B]]): Either[L, B] =
+        f(a) match {
+          case left @ Left(_) =>
+            left.asInstanceOf[Either[L, B]]
+          case Right(e) =>
+            e match {
+              case Left(b1)         => tailRecM(b1)(f)
+              case right @ Right(_) => right.asInstanceOf[Either[L, B]]
+            }
+        }
     }
 }

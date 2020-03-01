@@ -143,6 +143,7 @@ abstract class GenImplicits2 extends GenImplicits1 {
       override def ap[A, B](fa: => GenT[A])(f: => GenT[A => B]): GenT[B] =
         GenT((size, seed) => {
           val f2 = f.run(size, seed)
+          // FIXME: This is not stack safe.
           val fa2 = fa.run(size, f2.value._1)
           Applicative.zip(fa2, f2).map { case ((seed2, oa), (_, o)) =>
             (seed2, o.flatMap(y => oa.map(y(_))))
@@ -167,5 +168,12 @@ object GenT extends GenImplicits2 {
 
       override def bind[A, B](fa: GenT[A])(f: A => GenT[B]): GenT[B] =
         fa.flatMap(f)
+
+      // FIXME: This is not stack safe.
+      override def tailRecM[A, B](a: A)(f: A => GenT[Either[A, B]]): GenT[B] =
+        bind(f(a)) {
+          case Left(value) => tailRecM(value)(f)
+          case Right(value) => point(value)
+        }
     }
 }

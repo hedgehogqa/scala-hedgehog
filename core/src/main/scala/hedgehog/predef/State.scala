@@ -59,6 +59,13 @@ object StateT extends StateTImplicits2 {
 
       override def bind[A, B](fa: StateT[M, S, A])(f: A => StateT[M, S, B]): StateT[M, S, B] =
         fa.flatMap(f)
+
+      // FIXME: This is not stack safe.
+      override def tailRecM[A, B](a: A)(f: A => StateT[M, S, Either[A, B]]): StateT[M, S, B] =
+        bind(f(a)) {
+          case Left(value) => tailRecM(value)(f)
+          case Right(value) => point(value)
+        }
     }
 
 }
