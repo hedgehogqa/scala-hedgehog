@@ -6,6 +6,7 @@ import hedgehog._
 import hedgehog.core._
 import hedgehog.runner._
 import _root_.sbt.{testing => sbtt}
+import org.portablescala.reflect.Reflect
 
 class Framework extends sbtt.Framework {
 
@@ -28,6 +29,9 @@ class Framework extends sbtt.Framework {
 
   override def runner(args: Array[String], remoteArgs: Array[String], testClassLoader: ClassLoader): sbtt.Runner =
     new Runner(args, remoteArgs, testClassLoader)
+
+  def slaveRunner(args: Array[String], remoteArgs: Array[String], testClassLoader: ClassLoader, send: String => Unit): sbtt.Runner =
+    new SlaveRunner(args, remoteArgs, testClassLoader, send)
 }
 
 class Runner(
@@ -37,17 +41,34 @@ class Runner(
   ) extends sbtt.Runner {
 
   override def tasks(taskDefs: Array[sbtt.TaskDef]): Array[sbtt.Task] =
-    taskDefs.map(td =>
-      try {
-        Some(new Task(td, td.fingerprint.asInstanceOf[sbtt.SubclassFingerprint], testClassLoader))
-      } catch {
-        case e: ClassCastException =>
-          None
-      }
-    ).flatMap(_.toList)
+    taskDefs.map(mkTask).flatMap(_.toList)
+
+  private def mkTask(td: sbtt.TaskDef): Option[sbtt.Task] =
+    try {
+      Some(new Task(td, td.fingerprint.asInstanceOf[sbtt.SubclassFingerprint], testClassLoader))
+    } catch {
+      case e: ClassCastException =>
+        None
+    }
 
   override def done(): String =
     ""
+
+  def deserializeTask(task: String, deserializer: String => sbtt.TaskDef): sbtt.Task =
+    mkTask(deserializer(task)).getOrElse(throw new RuntimeException)
+  
+  def receiveMessage(msg: String): Option[String] = None
+
+  def serializeTask(task: sbtt.Task, serializer: sbtt.TaskDef => String): String =
+   serializer(task.asInstanceOf[Task].taskDef)
+}
+
+class SlaveRunner(
+    args: Array[String]
+  , remoteArgs: Array[String]
+  , testClassLoader: ClassLoader
+  , send: String => Unit
+  ) extends Runner(args, remoteArgs, testClassLoader) {
 }
 
 class Task(
@@ -60,17 +81,24 @@ class Task(
     Array()
 
   override def execute(eventHandler: sbtt.EventHandler, loggers: Array[sbtt.Logger]): Array[sbtt.Task] = {
+    run(eventHandler, loggers)
+    Array()
+  }
+
+  def execute(eventHandler: sbtt.EventHandler, loggers: Array[sbtt.Logger], continuation: Array[sbtt.Task] => Unit): Unit = {
+    run(eventHandler, loggers)
+    continuation(Array())
+  }
+
+  private def run(eventHandler: sbtt.EventHandler, loggers: Array[sbtt.Logger]) = {
     val config = PropertyConfig.default
     val seed = Seed.fromTime()
-    val c = testClassLoader
-      .loadClass(taskDef.fullyQualifiedName + (if (fingerprint.isModule) "$" else ""))
-      .asInstanceOf[Class[Properties]]
     val properties =
-      if (fingerprint.isModule)
-        // FIX Use scala-reflect to be more future compatible
-        c.getField("MODULE$").get(c).asInstanceOf[Properties]
-      else
-        c.getDeclaredConstructor().newInstance()
+      if (fingerprint.isModule) {
+        Reflect.lookupLoadableModuleClass(taskDef.fullyQualifiedName + "$", testClassLoader).get.loadModule().asInstanceOf[Properties]
+      } else {
+        Reflect.lookupInstantiatableClass(taskDef.fullyQualifiedName, testClassLoader).get.newInstance().asInstanceOf[Properties]
+      }
     properties.tests.foreach(t => {
       val startTime = System.currentTimeMillis
       val report = Property.check(t.withConfig(config), t.result, seed)
@@ -79,9 +107,7 @@ class Task(
 
       loggers.foreach(logger => logger.info(Test.renderReport(taskDef.fullyQualifiedName, t, report, logger.ansiCodesSupported)))
     })
-    Array()
   }
-
 }
 
 case class Event(
