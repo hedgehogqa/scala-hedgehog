@@ -8,3 +8,4 @@ project/plugins/project/
 project/source.scala
 .bloop
 .metals
+project/metals.sbt
