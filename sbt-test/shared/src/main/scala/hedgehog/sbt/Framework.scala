@@ -56,11 +56,11 @@ class Runner(
 
   def deserializeTask(task: String, deserializer: String => sbtt.TaskDef): sbtt.Task =
     mkTask(deserializer(task)).getOrElse(throw new RuntimeException)
-  
+
   def receiveMessage(msg: String): Option[String] = None
 
   def serializeTask(task: sbtt.Task, serializer: sbtt.TaskDef => String): String =
-   serializer(task.asInstanceOf[Task].taskDef)
+   serializer(task.taskDef)
 }
 
 class SlaveRunner(
