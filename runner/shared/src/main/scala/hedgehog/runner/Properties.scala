@@ -2,7 +2,9 @@ package hedgehog.runner
 
 import hedgehog._
 import hedgehog.core._
+import org.portablescala.reflect.annotation.EnableReflectiveInstantiation
 
+@EnableReflectiveInstantiation
 abstract class Properties {
 
   def tests: List[Test]

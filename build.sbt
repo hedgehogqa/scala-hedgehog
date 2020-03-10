@@ -1,4 +1,5 @@
 import sbt._, Keys._
+import sbtcrossproject.crossProject
 
 lazy val noPublish = Seq(
   publish := {},
@@ -13,7 +14,7 @@ lazy val hedgehog = Project(
   )
   .settings(standardSettings)
   .settings(noPublish)
-  .aggregate(core, runner, sbtTest, test, example)
+  .aggregate(coreJVM, coreJS, runnerJVM, runnerJS, sbtTestJVM, sbtTestJS, testJVM, testJS, exampleJVM, exampleJS)
 
 lazy val standardSettings = Seq(
     Defaults.coreDefaultSettings
@@ -26,7 +27,7 @@ lazy val projectSettings = Seq(
   , version in ThisBuild := "1.0.0"
   , organization := "qa.hedgehog"
   , scalaVersion := "2.12.8"
-  , crossScalaVersions := Seq("2.10.7", "2.11.12", scalaVersion.value, "2.13.0")
+  , crossScalaVersions := Seq("2.11.12", scalaVersion.value, "2.13.0")
   , fork in run  := true
   , homepage := Some(url("https://hedgehog.qa"))
   , scmInfo := Some(
@@ -37,50 +38,60 @@ lazy val projectSettings = Seq(
     )
   )
 
-lazy val core = Project(
-    id = "core"
-  , base = file("core")
-  ).settings(standardSettings ++ bintrarySettings ++ Seq(
+lazy val core = crossProject(JVMPlatform, JSPlatform)
+  .in(file("core"))
+  .settings(standardSettings ++ bintrarySettings ++ Seq(
     name := "hedgehog-core"
   ) ++ Seq(libraryDependencies ++= Seq(
   ).flatten))
+lazy val coreJVM = core.jvm
+lazy val coreJS = core.js
 
-lazy val example = Project(
-    id = "example"
-  , base = file("example")
-  ).settings(standardSettings ++ Seq(
+lazy val example = crossProject(JVMPlatform, JSPlatform)
+  .in(file("example"))
+  .settings(standardSettings ++ Seq(
     name := "hedgehog-example"
   ) ++ Seq(libraryDependencies ++= Seq(
   ))
   ).dependsOn(core, runner, sbtTest)
+lazy val exampleJVM = example.jvm
+lazy val exampleJS = example.js
 
-lazy val runner = Project(
-    id = "runner"
-  , base = file("runner")
-  ).settings(standardSettings ++ bintrarySettings ++ Seq(
+lazy val runner = crossProject(JVMPlatform, JSPlatform)
+  .in(file("runner"))
+  .settings(standardSettings ++ bintrarySettings ++ Seq(
     name := "hedgehog-runner"
   ) ++ Seq(libraryDependencies ++= Seq(
+      "org.portable-scala" %%% "portable-scala-reflect" % "1.0.0"
     ))
   ).dependsOn(core)
+lazy val runnerJVM = runner.jvm
+lazy val runnerJS = runner.js
 
-lazy val sbtTest = Project(
-    id = "sbt-test"
-  , base = file("sbt-test")
-  ).settings(standardSettings ++ testingSettings ++ bintrarySettings ++ Seq(
-    name := "hedgehog-sbt"
-  ) ++ Seq(libraryDependencies ++= Seq(
-      "org.scala-sbt" % "test-interface" % "1.0"
-    ))
-  ).dependsOn(core, runner)
+lazy val sbtTest = crossProject(JVMPlatform, JSPlatform)
+  .in(file("sbt-test"))
+  .settings(standardSettings ++ testingSettings ++ bintrarySettings ++ Seq(
+    name := "hedgehog-sbt",
+    libraryDependencies += "org.portable-scala" %%% "portable-scala-reflect" % "1.0.0"
+  ))
+  .jvmSettings(
+    libraryDependencies += "org.scala-sbt" % "test-interface" % "1.0"
+  )
+  .jsSettings(
+    libraryDependencies += "org.scala-js" %% "scalajs-test-interface" % "1.0.1"
+  )
+  .dependsOn(core, runner)
+lazy val sbtTestJVM = sbtTest.jvm
+lazy val sbtTestJS = sbtTest.js
 
-lazy val test = Project(
-      id = "test"
-    , base = file("test")
-  ).settings(standardSettings ++ noPublish ++ Seq(
+lazy val test = crossProject(JVMPlatform, JSPlatform)
+  .settings(standardSettings ++ noPublish ++ Seq(
     name := "hedgehog-test"
   ) ++ testingSettings ++ Seq(libraryDependencies ++= Seq(
     ))
   ).dependsOn(core, runner, sbtTest)
+lazy val testJVM = test.jvm
+lazy val testJS = test.js
 
 lazy val compilationSettings = Seq(
     maxErrors := 10
