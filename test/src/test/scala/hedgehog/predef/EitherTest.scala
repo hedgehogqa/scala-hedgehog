@@ -1,18 +1,20 @@
 package hedgehog.predef
 
-import hedgehog._
+import hedgehog.StackSafeTest._
 import hedgehog.core.{GenT, PropertyT, Tree}
 import hedgehog.predef.Monad._
 import hedgehog.runner._
 
 object EitherTest extends Properties {
 
+  private val ToProperty = λ[PF1[Either[Nothing, *], PropertyT]](eitherProperty)
+
   override def tests: List[Test] =
     List(
-      property("tailRecM is stack safe", StackSafeTest.propTailRecMIsStackSafe[Either[Nothing, ?]](eitherProperty))
+      property("tailRecM is stack safe", propTailRecMIsStackSafe(ToProperty))
     )
 
-  private def eitherProperty(either: Either[Nothing, List[Int]]): PropertyT[List[Int]] =
+  private def eitherProperty[A](either: Either[Nothing, A]): PropertyT[A] =
     GenT {
       case (_, seed) => implicitly[Applicative[Tree]].point((seed, either.right.toOption))
     }.forAll

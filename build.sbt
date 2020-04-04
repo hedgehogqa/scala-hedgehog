@@ -25,8 +25,8 @@ lazy val projectSettings = Seq(
     name := "hedgehog"
   , version in ThisBuild := "1.0.0"
   , organization := "qa.hedgehog"
-  , scalaVersion := "2.12.8"
-  , crossScalaVersions := Seq("2.10.7", "2.11.12", scalaVersion.value, "2.13.0")
+  , scalaVersion := "2.12.11"
+  , crossScalaVersions := Seq("2.10.7", "2.11.12", scalaVersion.value, "2.13.1")
   , fork in run  := true
   , homepage := Some(url("https://hedgehog.qa"))
   , scmInfo := Some(
@@ -112,7 +112,13 @@ lazy val compilationSettings = Seq(
         }
       }
     }
-  , libraryDependencies += compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3" cross CrossVersion.binary)
+  , libraryDependencies += "org.typelevel" % "kind-projector" % "0.11.0" % "plugin->default(compile);plugin->default(test)" cross CrossVersion.full
+  , libraryDependencies ++= (scalaBinaryVersion.value match {
+      case "2.10" =>
+        compilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full) :: Nil
+      case _ =>
+        Nil
+    })
   )
 
 lazy val testingSettings = Seq(
