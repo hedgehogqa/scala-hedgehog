@@ -112,7 +112,7 @@ lazy val compilationSettings = Seq(
         }
       }
     }
-  , libraryDependencies += "org.typelevel" % "kind-projector" % "0.11.0" % "plugin->default(compile);plugin->default(test)" cross CrossVersion.full
+  , libraryDependencies += compilerPlugin("org.typelevel" % "kind-projector" % "0.11.0" cross CrossVersion.full)
   , libraryDependencies ++= (scalaBinaryVersion.value match {
       case "2.10" =>
         compilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full) :: Nil
