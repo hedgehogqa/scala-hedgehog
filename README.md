@@ -137,7 +137,7 @@ object PropertyTest extends Properties {
 The background and motivation for Hedgehog in general is still best described by the original
 author in this excellent presenation:
 
-- [Gens N’ Roses: Appetite for Reduction](https://www.youtube.com/watch?v=AIv_9T0xKEo)
+- [Gens N’ Roses: Appetite for Reduction](https://www.youtube.com/watch?v=AIv_9T0xKEo) ([slides](https://slides.yowconference.com/yowlambdajam2017/Stanley-GensNRoses.pdf))
 
 A very quick summary is that the original QuickCheck and it's derivatives (like ScalaCheck)
 separate the generation of data from the shrinking, which results in something that cannot be
