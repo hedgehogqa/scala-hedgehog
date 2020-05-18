@@ -84,7 +84,7 @@ case class Get(key: String)
 For each command you need to implement the [Command] interface. This can look
 quite daunting so let's step through it:
 
-[Command]: https://github.com/hedgehogqa/scala-hedgehog/blob/master/core/src/main/scala/hedgehog/state/Command.scala
+[Command]: https://github.com/hedgehogqa/scala-hedgehog/blob/master/core/shared/src/main/scala/hedgehog/state/Command.scala
 
 ```scala
 def command(kv: KV): CommandIO[State] =
