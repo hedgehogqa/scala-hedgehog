@@ -37,7 +37,7 @@ object TurnstileTest extends Properties {
     List(
       property("sequential", testSequential)
 
-    /**
+    /*
      * NOTE: This currently fails, which is expected.
      *
      * {{{

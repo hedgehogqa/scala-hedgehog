@@ -1,9 +1,12 @@
 #!/bin/sh -eu
 
 : ${VERSION:?"VERSION"}
+: ${BINTRAY_USER:?"BINTRAY_USER"}
+: ${BINTRAY_PASS:?"BINTRAY_PASS"}
 
-BINTRAY_SUBJECT=hedgehogqa
-BINTRAY_REPO=scala-hedgehog-maven
+BINTRAY_SUBJECT=${BINTRAY_SUBJECT:-hedgehogqa}
+BINTRAY_REPO=${BINTRAY_REPO:-scala-hedgehog-maven}
+
 BINTRAY_PACKAGES="hedgehog-core hedgehog-runner hedgehog-sbt"
 
 echo "Sync to Maven Central..."
