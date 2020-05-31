@@ -14,6 +14,10 @@ script:
 after_success:
   - |
     if [ $TRAVIS_PULL_REQUEST == "false" ] && ([ "${TRAVIS_BRANCH:-}" == "master" ] || [ "${TRAVIS_TAG:-}" != "" ]); then
+      sbt ++${TRAVIS_SCALA_VERSION}! 'set version in ThisBuild := "'$VERSION'"' "set publishMavenStyle in ThisBuild := false" publish
+      # Keep publishing to the "generic" bintray repository
+      sbt ++${TRAVIS_SCALA_VERSION}! 'set version in ThisBuild := "'$VERSION'"' "set publishMavenStyle in ThisBuild := true" publish
+      # Publish to the "maven" bintray repository as well
       export BINTRAY_REPO=${BINTRAY_REPO:-scala-hedgehog-maven}
       sbt ++${TRAVIS_SCALA_VERSION}! \
         'set version in ThisBuild := "'$VERSION'"' \

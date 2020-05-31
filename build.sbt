@@ -49,7 +49,7 @@ lazy val coreJS = core.js
 
 lazy val example = crossProject(JVMPlatform, JSPlatform)
   .in(file("example"))
-  .settings(standardSettings ++ Seq(
+  .settings(standardSettings ++ noPublish ++ Seq(
     name := "hedgehog-example"
   ) ++ Seq(libraryDependencies ++= Seq(
   ))
@@ -131,7 +131,7 @@ lazy val testingSettings = Seq(
   )
 
 lazy val bintrarySettings = Seq(
-    bintrayOrganization := sys.env.get("BINTRAY_SUBJECT").orElse(Some("hedgehogqa"))
-  , bintrayRepository := sys.env.get("BINTRAY_REPO").getOrElse("scala-hedgehog-maven")
+    bintrayOrganization := Some("hedgehogqa")
+  , bintrayRepository := "scala-hedgehog"
   , licenses += ("Apache-2.0", url("https://opensource.org/licenses/Apache-2.0"))
   )
