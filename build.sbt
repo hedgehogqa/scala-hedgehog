@@ -49,7 +49,7 @@ lazy val coreJS = core.js
 
 lazy val example = crossProject(JVMPlatform, JSPlatform)
   .in(file("example"))
-  .settings(standardSettings ++ Seq(
+  .settings(standardSettings ++ noPublish ++ Seq(
     name := "hedgehog-example"
   ) ++ Seq(libraryDependencies ++= Seq(
   ))

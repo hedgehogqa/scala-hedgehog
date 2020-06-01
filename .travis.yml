@@ -10,17 +10,28 @@ script:
     else
       VERSION=$(git log --format=%H -1)
     fi
-  - sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$VERSION'"' test
+  - sbt ++${TRAVIS_SCALA_VERSION}! 'set version in ThisBuild := "'$VERSION'"' clean test
 after_success:
   - |
     if [ $TRAVIS_PULL_REQUEST == "false" ] && ([ "${TRAVIS_BRANCH:-}" == "master" ] || [ "${TRAVIS_TAG:-}" != "" ]); then
-      sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$VERSION'"' "set publishMavenStyle in ThisBuild := false" publish
+      sbt ++${TRAVIS_SCALA_VERSION}! 'set version in ThisBuild := "'$VERSION'"' "set publishMavenStyle in ThisBuild := false" publish
       # Keep publishing to the "generic" bintray repository
-      sbt ++$TRAVIS_SCALA_VERSION 'set version in ThisBuild := "'$VERSION'"' "set publishMavenStyle in ThisBuild := true" publish
+      sbt ++${TRAVIS_SCALA_VERSION}! 'set version in ThisBuild := "'$VERSION'"' "set publishMavenStyle in ThisBuild := true" publish
       # Publish to the "maven" bintray repository as well
-      sbt ++$TRAVIS_SCALA_VERSION \
+      export BINTRAY_REPO=${BINTRAY_REPO:-scala-hedgehog-maven}
+      sbt ++${TRAVIS_SCALA_VERSION}! \
         'set version in ThisBuild := "'$VERSION'"' \
         'set publishMavenStyle in ThisBuild := true' \
-        'set bintrayRepository in ThisBuild := "scala-hedgehog-maven"' \
+        'set bintrayRepository in ThisBuild := "'$BINTRAY_REPO'"' \
         publish
+      if [ "${TRAVIS_TAG:-}" != "" ]; then
+        export VERSION
+        ./ci/bintray_maven_central_sync
+      fi
     fi
+
+cache:
+  directories:
+    - $HOME/.cache/coursier
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt
