@@ -63,7 +63,7 @@ libraryDependencies ++= Seq(
   "qa.hedgehog" %% "hedgehog-sbt" % hedgehogVersion
 )
 
-resolvers += "bintray-scala-hedgehog" at "https://dl.bintray.com/hedgehogqa/scala-hedgehog-maven"
+resolvers += "bintray-scala-hedgehog" at "https://dl.bintray.com/hedgehogqa/scala-hedgehog"
 ```
 
 ### SBT Source Dependency
