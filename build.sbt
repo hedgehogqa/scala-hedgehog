@@ -8,6 +8,32 @@ lazy val noPublish = Seq(
   skip in publish := true
 )
 
+lazy val projectSettings: Seq[Setting[_]] = Seq(
+    name := "hedgehog"
+  , fork in run := true
+  )
+
+lazy val standardSettings: Seq[Setting[_]] = Seq(
+    Defaults.coreDefaultSettings
+  , projectSettings
+  , compilationSettings
+  ).flatten
+
+ThisBuild / organization := "qa.hedgehog"
+ThisBuild / version := "1.0.0"
+ThisBuild / developers := List(
+    Developer("charleso", "Charles O'Farrell", "charleso@gmail.com", url("https://github.com/charleso"))
+  )
+ThisBuild / homepage := Some(url("https://hedgehog.qa"))
+ThisBuild / scmInfo := Some(
+    ScmInfo(
+      url("https://github.com/hedgehogqa/scala-hedgehog"),
+      "scm:git@github.com:hedgehogqa/scala-hedgehog.git"
+    )
+  )
+ThisBuild / scalaVersion := "2.12.8"
+ThisBuild / crossScalaVersions := Seq("2.11.12", scalaVersion.value, "2.13.0")
+
 lazy val hedgehog = Project(
     id = "hedgehog"
   , base = file(".")
@@ -15,28 +41,6 @@ lazy val hedgehog = Project(
   .settings(standardSettings)
   .settings(noPublish)
   .aggregate(coreJVM, coreJS, runnerJVM, runnerJS, sbtTestJVM, sbtTestJS, testJVM, testJS, exampleJVM, exampleJS)
-
-lazy val standardSettings = Seq(
-    Defaults.coreDefaultSettings
-  , projectSettings
-  , compilationSettings
-  ).flatten
-
-lazy val projectSettings = Seq(
-    name := "hedgehog"
-  , version in ThisBuild := "1.0.0"
-  , organization := "qa.hedgehog"
-  , scalaVersion := "2.12.8"
-  , crossScalaVersions := Seq("2.11.12", scalaVersion.value, "2.13.0")
-  , fork in run  := true
-  , homepage := Some(url("https://hedgehog.qa"))
-  , scmInfo := Some(
-      ScmInfo(
-        url("https://github.com/hedgehogqa/scala-hedgehog"),
-        "scm:git@github.com:hedgehogqa/scala-hedgehog.git"
-      )
-    )
-  )
 
 lazy val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("core"))
@@ -133,5 +137,6 @@ lazy val testingSettings = Seq(
 lazy val bintrarySettings = Seq(
     bintrayOrganization := Some("hedgehogqa")
   , bintrayRepository := sys.env.getOrElse("BINTRAY_REPO", "scala-hedgehog")
+  , bintrayVcsUrl := Some("https://github.com/hedgehogqa/scala-hedgehog")
   , licenses += ("Apache-2.0", url("https://opensource.org/licenses/Apache-2.0"))
   )
