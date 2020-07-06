@@ -7,6 +7,7 @@ import hedgehog.core._
 import hedgehog.runner._
 import _root_.sbt.{testing => sbtt}
 import org.portablescala.reflect.Reflect
+import scala.util.Try
 
 class Framework extends sbtt.Framework {
 
@@ -92,7 +93,7 @@ class Task(
 
   private def run(eventHandler: sbtt.EventHandler, loggers: Array[sbtt.Logger]) = {
     val config = PropertyConfig.default
-    val seed = Seed.fromTime()
+    val seed = getSeed(loggers)
     val properties =
       if (fingerprint.isModule) {
         Reflect.lookupLoadableModuleClass(taskDef.fullyQualifiedName + "$", testClassLoader).get.loadModule().asInstanceOf[Properties]
@@ -107,6 +108,20 @@ class Task(
 
       loggers.foreach(logger => logger.info(Test.renderReport(taskDef.fullyQualifiedName, t, report, logger.ansiCodesSupported)))
     })
+  }
+
+  private def getSeed(loggers: Array[sbtt.Logger]): Seed = {
+    val (seed, logOutput) = sys.env
+      .get("HEDGEHOG_SEED")
+      .flatMap(s => Try(s.toLong).toOption) match {
+        case Some(seedFromEnv) => 
+          (seedFromEnv, s"Using seed from environment variable HEDGEHOG_SEED: $seedFromEnv")
+        case None =>
+          val seedFromTime = System.nanoTime()
+          (seedFromTime, s"Using random seed: $seedFromTime")
+      }
+    loggers.foreach(logger => logger.info(logOutput))
+    Seed.fromLong(seed)
   }
 }
 
