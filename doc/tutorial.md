@@ -639,6 +639,35 @@ List(0)
 You can see after a few tries Hedgehog finds an invalid example `List(1, 4, 1)`,
 and starts to shrink both the values down to `0` and also the list size.
 
+### Deterministic results
+
+By default, Hedgehog uses a random seed that is based on the current system time. Normally, this is exactly what you want. However, if you have a failing test, the randomness of the generated test data can make it very difficult to reproduce and analyse the problem — especially if the test is only failing sporadically. In this situation, it would be better if you could get exactly the same generated test data that caused the test to fail.
+
+This is why Hedgehog logs the seed together with the test results. In your console, you should see something like this:
+
+```
+Using random seed: 58973622580784
++ hedgehog.PropertyTest$.example1: OK, passed 1 tests
++ hedgehog.PropertyTest$.applicative: OK, passed 1 tests
++ hedgehog.PropertyTest$.applicative shrink: OK, passed 100 tests
+```
+
+Now imagine of these tests fails sporadically in your build pipeline. To analyse the problem locally, you can reproduce this test run by setting the seed to the same value. All you need to do is set the environment variable `HEDGEHOG_SEED` to the value in question.
+
+Example:
+
+```
+export HEDGEHOG_SEED=58973622580784
+```
+
+Now you can reproduce the test run you're interested in. Hedgehog will inform you that it used the seed from the environment variable:
+
+```
+Using seed from environment variable HEDGEHOG_SEED: 58973622580784
++ hedgehog.PropertyTest$.example1: OK, passed 1 tests
++ hedgehog.PropertyTest$.applicative: OK, passed 1 tests
++ hedgehog.PropertyTest$.applicative shrink: OK, passed 100 tests
+```
 
 ## State
 
