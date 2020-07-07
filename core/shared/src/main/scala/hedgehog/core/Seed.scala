@@ -46,10 +46,10 @@ object Seed {
 
   // FIX: predef IO
   def fromTime(): Seed =
-    fromSeedSource(SeedSource.FromTime(System.nanoTime))
+    fromSeedSource(SeedSource.fromTime(System.nanoTime))
 
   def fromLong(seed: Long): Seed =
-    Seed(MersenneTwister64.fromSeed(seed), SeedSource.FromLong(seed))
+    Seed(MersenneTwister64.fromSeed(seed), SeedSource.fromLong(seed))
   
   def fromSeedSource(source: SeedSource): Seed =
     Seed(MersenneTwister64.fromSeed(source.seed), source)
@@ -58,8 +58,8 @@ object Seed {
     val source = sys.env
       .get("HEDGEHOG_SEED")
       .flatMap(s => scala.util.Try(s.toLong).toOption)
-      .map(SeedSource.FromEnv)
-      .getOrElse(SeedSource.FromTime(System.nanoTime()))
+      .map(SeedSource.fromEnv)
+      .getOrElse(SeedSource.fromTime(System.nanoTime()))
     Seed.fromSeedSource(source)
   }
 }
@@ -76,6 +76,10 @@ sealed trait SeedSource extends Product with Serializable {
   }
 }
 object SeedSource {
+  def fromTime(seed: Long): SeedSource = FromTime(seed)
+  def fromEnv(seed: Long): SeedSource = FromEnv(seed)
+  def fromLong(seed: Long): SeedSource = FromLong(seed)
+
   final case class FromTime(seed: Long) extends SeedSource
   final case class FromEnv(seed: Long) extends SeedSource
   final case class FromLong(seed: Long) extends SeedSource
