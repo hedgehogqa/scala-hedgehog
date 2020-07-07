@@ -12,7 +12,7 @@ abstract class Properties {
   /** Allows the implementing test to be run separately without SBT */
   def main(args: Array[String]): Unit = {
     val config = PropertyConfig.default
-    val seed = Seed.fromTime()
+    val seed = Seed.fromEnvOrTime(Some((s: String) => println(s)))
     tests.foreach(t => {
       val report = Property.check(t.withConfig(config), t.result, seed)
       println(Test.renderReport(this.getClass.getName, t, report, ansiCodesSupported = true))

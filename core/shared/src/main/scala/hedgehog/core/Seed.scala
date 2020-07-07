@@ -50,5 +50,19 @@ object Seed {
 
   def fromLong(seed: Long): Seed =
     Seed(MersenneTwister64.fromSeed(seed))
+
+  def fromEnvOrTime(loggers: Iterable[String => Unit]): Seed = {
+    val (seed, logOutput) = sys.env
+      .get("HEDGEHOG_SEED")
+      .flatMap(s => scala.util.Try(s.toLong).toOption) match {
+        case Some(seedFromEnv) => 
+          (seedFromEnv, s"Using seed from environment variable HEDGEHOG_SEED: $seedFromEnv")
+        case None =>
+          val seedFromTime = System.nanoTime()
+          (seedFromTime, s"Using random seed: $seedFromTime")
+      }
+    loggers.foreach(log => log(logOutput))
+    Seed.fromLong(seed)
+  }
 }
 
