@@ -2,7 +2,7 @@ package hedgehog.core
 
 import hedgehog.random._
 
-case class Seed(seed: MersenneTwister64) {
+case class Seed(seed: MersenneTwister64, source: SeedSource) {
 
   def chooseLong(from: Long, to: Long): (Seed, Long) = {
     val next =
@@ -29,7 +29,7 @@ case class Seed(seed: MersenneTwister64) {
         }
         loop(seed)
       }
-    (Seed(next._1), next._2)
+    (Seed(next._1, source), next._2)
   }
 
   def chooseDouble(from: Double, to: Double): (Seed, Double) = {
@@ -38,7 +38,7 @@ case class Seed(seed: MersenneTwister64) {
     // Have updated to use the more stable haskell version
     // http://hackage.haskell.org/package/random-1.1/docs/src/System.Random.html#randomRFloating
     val (s2, next) = seed.nextDouble
-    (Seed(s2), 2.0 * (0.5 * from + next * (0.5 * to - 0.5 * from)))
+    (Seed(s2, source), 2.0 * (0.5 * from + next * (0.5 * to - 0.5 * from)))
   }
 }
 
@@ -46,23 +46,38 @@ object Seed {
 
   // FIX: predef IO
   def fromTime(): Seed =
-    fromLong(System.nanoTime)
+    fromSeedSource(SeedSource.FromTime(System.nanoTime))
 
   def fromLong(seed: Long): Seed =
-    Seed(MersenneTwister64.fromSeed(seed))
+    Seed(MersenneTwister64.fromSeed(seed), SeedSource.FromLong(seed))
+  
+  def fromSeedSource(source: SeedSource): Seed =
+    Seed(MersenneTwister64.fromSeed(source.seed), source)
 
-  def fromEnvOrTime(loggers: Iterable[String => Unit]): Seed = {
-    val (seed, logOutput) = sys.env
+  def fromEnvOrTime(): Seed = {
+    val source = sys.env
       .get("HEDGEHOG_SEED")
-      .flatMap(s => scala.util.Try(s.toLong).toOption) match {
-        case Some(seedFromEnv) => 
-          (seedFromEnv, s"Using seed from environment variable HEDGEHOG_SEED: $seedFromEnv")
-        case None =>
-          val seedFromTime = System.nanoTime()
-          (seedFromTime, s"Using random seed: $seedFromTime")
-      }
-    loggers.foreach(log => log(logOutput))
-    Seed.fromLong(seed)
+      .flatMap(s => scala.util.Try(s.toLong).toOption)
+      .map(SeedSource.FromEnv)
+      .getOrElse(SeedSource.FromTime(System.nanoTime()))
+    Seed.fromSeedSource(source)
   }
+}
+
+sealed trait SeedSource extends Product with Serializable {
+  def seed: Long
+  def renderLog: String = this match {
+    case SeedSource.FromTime(seed) => 
+      s"Using random seed: $seed"
+    case SeedSource.FromEnv(seed) => 
+      s"Using seed from environment variable HEDGEHOG_SEED: $seed"
+    case SeedSource.FromLong(seed) =>
+      s"Using seed: $seed"
+  }
+}
+object SeedSource {
+  final case class FromTime(seed: Long) extends SeedSource
+  final case class FromEnv(seed: Long) extends SeedSource
+  final case class FromLong(seed: Long) extends SeedSource
 }
 

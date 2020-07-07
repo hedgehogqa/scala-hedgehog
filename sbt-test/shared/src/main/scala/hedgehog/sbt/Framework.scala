@@ -92,7 +92,8 @@ class Task(
 
   private def run(eventHandler: sbtt.EventHandler, loggers: Array[sbtt.Logger]) = {
     val config = PropertyConfig.default
-    val seed = Seed.fromEnvOrTime(loggers.map(logger => logger.info(_)))
+    val seed = Seed.fromEnvOrTime()
+    loggers.foreach(logger => logger.info(seed.source.renderLog))
     val properties =
       if (fingerprint.isModule) {
         Reflect.lookupLoadableModuleClass(taskDef.fullyQualifiedName + "$", testClassLoader).get.loadModule().asInstanceOf[Properties]
