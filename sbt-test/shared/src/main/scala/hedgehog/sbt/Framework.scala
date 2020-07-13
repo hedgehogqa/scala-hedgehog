@@ -45,7 +45,7 @@ class Runner(
 
   private def mkTask(td: sbtt.TaskDef): Option[sbtt.Task] =
     try {
-      Some(new Task(td, td.fingerprint.asInstanceOf[sbtt.SubclassFingerprint], testClassLoader))
+      Some(new Task(td, td.fingerprint().asInstanceOf[sbtt.SubclassFingerprint], testClassLoader))
     } catch {
       case e: ClassCastException =>
         None
@@ -60,7 +60,7 @@ class Runner(
   def receiveMessage(msg: String): Option[String] = None
 
   def serializeTask(task: sbtt.Task, serializer: sbtt.TaskDef => String): String =
-   serializer(task.taskDef)
+   serializer(task.taskDef())
 }
 
 class SlaveRunner(
@@ -96,10 +96,10 @@ class Task(
     val seed = Seed.fromLong(seedSource.seed)
     loggers.foreach(logger => logger.info(seedSource.renderLog))
     val properties =
-      if (fingerprint.isModule) {
-        Reflect.lookupLoadableModuleClass(taskDef.fullyQualifiedName + "$", testClassLoader).get.loadModule().asInstanceOf[Properties]
+      if (fingerprint.isModule()) {
+        Reflect.lookupLoadableModuleClass(taskDef.fullyQualifiedName() + "$", testClassLoader).get.loadModule().asInstanceOf[Properties]
       } else {
-        Reflect.lookupInstantiatableClass(taskDef.fullyQualifiedName, testClassLoader).get.newInstance().asInstanceOf[Properties]
+        Reflect.lookupInstantiatableClass(taskDef.fullyQualifiedName(), testClassLoader).get.newInstance().asInstanceOf[Properties]
       }
     properties.tests.foreach(t => {
       val startTime = System.currentTimeMillis
@@ -107,7 +107,7 @@ class Task(
       val endTime = System.currentTimeMillis
       eventHandler.handle(Event.fromReport(taskDef, new sbtt.TestSelector(t.name), report, endTime - startTime))
 
-      loggers.foreach(logger => logger.info(Test.renderReport(taskDef.fullyQualifiedName, t, report, logger.ansiCodesSupported)))
+      loggers.foreach(logger => logger.info(Test.renderReport(taskDef.fullyQualifiedName(), t, report, logger.ansiCodesSupported())))
     })
   }
 }
@@ -136,7 +136,7 @@ object Event {
       case OK =>
         (sbtt.Status.Success, None)
     }
-    Event(taskDef.fullyQualifiedName, taskDef.fingerprint, selector, status, maybeThrowable, duration)
+    Event(taskDef.fullyQualifiedName(), taskDef.fingerprint(), selector, status, maybeThrowable, duration)
   }
 }
 

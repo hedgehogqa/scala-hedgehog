@@ -31,8 +31,8 @@ ThisBuild / scmInfo := Some(
       "scm:git@github.com:hedgehogqa/scala-hedgehog.git"
     )
   )
-ThisBuild / scalaVersion := "2.12.8"
-ThisBuild / crossScalaVersions := Seq("2.11.12", scalaVersion.value, "2.13.0")
+ThisBuild / scalaVersion := "2.12.11"
+ThisBuild / crossScalaVersions := Seq("2.11.12", scalaVersion.value, "2.13.3")
 
 lazy val hedgehog = Project(
     id = "hedgehog"
