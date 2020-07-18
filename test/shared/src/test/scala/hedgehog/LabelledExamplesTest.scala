@@ -8,7 +8,7 @@ object LabelledExamplesTest extends Properties {
   def tests: List[Test] =
     List(
       property("testLabelledExamples", testLabelledExamples)
-    , property("testProperty", prop).withExamples
+    , property("testProperty", prop)
     )
 
   def prop: Property =
@@ -21,7 +21,7 @@ object LabelledExamplesTest extends Properties {
   def testLabelledExamples: Property = {
     for {
       examples <- Gen.generate { (size, seed) =>
-        val config = PropertyConfig.default.copy(withExamples = WithExamples.WithExamples)
+        val config = PropertyConfig.default
         val labelledExamples = Property.report(config, Some(size), seed, prop)
         Seed(seed.seed.next) -> labelledExamples.examples
       }.forAll

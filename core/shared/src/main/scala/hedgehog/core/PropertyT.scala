@@ -191,15 +191,10 @@ trait PropertyTReporting {
         // we've hit the test limit
         Coverage.split(coverage, successes) match {
           case (_, Nil) =>
-            config.withExamples match {
-              case WithExamples.WithExamples =>
-                if (examples.examples.exists(_._2.isEmpty))
-                  Report(successes, discards, coverage, examples, Status.failed(ShrinkCount(0), List("Insufficient examples.")))
-                else
-                  Report(successes, discards, coverage, examples, OK)
-              case WithExamples.NoExamples =>
-                Report(successes, discards, coverage, examples, OK)
-            }
+            if (examples.examples.exists(_._2.isEmpty))
+              Report(successes, discards, coverage, examples, Status.failed(ShrinkCount(0), List("Insufficient examples.")))
+            else
+              Report(successes, discards, coverage, examples, OK)
           case _ =>
             Report(successes, discards, coverage, examples, Status.failed(ShrinkCount(0), List("Insufficient coverage.")))
         }
@@ -224,17 +219,11 @@ trait PropertyTReporting {
             } else {
               val coverage2 = Coverage.union(Coverage.count(j.coverage), coverage)(_ + _)
               val examples2 =
-                config.withExamples match {
-                  case WithExamples.NoExamples =>
-                    examples
-
-                  case WithExamples.WithExamples =>
-                    Examples.addTo(examples, Coverage.labels(j.coverage)) { name =>
-                      if (Coverage.covers(j.coverage, name))
-                        takeSmallestExample(ShrinkCount(0), config.shrinkLimit, name, t)
-                      else
-                        Nil
-                    }
+                Examples.addTo(examples, Coverage.labels(j.coverage)) { name =>
+                  if (Coverage.covers(j.coverage, name))
+                    takeSmallestExample(ShrinkCount(0), config.shrinkLimit, name, t)
+                  else
+                    Nil
                 }
               loop(successes.inc, discards, size.incBy(sizeInc), x.value._1, coverage2, examples2)
             }
