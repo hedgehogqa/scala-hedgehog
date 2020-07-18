@@ -23,7 +23,7 @@ object PropertyTest extends Properties {
       y <- int(Range.linear(0, 50)).log("y")
       _ <- if (y % 2 == 0) Property.discard else Property.point(())
     } yield Result.assert(y < 87 && x <= 'r'), seed)
-    r ==== Report(SuccessCount(2), DiscardCount(4), Coverage.empty, Failed(ShrinkCount(2), List(
+    r ==== Report(SuccessCount(2), DiscardCount(4), Coverage.empty, Examples.empty, Failed(ShrinkCount(2), List(
         ForAll("x", "s")
       , ForAll("y", "1"))
       ))
@@ -39,7 +39,7 @@ object PropertyTest extends Properties {
       (if (y % 2 == 0) Property.discard else Property.point(())).map(_ =>
       Result.assert(y < 87 && x <= 'r')
     )}, seed)
-    r ==== Report(SuccessCount(2), DiscardCount(4), Coverage.empty, Failed(ShrinkCount(2), List(
+    r ==== Report(SuccessCount(2), DiscardCount(4), Coverage.empty, Examples.empty, Failed(ShrinkCount(2), List(
         ForAll("x", "s")
       , ForAll("y", "1"))
       ))
@@ -107,7 +107,7 @@ object PropertyTest extends Properties {
       y <- order(expensive).log("expensive")
     } yield Result.assert(merge(x, y).total.value == x.total.value + y.total.value)
       , seed)
-    r ==== Report(SuccessCount(1), DiscardCount(0), Coverage.empty, Failed(ShrinkCount(4), List(
+    r ==== Report(SuccessCount(1), DiscardCount(0), Coverage.empty, Examples.empty, Failed(ShrinkCount(4), List(
         ForAll("cheap", "Order(List())")
       , ForAll("expensive", "Order(List(Item(oculus,USD(1000))))"
       ))))

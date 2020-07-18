@@ -70,12 +70,12 @@ object GenTest extends Properties {
 
   def testFromSomeSome: Result = {
     val r = Property.checkRandom(PropertyConfig.default, Gen.fromSome(Gen.constant(Result.success).option).forAll)
-    r ==== Report(SuccessCount(100), DiscardCount(0), Coverage.empty, OK)
+    r ==== Report(SuccessCount(100), DiscardCount(0), Coverage.empty, Examples.empty, OK)
   }
 
   def testFromSomeNone: Result = {
     val r = Property.checkRandom(PropertyConfig.default, Gen.fromSome(Gen.constant(Option.empty[Result])).forAll)
-    r ==== Report(SuccessCount(0), DiscardCount(100), Coverage.empty, GaveUp)
+    r ==== Report(SuccessCount(0), DiscardCount(100), Coverage.empty, Examples.empty, GaveUp)
   }
 
   def testApplicative: Result = {

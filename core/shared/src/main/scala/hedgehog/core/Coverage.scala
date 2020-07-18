@@ -89,6 +89,17 @@ object Coverage {
   def empty[A]: Coverage[A] =
     Coverage(Map.empty[LabelName, Label[A]])
 
+  def labels(cv: Coverage[_]): List[LabelName] =
+    cv.labels.keysIterator.toList
+
+  def covers(cv: Coverage[Cover], name: LabelName): Boolean =
+    cv.labels.get(name).exists(_.annotation match {
+      case Cover.Cover =>
+        true
+      case Cover.NoCover =>
+        false
+    })
+
   def count(cv: Coverage[Cover]): Coverage[CoverCount] =
     cv.copy(labels = cv.labels.map { case (k, l) =>
       k -> l.copy(annotation = CoverCount.fromCover(l.annotation))
@@ -105,3 +116,16 @@ object Coverage {
   }
 }
 
+case class Examples(examples: Map[LabelName, List[Log]])
+
+object Examples {
+
+  def empty[A]: Examples =
+    Examples(Map.empty[LabelName, List[Log]])
+
+  def addTo(examples: Examples, labels: List[LabelName])(seek: LabelName => List[Log]): Examples = {
+    Examples(labels.foldLeft(examples.examples) { (m, name) =>
+      m.updated(name, m.get(name).filter(_.nonEmpty).getOrElse(seek(name)))
+    })
+  }
+}
