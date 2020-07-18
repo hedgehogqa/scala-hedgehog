@@ -170,12 +170,10 @@ trait PropertyTReporting {
     // Increase the size proportionally to the number of tests to ensure better coverage of the desired range
     val sizeInc = Size(Math.max(1, Size.max / config.testLimit.value))
     // Start the size at whatever remainder we have to ensure we run with "max" at least once
-    val sizeInit = Size(Size.max % Math.min(config.testLimit.value, Size.max)).incBy(sizeInc)
+    val sizeInit = Size((Size.max % Math.min(config.testLimit.value, Size.max)) + sizeInc.value)
     @annotation.tailrec
     def loop(successes: SuccessCount, discards: DiscardCount, size: Size, seed: Seed, coverage: Coverage[CoverCount]): Report =
-      if (size.value > Size.max)
-        loop(successes, discards, sizeInit, seed, coverage)
-      else if (successes.value >= config.testLimit.value)
+      if (successes.value >= config.testLimit.value)
         // we've hit the test limit
         Coverage.split(coverage, successes) match {
           case (_, Nil) =>
