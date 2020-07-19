@@ -7,7 +7,7 @@ import hedgehog.predef.{DecimalPlus, IntegralPlus}
  * Tests are parameterized by the size of the randomly-generated data, the
  * meaning of which depends on the particular generator used.
  */
-case class Size(value: Int) {
+sealed abstract case class Size private (value: Int) {
 
   /** Represents the size as a percentage (0 - 1) which is useful for range calculations */
   def percentage: Double =
@@ -24,6 +24,10 @@ case class Size(value: Int) {
 }
 
 object Size {
+  def apply(value: Int): Size = {
+    val remainder = value % max
+    new Size(if (remainder <= 0) remainder + max else remainder) {}
+  }
 
   def max: Int =
     100
@@ -131,13 +135,13 @@ object Range {
    * parameter.
    *
    * {{{
-   * scala> Range.linear(0, 10).bounds(Size(0))
+   * scala> Range.linear(0, 10).bounds(Size(1))
    * (0,0)
    *
    * scala> Range.linear(0, 10).bounds(Size(50))
    * (0,5)
    *
-   * scala> Range.linear(0, 10).bounds(Size(99))
+   * scala> Range.linear(0, 10).bounds(Size(100))
    * (0,10)
    * }}}
    */
@@ -149,13 +153,13 @@ object Range {
    * parameter.
    *
    * {{{
-   * scala> Range.linearFrom(0, -10, 10).bounds(Size(0))
+   * scala> Range.linearFrom(0, -10, 10).bounds(Size(1))
    * (0,0)
    *
    * scala> Range.linearFrom(0, -10, 20).bounds(Size(50))
    * (-5,10)
    *
-   * scala> Range.linearFrom(0, -10, 20).bounds(Size(20))
+   * scala> Range.linearFrom(0, -10, 20).bounds(Size(100))
    * (-10,20)
    * }}}
    */
