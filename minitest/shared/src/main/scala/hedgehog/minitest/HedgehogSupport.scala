@@ -9,18 +9,18 @@ trait HedgehogSupport { self: SimpleTestSuite =>
   private val seedSource = SeedSource.fromEnvOrTime()
   private val seed: Seed = Seed.fromLong(seedSource.seed)
 
-  def property(name: String, config: PropertyConfig = PropertyConfig.default)(
+  def property(name: String, withConfig: PropertyConfig => PropertyConfig = identity)(
       prop: => Property
   ): Unit = {
-    val t = hedgehog.runner.property(name, prop)
-    test(name)(check(t, config))
+    val t = hedgehog.runner.property(name, prop).config(withConfig)
+    test(name)(check(t, t.withConfig(PropertyConfig.default)))
   }
 
-  def example(name: String, config: PropertyConfig = PropertyConfig.default)(
+  def example(name: String, withConfig: PropertyConfig => PropertyConfig = identity)(
       result: => Result
   ): Unit = {
-    val t = hedgehog.runner.example(name, result)
-    test(name)(check(t, config))
+    val t = hedgehog.runner.example(name, result).config(withConfig)
+    test(name)(check(t, t.withConfig(PropertyConfig.default)))
   }
 
   private def check(test: Test, config: PropertyConfig): Unit = {
