@@ -8,6 +8,7 @@ object LabelledExamplesTest extends Properties {
   def tests: List[Test] =
     List(
       property("testLabelledExamples", testLabelledExamples)
+    , property("testProperty", prop).withExamples
     )
 
   def prop: Property =
