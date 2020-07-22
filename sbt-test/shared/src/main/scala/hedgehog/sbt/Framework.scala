@@ -105,9 +105,8 @@ class Task(
       val startTime = System.currentTimeMillis
       val report = Property.check(t.withConfig(config), t.result, seed)
       val endTime = System.currentTimeMillis
-      eventHandler.handle(Event.fromReport(taskDef, new sbtt.TestSelector(t.name), report, endTime - startTime))
-
       loggers.foreach(logger => logger.info(Test.renderReport(taskDef.fullyQualifiedName(), t, report, logger.ansiCodesSupported())))
+      eventHandler.handle(Event.fromReport(taskDef, new sbtt.TestSelector(t.name), report, endTime - startTime))
     })
   }
 }
