@@ -40,7 +40,7 @@ lazy val hedgehog = Project(
   )
   .settings(standardSettings)
   .settings(noPublish)
-  .aggregate(coreJVM, coreJS, runnerJVM, runnerJS, sbtTestJVM, sbtTestJS, testJVM, testJS, exampleJVM, exampleJS)
+  .aggregate(coreJVM, coreJS, runnerJVM, runnerJS, sbtTestJVM, sbtTestJS, testJVM, testJS, exampleJVM, exampleJS, minitestJVM, minitestJS)
 
 lazy val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("core"))
@@ -87,6 +87,18 @@ lazy val sbtTest = crossProject(JVMPlatform, JSPlatform)
   .dependsOn(core, runner)
 lazy val sbtTestJVM = sbtTest.jvm
 lazy val sbtTestJS = sbtTest.js
+
+lazy val minitest = crossProject(JVMPlatform, JSPlatform)
+  .in(file("minitest"))
+  .settings(standardSettings ++ bintrarySettings ++ Seq(
+    name := "hedgehog-minitest"
+  ) ++ Seq(libraryDependencies ++= Seq(
+      "org.portable-scala" %%% "portable-scala-reflect" % "1.0.0",
+      "io.monix" %%% "minitest" % "2.8.2"
+    )) ++ Seq(testFrameworks += TestFramework("minitest.runner.Framework"))
+  ).dependsOn(runner)
+lazy val minitestJVM = minitest.jvm
+lazy val minitestJS = minitest.js
 
 lazy val test = crossProject(JVMPlatform, JSPlatform)
   .settings(standardSettings ++ noPublish ++ Seq(
