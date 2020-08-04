@@ -9,7 +9,7 @@ if [ "${GITHUB_TAG:-}" != "" ]; then
   BINTRAY_SUBJECT=${BINTRAY_SUBJECT:-hedgehogqa}
   BINTRAY_REPO=${BINTRAY_REPO:-scala-hedgehog-maven}
 
-  BINTRAY_PACKAGES="hedgehog-core hedgehog-runner hedgehog-sbt hedgehog-minitest"
+  BINTRAY_PACKAGES="hedgehog-core hedgehog-runner hedgehog-sbt"
 
   echo "PROJECT_VERSION: $PROJECT_VERSION"
   echo "BINTRAY_SUBJECT: $BINTRAY_SUBJECT"
@@ -17,12 +17,16 @@ if [ "${GITHUB_TAG:-}" != "" ]; then
 
   for bintray_package in $BINTRAY_PACKAGES
   do
+    echo ""
     echo "bintray_package: $bintray_package"
     echo "Sync to Maven Central..."
     curl \
       --user "${BINTRAY_USER}:${BINTRAY_PASS}" \
       -X POST \
+      -H "Content-Type: application/json" \
       "https://api.bintray.com/maven_central_sync/$BINTRAY_SUBJECT/$BINTRAY_REPO/$bintray_package/versions/$PROJECT_VERSION"
+
+    sleep 10s
   done
 else
   echo "It's not a tag release so 'Sync to Maven Central' has been skipped."
