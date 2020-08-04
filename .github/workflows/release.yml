@@ -9,6 +9,7 @@ on:
 
 jobs:
   build_and_publish:
+    if: github.repository == 'hedgehogqa/scala-hedgehog'
 
     runs-on: ubuntu-latest
 
