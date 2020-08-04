@@ -41,11 +41,6 @@ jobs:
 
       - name: Build for Scala ${{ matrix.scala.version }}
         run: |
-          export GITHUB_TAG=${GITHUB_REF#refs/tags/}
-          export CURRENT_BRANCH_NAME="${GITHUB_REF#refs/heads/:-}"
-          if [ "${GITHUB_TAG:-}" != "" ]; then
-            PROJECT_VERSION=$(echo "$GITHUB_TAG" | sed 's/^v//')
-          else
-            PROJECT_VERSION=$(git log --format=%H -1)
-          fi
+          export CURRENT_BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          PROJECT_VERSION=$(git log --format=%H -1)
           .github/workflows/sbt-build.sh ${{ matrix.scala.version }} $PROJECT_VERSION

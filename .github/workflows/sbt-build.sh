@@ -1,7 +1,5 @@
 #!/bin/bash -e
 
-: ${CURRENT_BRANCH_NAME:?"CURRENT_BRANCH_NAME is missing."}
-
 if [ -z "$2" ]
   then
     echo "Missing parameters. Please enter the [Scala version] and [project version]."
@@ -10,6 +8,11 @@ if [ -z "$2" ]
 else
   SCALA_VERSION=$1
   PROJECT_VERSION=$2
+
+  echo "      SCALA_VERSION=$SCALA_VERSION"
+  echo "    PROJECT_VERSION=$PROJECT_VERSION"
+  echo "CURRENT_BRANCH_NAME=$CURRENT_BRANCH_NAME"
+  echo "         GITHUB_TAG=$GITHUB_TAG"
 
   if [[ $CURRENT_BRANCH_NAME == "master" || $GITHUB_TAG != "" ]]
   then
