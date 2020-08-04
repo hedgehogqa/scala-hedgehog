@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/hedgehogqa/scala-hedgehog.svg?branch=master)](https://travis-ci.org/hedgehogqa/scala-hedgehog)
+[![Build Status](https://github.com/hedgehogqa/scala-hedgehog/workflows/Build%20All/badge.svg)](https://github.com/hedgehogqa/scala-hedgehog/actions?workflow=Build+All)
+[![Release Status](https://github.com/hedgehogqa/scala-hedgehog/workflows/Release/badge.svg)](https://github.com/hedgehogqa/scala-hedgehog/actions?workflow=Release)
 
 > Hedgehog will eat all your bugs.
 
