@@ -47,7 +47,7 @@ jobs:
           BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
           BINTRAY_PASS: ${{ secrets.BINTRAY_PASS }}
         run: |
-          export $CURRENT_BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          export CURRENT_BRANCH_NAME="${GITHUB_REF#refs/heads/}"
           export SCALA_VERSION=${{ matrix.scala.version }}
           export PROJECT_VERSION=$(git log --format=%H -1)
 
