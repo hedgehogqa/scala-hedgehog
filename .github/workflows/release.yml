@@ -41,35 +41,36 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-ivy-scala-${{ matrix.scala.binary-version }}-
 
-      - name: Build for Scala ${{ matrix.scala.version }}
+      - name: sbt Publish non-tag for Scala ${{ matrix.scala.version }}
+        if: startsWith(github.ref, 'refs/heads/')
+        env:
+          BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
+          BINTRAY_PASS: ${{ secrets.BINTRAY_PASS }}
         run: |
-          export GITHUB_TAG=${GITHUB_REF#refs/tags/}
-          export CURRENT_BRANCH_NAME="${GITHUB_REF#refs/heads/:-}"
-          if [ "${GITHUB_TAG:-}" != "" ]; then
-            PROJECT_VERSION=$(echo "$GITHUB_TAG" | sed 's/^v//')
-          else
-            PROJECT_VERSION=$(git log --format=%H -1)
-          fi
-          .github/workflows/sbt-build.sh ${{ matrix.scala.version }} $PROJECT_VERSION
+          export $CURRENT_BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          export SCALA_VERSION=${{ matrix.scala.version }}
+          export PROJECT_VERSION=$(git log --format=%H -1)
 
-      - name: sbt Publish
+          .github/workflows/sbt-build.sh ${{ matrix.scala.version }} $PROJECT_VERSION
+          .github/workflows/publish.sh
+
+      - name: sbt Publish tag for Scala ${{ matrix.scala.version }}
+        if: startsWith(github.ref, 'refs/tags/v')
         env:
           BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
           BINTRAY_PASS: ${{ secrets.BINTRAY_PASS }}
         run: |
           export GITHUB_TAG=${GITHUB_REF#refs/tags/}
           export SCALA_VERSION=${{ matrix.scala.version }}
-          if [ "${GITHUB_TAG:-}" != "" ]; then
-            export PROJECT_VERSION=$(echo "$GITHUB_TAG" | sed 's/^v//')
-          else
-            export PROJECT_VERSION=$(git log --format=%H -1)
-          fi
+          export PROJECT_VERSION=$(echo "$GITHUB_TAG" | sed 's/^v//')
 
+          .github/workflows/sbt-build.sh ${{ matrix.scala.version }} $PROJECT_VERSION
           .github/workflows/publish.sh
 
   # NOTE: Do not sync multiple repos to Maven Central in parallel. It's unsupported so will fail.
   publish_maven:
     needs: build_and_publish
+    if: startsWith(github.ref, 'refs/tags/v')
 
     runs-on: ubuntu-latest
 
@@ -83,4 +84,3 @@ jobs:
         run: |
           export GITHUB_TAG=${GITHUB_REF#refs/tags/}
           .github/workflows/maven_central_sync.sh
-
