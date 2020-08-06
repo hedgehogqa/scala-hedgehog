@@ -9,7 +9,7 @@ if [ "${GITHUB_TAG:-}" != "" ]; then
   BINTRAY_SUBJECT=${BINTRAY_SUBJECT:-hedgehogqa}
   BINTRAY_REPO=${BINTRAY_REPO:-scala-hedgehog-maven}
 
-  BINTRAY_PACKAGES="hedgehog-core hedgehog-runner hedgehog-sbt"
+  BINTRAY_PACKAGES="hedgehog-core hedgehog-runner hedgehog-sbt hedgehog-minitest"
 
   echo "PROJECT_VERSION: $PROJECT_VERSION"
   echo "BINTRAY_SUBJECT: $BINTRAY_SUBJECT"
