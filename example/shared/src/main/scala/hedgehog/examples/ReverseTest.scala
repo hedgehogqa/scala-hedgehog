@@ -13,5 +13,7 @@ object ReverseTest extends Properties {
   def testReverse: Property =
     for {
       xs <- Gen.alpha.list(Range.linear(0, 100)).forAll
+         .cover(50, "empty", _.isEmpty)
+         .cover(50, "nonempty", _.nonEmpty)
     } yield xs.reverse.reverse ==== xs
 }
