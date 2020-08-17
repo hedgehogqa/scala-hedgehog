@@ -36,6 +36,9 @@ class Test(
 
   def noShrinking: Test =
     config(_.copy(shrinkLimit = ShrinkLimit(0)))
+
+  def withExamples: Test =
+    config(_.copy(withExamples = WithExamples.WithExamples))
 }
 
 object Test {
@@ -62,7 +65,7 @@ object Test {
       }
     }
 
-    val coverage = renderCoverage(report.coverage, report.tests)
+    val coverage = renderCoverage(report.coverage, report.tests, report.examples)
     report.status match {
       case Failed(shrinks, log) =>
         render(false, s"Falsified after ${report.tests.value} passed tests", log.map(renderLog) ++ coverage)
@@ -86,7 +89,7 @@ object Test {
         sw.toString
     }
 
-  def renderCoverage(coverage: Coverage[CoverCount], tests: SuccessCount): List[String] =
+  def renderCoverage(coverage: Coverage[CoverCount], tests: SuccessCount, examples: Examples): List[String] =
     coverage.labels.values.toList
       .sortBy(_.annotation.percentage(tests).toDouble.toInt * -1)
       .map(l => {
@@ -97,6 +100,20 @@ object Test {
             l.minimum.toDouble.toInt.toString + "%"
           , if (Label.covered(l, tests)) "✓" else "✗"
           ) else Nil
+        , renderExample(examples, l.name)
         ).flatten.mkString(" ")
       })
+
+  def renderExample(examples: Examples, name: LabelName): List[String] =
+    examples.examples.getOrElse(name, Nil).map(renderLog) match {
+      case Nil =>
+        Nil
+      case x :: Nil =>
+        if (x == name.render) // i.e. `.collect`
+          Nil
+        else
+          List(x)
+      case xs =>
+        List(xs.mkString)
+    }
 }

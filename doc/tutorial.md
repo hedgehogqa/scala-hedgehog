@@ -16,6 +16,7 @@ Tutorial
     - [Filtering](#filtering)
     - [Sized](#sized)
   - [Shrinking](#shrinking)
+  - [Classifications](#classifications)
 - [State](#state)
 
 ## Thanks
@@ -668,6 +669,54 @@ Using seed from environment variable HEDGEHOG_SEED: 58973622580784
 + hedgehog.PropertyTest$.applicative: OK, passed 1 tests
 + hedgehog.PropertyTest$.applicative shrink: OK, passed 100 tests
 ```
+
+
+### Classifications
+
+Using `classify` you can add classifications to your generator's data, for example:
+
+```scala
+  def testReverse: Property =
+    for {
+      xs <- Gen.alpha.list(Range.linear(0, 10)).forAll
+         .classify("empty", _.isEmpty)
+         .classify("nonempty", _.nonEmpty)
+    } yield xs.reverse.reverse ==== xs
+```
+
+Running that property will produce a result like:
+
+```
+[info] + hedgehog.examples.ReverseTest.reverse: OK, passed 100 tests
+[info] > 69% nonempty List(a)
+[info] > 31% empty List()
+```
+
+Notice how, in addition to the percentage, it also presents a shrunk example for that classifier.
+
+Using `cover` you may also specify a minimum coverage percentage for the given classification:
+
+```scala
+  def testReverse: Property =
+    for {
+      xs <- Gen.alpha.list(Range.linear(0, 10)).forAll
+         .cover(50, "empty", _.isEmpty)
+         .cover(50, "nonempty", _.nonEmpty)
+    } yield xs.reverse.reverse ==== xs
+```
+
+```
+[info] - hedgehog.examples.ReverseTest.reverse: Falsified after 100 passed tests
+[info] > Insufficient coverage.
+[info] > 93% nonempty 50% ✓ List(a)
+[info] > 7% empty 50% ✗ List()
+```
+
+Finally:
+
+* `label(name)` is an alias for `classify(name, _ => true)`, and
+* `collect` is an alias for `labal` using the value's `toString` as the classification (label name)
+
 
 ## State
 

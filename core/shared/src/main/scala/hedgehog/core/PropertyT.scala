@@ -46,12 +46,13 @@ case class PropertyConfig(
     testLimit: SuccessCount
   , discardLimit: DiscardCount
   , shrinkLimit: ShrinkLimit
+  , withExamples: WithExamples
   )
 
 object PropertyConfig {
 
   def default: PropertyConfig =
-    PropertyConfig(SuccessCount(100), DiscardCount(100), ShrinkLimit(1000))
+    PropertyConfig(SuccessCount(100), DiscardCount(100), ShrinkLimit(1000), WithExamples.NoExamples)
 }
 
 case class PropertyT[A](
@@ -132,38 +133,51 @@ object PropertyT {
 trait PropertyTReporting {
 
   @annotation.tailrec
-  final def takeSmallest(n: ShrinkCount, slimit: ShrinkLimit, t: Tree[Option[(List[Log], Option[Result])]]): Status =
-    t.value match {
+  final def takeSmallestG[A, B](n: ShrinkCount, slimit: ShrinkLimit, t: Tree[A])(p: A => Boolean)(e: (ShrinkCount, A) => B): B = {
+    if (n.value < slimit.value && p(t.value)) {
+      findMap(t.children.value)(m => if (p(m.value)) some(m) else Option.empty) match {
+        case None =>
+          e(n, t.value)
+
+        case Some(m) =>
+          takeSmallestG(n.inc, slimit, m)(p)(e)
+      }
+    } else {
+      e(n, t.value)
+    }
+  }
+
+  def takeSmallest(n: ShrinkCount, slimit: ShrinkLimit, t: Tree[Option[(Journal, Option[Result])]]): Status =
+    takeSmallestG(n, slimit, t) {
       case None =>
+        false
+
+      case Some((_, r)) =>
+        r.forall(!_.success)
+    } {
+      case (_, None) =>
         Status.gaveUp
 
-      case Some((w, r)) =>
-        if (r.forall(!_.success)) {
-          if (n.value >= slimit.value) {
-            Status.failed(n, w ++ r.map(_.logs).getOrElse(Nil))
-          } else {
-            findMap(t.children.value)(m =>
-              m.value match {
-                case Some((_, None)) =>
-                  some(m)
-                case Some((_, Some(r2))) =>
-                  if (!r2.success)
-                    some(m)
-                  else
-                    Option.empty
-                case None =>
-                  Option.empty
-              }
-            ) match {
-              case Some(m) =>
-                takeSmallest(n.inc, slimit, m)
-              case None =>
-                Status.failed(n, w ++ r.map(_.logs).getOrElse(Nil))
-            }
-          }
-        } else {
+      case (n, Some((j, r))) =>
+        if (r.forall(!_.success))
+          Status.failed(n, j.logs ++ r.map(_.logs).getOrElse(Nil))
+        else
           Status.ok
-        }
+    }
+
+  def takeSmallestExample(n: ShrinkCount, slimit: ShrinkLimit, name: LabelName, t: Tree[Option[(Journal, Option[Result])]]): List[Log] =
+    takeSmallestG(n, slimit, t) {
+      case None =>
+        false
+
+      case Some((j, r)) =>
+        r.exists(_.success) && Coverage.covers(j.coverage, name)
+    } {
+      case (_, None) =>
+        Nil
+
+      case (_, Some((j, _))) =>
+        j.logs
     }
 
   def report(config: PropertyConfig, size0: Option[Size], seed0: Seed, p: PropertyT[Result]): Report = {
@@ -172,17 +186,20 @@ trait PropertyTReporting {
     // Start the size at whatever remainder we have to ensure we run with "max" at least once
     val sizeInit = Size((Size.max % Math.min(config.testLimit.value, Size.max)) + sizeInc.value)
     @annotation.tailrec
-    def loop(successes: SuccessCount, discards: DiscardCount, size: Size, seed: Seed, coverage: Coverage[CoverCount]): Report =
+    def loop(successes: SuccessCount, discards: DiscardCount, size: Size, seed: Seed, coverage: Coverage[CoverCount], examples: Examples): Report =
       if (successes.value >= config.testLimit.value)
         // we've hit the test limit
         Coverage.split(coverage, successes) match {
           case (_, Nil) =>
-            Report(successes, discards, coverage, OK)
+            if (examples.examples.exists(_._2.isEmpty))
+              Report(successes, discards, coverage, examples, Status.failed(ShrinkCount(0), List("Insufficient examples.")))
+            else
+              Report(successes, discards, coverage, examples, OK)
           case _ =>
-            Report(successes, discards, coverage, Status.failed(ShrinkCount(0), List("Insufficient coverage.")))
+            Report(successes, discards, coverage, examples, Status.failed(ShrinkCount(0), List("Insufficient coverage.")))
         }
       else if (discards.value >= config.discardLimit.value)
-        Report(successes, discards, coverage, GaveUp)
+        Report(successes, discards, coverage, examples, GaveUp)
       else {
         val x =
           try {
@@ -191,23 +208,28 @@ trait PropertyTReporting {
             case e: Exception =>
               Property.error(e).run.run(size, seed)
           }
-        val t = x.map(_._2.map { case (l, r) => (l.logs, r) })
+        val t = x.map(_._2)
         x.value._2 match {
           case None =>
-            loop(successes, discards.inc, size.incBy(sizeInc), x.value._1, coverage)
+            loop(successes, discards.inc, size.incBy(sizeInc), x.value._1, coverage, examples)
 
-          case Some((_, None)) =>
-            Report(successes, discards, coverage, takeSmallest(ShrinkCount(0), config.shrinkLimit, t))
-
-          case Some((j, Some(r))) =>
-            if (!r.success){
-              Report(successes, discards, coverage, takeSmallest(ShrinkCount(0), config.shrinkLimit, t))
-            } else
-              loop(successes.inc, discards, size.incBy(sizeInc), x.value._1,
-                Coverage.union(Coverage.count(j.coverage), coverage)(_ + _))
+          case Some((j, r)) =>
+            if (r.forall(!_.success)) {
+              Report(successes, discards, coverage, examples, takeSmallest(ShrinkCount(0), config.shrinkLimit, t))
+            } else {
+              val coverage2 = Coverage.union(Coverage.count(j.coverage), coverage)(_ + _)
+              val examples2 =
+                Examples.addTo(examples, Coverage.labels(j.coverage)) { name =>
+                  if (Coverage.covers(j.coverage, name))
+                    takeSmallestExample(ShrinkCount(0), config.shrinkLimit, name, t)
+                  else
+                    Nil
+                }
+              loop(successes.inc, discards, size.incBy(sizeInc), x.value._1, coverage2, examples2)
+            }
         }
       }
-    loop(SuccessCount(0), DiscardCount(0), size0.getOrElse(sizeInit), seed0, Coverage.empty)
+    loop(SuccessCount(0), DiscardCount(0), size0.getOrElse(sizeInit), seed0, Coverage.empty, Examples.empty)
   }
 
   def recheck(config: PropertyConfig, size: Size, seed: Seed)(p: PropertyT[Result]): Report =
@@ -247,6 +269,15 @@ case class DiscardCount(value: Int) {
     DiscardCount(value + 1)
 }
 
+/** Whether the report should include an example for each label. */
+sealed trait WithExamples
+
+object WithExamples {
+
+  case object WithExamples extends WithExamples
+  case object NoExamples extends WithExamples
+}
+
 /**
  * The status of a property test run.
  *
@@ -270,4 +301,4 @@ object Status {
     OK
 }
 
-case class Report(tests: SuccessCount, discards: DiscardCount, coverage: Coverage[CoverCount], status: Status)
+case class Report(tests: SuccessCount, discards: DiscardCount, coverage: Coverage[CoverCount], examples: Examples, status: Status)
