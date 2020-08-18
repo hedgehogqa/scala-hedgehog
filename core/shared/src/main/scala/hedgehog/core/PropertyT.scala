@@ -46,13 +46,12 @@ case class PropertyConfig(
     testLimit: SuccessCount
   , discardLimit: DiscardCount
   , shrinkLimit: ShrinkLimit
-  , withExamples: WithExamples
   )
 
 object PropertyConfig {
 
   def default: PropertyConfig =
-    PropertyConfig(SuccessCount(100), DiscardCount(100), ShrinkLimit(1000), WithExamples.NoExamples)
+    PropertyConfig(SuccessCount(100), DiscardCount(100), ShrinkLimit(1000))
 }
 
 case class PropertyT[A](
@@ -267,15 +266,6 @@ case class DiscardCount(value: Int) {
 
   def inc: DiscardCount =
     DiscardCount(value + 1)
-}
-
-/** Whether the report should include an example for each label. */
-sealed trait WithExamples
-
-object WithExamples {
-
-  case object WithExamples extends WithExamples
-  case object NoExamples extends WithExamples
 }
 
 /**
