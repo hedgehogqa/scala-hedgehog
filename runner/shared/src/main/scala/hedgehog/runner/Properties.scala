@@ -36,9 +36,6 @@ class Test(
 
   def noShrinking: Test =
     config(_.copy(shrinkLimit = ShrinkLimit(0)))
-
-  def withExamples: Test =
-    config(_.copy(withExamples = WithExamples.WithExamples))
 }
 
 object Test {
