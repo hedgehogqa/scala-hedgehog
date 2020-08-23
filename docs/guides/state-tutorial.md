@@ -1,5 +1,10 @@
-State-Based Property Testing Tutorial
-=====================================
+---
+title: 'State-Based Property Testing Tutorial'
+sidebar_label: 'State-Based Testing (1)'
+slug: '/guides-state-tutorial'
+---
+
+## State-Based Property Testing Tutorial
 
 ## Follow Along
 

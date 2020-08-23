@@ -1,5 +1,9 @@
-State-Based Property Testing Tutorial (Part 2 - Vars)
-=====================================================
+---
+title: 'State-Based Property Testing Tutorial (Part 2 - Vars)'
+sidebar_label: 'State-Based Testing (2)'
+slug: '/guides-state-tutorial-vars'
+---
+## State-Based Property Testing Tutorial (Part 2 - Vars)
 
 This tutorial continues on from the [first tutorial](state-tutorial.md).
 

@@ -1,5 +1,4 @@
 import sbt._, Keys._
-import sbtcrossproject.crossProject
 
 lazy val noPublish = Seq(
   publish := {},
@@ -132,6 +131,21 @@ lazy val test = crossProject(JVMPlatform, JSPlatform)
   ).dependsOn(core, runner, sbtTest)
 lazy val testJVM = test.jvm
 lazy val testJS = test.js
+
+lazy val docs = (project in file("generated-docs"))
+  .enablePlugins(MdocPlugin, DocusaurPlugin)
+  .settings(
+    name := "docs"
+
+  , docusaurDir := (ThisBuild / baseDirectory).value / "website"
+  , docusaurBuildDir := docusaurDir.value / "build"
+
+  , gitHubPagesOrgName := "hedgehogqa"
+  , gitHubPagesRepoName := "scala-hedgehog"
+  )
+  .settings(noPublish)
+  .dependsOn(coreJVM, runnerJVM, exampleJVM, minitestJVM)
+
 
 lazy val compilationSettings = Seq(
     maxErrors := 10
