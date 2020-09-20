@@ -15,6 +15,8 @@ Hedgehog is released for every commit and so the "version" will be a git commit 
 You can find the [bintray repository here](https://bintray.com/hedgehogqa/scala-hedgehog).
 
 ```scala
+val hedgehogVersion = "@VERSION@"
+// OR
 val hedgehogVersion = "${COMMIT}"
 
 libraryDependencies ++= Seq(
@@ -23,6 +25,7 @@ libraryDependencies ++= Seq(
   "qa.hedgehog" %% "hedgehog-sbt" % hedgehogVersion
 )
 
+// To use Git commit hash version instead of SemVer, add the following resolver.
 resolvers += "bintray-scala-hedgehog" at "https://dl.bintray.com/hedgehogqa/scala-hedgehog"
 ```
 
