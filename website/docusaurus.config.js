@@ -87,8 +87,6 @@ const websiteConfig = {
       {
         docs: {
           path: '../generated-docs/target/mdoc/',
-          // It is recommended to set document id as docs home page (`docs/` path).
-          homePageId: 'hedgehog',
           sidebarPath: require.resolve('./sidebars.js'),
         },
         theme: {

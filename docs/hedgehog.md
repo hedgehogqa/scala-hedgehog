@@ -2,6 +2,7 @@
 id: 'hedgehog'
 title: 'Hedgehog for Scala'
 sidebar_label: 'Hedgehog'
+slug: /
 ---
 ## Hedgehog
 [![Release Status](https://github.com/hedgehogqa/scala-hedgehog/workflows/Release/badge.svg)](https://github.com/hedgehogqa/scala-hedgehog/actions?workflow=Release)
