@@ -20,8 +20,8 @@ case class StateT[M[_], S, A](run: S => M[(S, A)]) {
 
 abstract class StateTImplicits1 {
 
-  implicit def StateTFunctor[M[_], S](implicit F: Functor[M]): Functor[StateT[M, S, ?]] =
-    new Functor[StateT[M, S, ?]] {
+  implicit def StateTFunctor[M[_], S](implicit F: Functor[M]): Functor[StateT[M, S, *]] =
+    new Functor[StateT[M, S, *]] {
       override def map[A, B](fa: StateT[M, S, A])(f: A => B): StateT[M, S, B] =
         fa.map(f)
     }
@@ -29,8 +29,8 @@ abstract class StateTImplicits1 {
 
 abstract class StateTImplicits2 extends StateTImplicits1 {
 
-  implicit def StateTApplicative[M[_], S](implicit F: Monad[M]): Applicative[StateT[M, S, ?]] =
-    new Applicative[StateT[M, S, ?]] {
+  implicit def StateTApplicative[M[_], S](implicit F: Monad[M]): Applicative[StateT[M, S, *]] =
+    new Applicative[StateT[M, S, *]] {
 
       def point[A](a: => A): StateT[M, S, A] =
         StateT(s => F.point((s, a)))
@@ -45,8 +45,8 @@ abstract class StateTImplicits2 extends StateTImplicits1 {
 
 object StateT extends StateTImplicits2 {
 
-  implicit def StateTMonad[M[_], S](implicit F: Monad[M]): Monad[StateT[M, S, ?]] =
-    new Monad[StateT[M, S, ?]] {
+  implicit def StateTMonad[M[_], S](implicit F: Monad[M]): Monad[StateT[M, S, *]] =
+    new Monad[StateT[M, S, *]] {
 
       override def map[A, B](fa: StateT[M, S, A])(f: A => B): StateT[M, S, B] =
         fa.map(f)
@@ -67,7 +67,7 @@ trait StateTOpt[M[_]] {
 
   // Just to give ol' scala type-inference a helping hand...
   def traverse[S, A, B](l: List[A])(f: A => StateT[M, S, B])(implicit F: Monad[M]): StateT[M, S, List[B]] =
-    hedgehog.predef.traverse[StateT[M, S, ?], A, B](l)(f)
+    hedgehog.predef.traverse[StateT[M, S, *], A, B](l)(f)
 
   def apply[S, A](f: S => M[(S, A)]): StateT[M, S, A] =
     StateT(f)

@@ -33,7 +33,7 @@ object RangeTest extends Properties {
 
   def testLong: Result = {
     val r1 = Range.linear(Long.MinValue, Long.MaxValue)
-    val r2 = Range.linear(1, Long.MaxValue)
+    val r2 = Range.linear(1L, Long.MaxValue)
     Result.all(List(
       r1.bounds(Size(1))._2 ==== -9038904596117680292L
       , r1.bounds(Size(25))._2 ==== -4611686018427387905L

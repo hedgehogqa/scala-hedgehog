@@ -17,6 +17,14 @@ lazy val standardSettings: Seq[Setting[_]] = Seq(
     Defaults.coreDefaultSettings
   , projectSettings
   , compilationSettings
+  , Seq(
+      Compile / packageDoc / publishArtifact :=
+        (if (isDotty.value) false else (Compile / packageDoc / publishArtifact).value)
+    , packageDoc / publishArtifact :=
+        (if (isDotty.value) false else (packageDoc / publishArtifact).value)
+    , Compile / doc / sources :=
+        (if (isDotty.value) Seq.empty[File] else (Compile / doc / sources).value)
+    )
   ).flatten
 
 ThisBuild / organization := "qa.hedgehog"
@@ -31,8 +39,8 @@ ThisBuild / scmInfo := Some(
       "scm:git@github.com:hedgehogqa/scala-hedgehog.git"
     )
   )
-ThisBuild / scalaVersion := "2.12.11"
-ThisBuild / crossScalaVersions := Seq("2.11.12", scalaVersion.value, "2.13.3")
+ThisBuild / scalaVersion := "2.13.3"
+ThisBuild / crossScalaVersions := Seq("2.11.12", "2.12.12", scalaVersion.value, "3.0.0-M1")
 
 lazy val hedgehog = Project(
     id = "hedgehog"
@@ -66,7 +74,8 @@ lazy val runner = crossProject(JVMPlatform, JSPlatform)
   .settings(standardSettings ++ bintrarySettings ++ Seq(
     name := "hedgehog-runner"
   ) ++ Seq(libraryDependencies ++= Seq(
-      "org.portable-scala" %%% "portable-scala-reflect" % "1.0.0"
+      ("org.portable-scala" %%% "portable-scala-reflect" % "1.0.0")
+        .withDottyCompat(scalaVersion.value)
     ))
   ).dependsOn(core)
 lazy val runnerJVM = runner.jvm
@@ -76,13 +85,19 @@ lazy val sbtTest = crossProject(JVMPlatform, JSPlatform)
   .in(file("sbt-test"))
   .settings(standardSettings ++ testingSettings ++ bintrarySettings ++ Seq(
     name := "hedgehog-sbt",
-    libraryDependencies += "org.portable-scala" %%% "portable-scala-reflect" % "1.0.0"
+    libraryDependencies +=
+      ("org.portable-scala" %%% "portable-scala-reflect" % "1.0.0")
+        .withDottyCompat(scalaVersion.value)
   ))
   .jvmSettings(
-    libraryDependencies += "org.scala-sbt" % "test-interface" % "1.0"
+    libraryDependencies +=
+      ("org.scala-sbt" % "test-interface" % "1.0")
+        .withDottyCompat(scalaVersion.value)
   )
   .jsSettings(
-    libraryDependencies += "org.scala-js" %% "scalajs-test-interface" % "1.0.1"
+    libraryDependencies +=
+      ("org.scala-js" %% "scalajs-test-interface" % "1.3.0")
+        .withDottyCompat(scalaVersion.value)
   )
   .dependsOn(core, runner)
 lazy val sbtTestJVM = sbtTest.jvm
@@ -92,10 +107,19 @@ lazy val minitest = crossProject(JVMPlatform, JSPlatform)
   .in(file("minitest"))
   .settings(standardSettings ++ bintrarySettings ++ Seq(
     name := "hedgehog-minitest"
-  ) ++ Seq(libraryDependencies ++= Seq(
-      "org.portable-scala" %%% "portable-scala-reflect" % "1.0.0",
-      "io.monix" %%% "minitest" % "2.8.2"
-    )) ++ Seq(testFrameworks += TestFramework("minitest.runner.Framework"))
+  ) ++ Seq(
+    libraryDependencies ++= Seq(
+        ("org.portable-scala" %%% "portable-scala-reflect" % "1.0.0")
+          .withDottyCompat(scalaVersion.value)
+      ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2L, 11L)) =>
+          Seq("io.monix" %%% "minitest" % "2.8.2")
+        case _ =>
+          Seq("io.monix" %%% "minitest" % "2.9.0")
+      })
+  ) ++ Seq(
+    testFrameworks += TestFramework("minitest.runner.Framework")
+  )
   ).dependsOn(runner)
 lazy val minitestJVM = minitest.jvm
 lazy val minitestJS = minitest.js
@@ -111,35 +135,62 @@ lazy val testJS = test.js
 
 lazy val compilationSettings = Seq(
     maxErrors := 10
-  , scalacOptions in Compile ++= Seq(
-      "-deprecation"
-    , "-unchecked"
-    , "-feature"
-    , "-language:_"
-    , "-Ywarn-value-discard"
-    , "-Xlint"
-    , "-Xfatal-warnings"
-    ) ++ (
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, 10)) =>
-          Seq("-Yno-adapted-args")
-        case Some((2, 13)) =>
-          Seq.empty
-        case _ =>
-          Seq("-Yno-adapted-args", "-Ywarn-unused-import")
-      }
-    )
+  , scalacOptions in Compile ++= (if (isDotty.value) {
+      Seq(
+        "-deprecation"
+        , "-unchecked"
+        , "-feature"
+        , "-Xfatal-warnings"
+        , "-source:3.0-migration"
+        , "-Ykind-projector"
+        , "-language:" + List(
+          "dynamics",
+          "existentials",
+          "higherKinds",
+          "reflectiveCalls",
+          "experimental.macros",
+          "implicitConversions"
+        ).mkString(",")
+        , "-siteroot", "./dotty-docs"
+      )
+    } else {
+      Seq(
+        "-deprecation"
+        , "-unchecked"
+        , "-feature"
+        , "-language:_"
+        , "-Ywarn-value-discard"
+        , "-Xlint"
+        , "-Xfatal-warnings"
+      ) ++ (
+        CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((2, 10)) =>
+            Seq("-Yno-adapted-args")
+          case Some((2, 13)) =>
+            Seq.empty
+          case _ =>
+            Seq("-Yno-adapted-args", "-Ywarn-unused-import")
+        }
+      )
+    })
   , scalacOptions in (Compile,console) := Seq("-language:_", "-feature")
   , scalacOptions in (Test,console) := Seq("-language:_", "-feature")
   , unmanagedSourceDirectories in Compile ++= {
       (unmanagedSourceDirectories in Compile).value.map { dir =>
         CrossVersion.partialVersion(scalaVersion.value) match {
-          case Some((2, 13)) => file(dir.getPath ++ "-2.13+")
+          case Some((2, 13)) | Some((3, 0)) => file(dir.getPath ++ "-2.13+")
           case _             => file(dir.getPath ++ "-2.13-")
         }
       }
     }
-  , libraryDependencies += compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3" cross CrossVersion.binary)
+  , libraryDependencies ++= (
+      if (isDotty.value)
+        Seq.empty[ModuleID]
+      else
+        Seq(
+          compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3" cross CrossVersion.binary)
+        )
+    )
   )
 
 lazy val testingSettings = Seq(

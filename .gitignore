@@ -9,3 +9,4 @@ project/source.scala
 .bloop
 .metals
 project/metals.sbt
+.bsp/

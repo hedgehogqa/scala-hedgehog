@@ -7,8 +7,8 @@ trait Functor[F[_]] {
 
 object Functor {
 
-  implicit def FunctorEither[L]: Functor[Either[L, ?]] =
-    new Functor[Either[L, ?]] {
+  implicit def FunctorEither[L]: Functor[Either[L, *]] =
+    new Functor[Either[L, *]] {
 
       override def map[A, B](fa: Either[L, A])(f: A => B): Either[L, B] =
         fa.rightMap(f)
@@ -33,8 +33,8 @@ object Applicative {
   def ap[F[_], A, B](fa: => F[A])(f: => F[A => B])(implicit F: Monad[F]): F[B] =
     F.bind(f)(x => F.map(fa)(x))
 
-  implicit def ApplicativeEither[L]: Applicative[Either[L, ?]] =
-    new Applicative[Either[L, ?]] {
+  implicit def ApplicativeEither[L]: Applicative[Either[L, *]] =
+    new Applicative[Either[L, *]] {
 
       override def point[A](a: => A): Either[L, A] =
         Right(a)
@@ -61,8 +61,8 @@ trait Monad[F[_]] extends Applicative[F] {
 
 object Monad {
 
-  implicit def MonadEither[L]: Monad[Either[L, ?]] =
-    new Monad[Either[L, ?]] {
+  implicit def MonadEither[L]: Monad[Either[L, *]] =
+    new Monad[Either[L, *]] {
 
       override def map[A, B](fa: Either[L, A])(f: A => B): Either[L, B] =
         fa.rightMap(f)
