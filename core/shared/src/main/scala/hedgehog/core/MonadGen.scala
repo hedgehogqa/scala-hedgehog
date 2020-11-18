@@ -27,8 +27,8 @@ object MonadGenT {
         gen.shrink(f)
     }
 
-  implicit def StateTMonadGenT[M[_], S](implicit F: Functor[M], G: MonadGenT[M]): MonadGenT[StateT[M, S, ?]] =
-    new MonadGenT[StateT[M, S, ?]] {
+  implicit def StateTMonadGenT[M[_], S](implicit F: Functor[M], G: MonadGenT[M]): MonadGenT[StateT[M, S, *]] =
+    new MonadGenT[StateT[M, S, *]] {
 
       def lift[A](gen: GenT[A]): StateT[M, S, A] =
         StateT(s => F.map(G.lift(gen))(a => (s, a)))

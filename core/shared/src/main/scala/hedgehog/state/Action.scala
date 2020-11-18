@@ -47,7 +47,7 @@ object Action {
     } yield x
 
   def action[S](commands: List[CommandIO[S]]): StateT[GenT, Context[S], Action[S]] =
-    MonadGen[StateT[GenT, Context[S], ?]]
+    MonadGen[StateT[GenT, Context[S], *]]
       .fromSome(for {
         context <- stateT[GenT].get[Context[S]]
         cmd <- stateT[GenT].lift(Gen.elementUnsafe(commands.filter(command =>
@@ -57,7 +57,7 @@ object Action {
         } yield a)
 
   def genActions[S](range: Range[Int], commands: List[CommandIO[S]], ctx: Context[S]): GenT[(Context[S], List[Action[S]])] =
-    MonadGen[StateT[GenT, Context[S], ?]]
+    MonadGen[StateT[GenT, Context[S], *]]
       .list(action(commands), range).eval(ctx)
       .map(xs => dropInvalid(xs).run(ctx).value)
 
@@ -84,8 +84,8 @@ object Action {
     State.traverse(actions)(loop).map(_.flatMap(_.toList))
   }
 
-  def execute[S](action: Action[S]): StateT[Either[ExecutionError, ?], Environment, ActionCheck[S]] =
-    stateT[Either[ExecutionError, ?]](env0 =>
+  def execute[S](action: Action[S]): StateT[Either[ExecutionError, *], Environment, ActionCheck[S]] =
+    stateT[Either[ExecutionError, *]](env0 =>
       // Apologies, we're going to assume that environment variables are uncommon enough we don't want to force
       // users to have to pass back the exceptions, instead we'll catch them here. Dodgy.
       (try {
@@ -147,10 +147,10 @@ object Action {
     val (e, r) = stateT.traverse(parallel.prefix)(executeUpdateEnsure)
       .run((initial, Environment(Map())))
       .value
-    Future(stateT[Either[ExecutionError, ?]].traverse(parallel.branch1)(execute).eval(e._2))
-      .zip(Future(stateT[Either[ExecutionError, ?]].traverse(parallel.branch2)(execute).eval(e._2)))
+    Future(stateT[Either[ExecutionError, *]].traverse(parallel.branch1)(execute).eval(e._2))
+      .zip(Future(stateT[Either[ExecutionError, *]].traverse(parallel.branch2)(execute).eval(e._2)))
       .map { case (xs, ys) =>
-        Applicative.zip[Either[ExecutionError, ?], List[ActionCheck[S]], List[ActionCheck[S]]](xs, ys)
+        Applicative.zip[Either[ExecutionError, *], List[ActionCheck[S]], List[ActionCheck[S]]](xs, ys)
           .fold[Result](
             e => Runner.executionErrorToResult(e)
           , x => Result.all(r).and(linearize(e._1, e._2, x._1, x._2))

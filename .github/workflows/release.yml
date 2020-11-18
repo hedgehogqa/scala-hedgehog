@@ -16,9 +16,10 @@ jobs:
     strategy:
       matrix:
         scala:
-          - { version: "2.11.12", binary-version: "2.11", java-version: "8" }
-          - { version: "2.12.11", binary-version: "2.12", java-version: "11" }
-          - { version: "2.13.3", binary-version: "2.13", java-version: "11" }
+          - { name: "Scala 2", version: "2.11.12", binary-version: "2.11", java-version: "8" }
+          - { name: "Scala 2", version: "2.12.12", binary-version: "2.12", java-version: "11" }
+          - { name: "Scala 2", version: "2.13.3",  binary-version: "2.13", java-version: "11" }
+          - { name: "Scala 3", version: "3.0.0-M1",  binary-version: "3.0.0-M1", java-version: "11" }
 
     steps:
       - uses: actions/checkout@v2
@@ -42,7 +43,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-ivy-scala-${{ matrix.scala.binary-version }}-
 
-      - name: sbt Publish non-tag for Scala ${{ matrix.scala.version }}
+      - name: "sbt Publish non-tag for ${{ matrix.scala.name }} ${{ matrix.scala.version }} - ${{ github.run_number }}"
         if: startsWith(github.ref, 'refs/heads/')
         env:
           BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
@@ -55,7 +56,7 @@ jobs:
           .github/workflows/sbt-build.sh ${{ matrix.scala.version }} $PROJECT_VERSION
           .github/workflows/publish.sh
 
-      - name: sbt Publish tag for Scala ${{ matrix.scala.version }}
+      - name: "sbt Publish tag for ${{ matrix.scala.name }} ${{ matrix.scala.version }} - ${{ github.run_number }}"
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
