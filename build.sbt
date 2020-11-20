@@ -22,8 +22,12 @@ lazy val standardSettings: Seq[Setting[_]] = Seq(
         (if (isDotty.value) false else (Compile / packageDoc / publishArtifact).value)
     , packageDoc / publishArtifact :=
         (if (isDotty.value) false else (packageDoc / publishArtifact).value)
-    , Compile / doc / sources :=
-        (if (isDotty.value) Seq.empty[File] else (Compile / doc / sources).value)
+    , Compile / doc / sources := (Def.taskDyn {
+        (if (isDotty.value)
+          Def.task(Seq.empty[File])
+        else
+          Def.task((Compile / doc / sources).value))
+      }).value
     )
   ).flatten
 
