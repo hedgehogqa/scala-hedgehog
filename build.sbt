@@ -18,11 +18,7 @@ lazy val standardSettings: Seq[Setting[_]] = Seq(
   , projectSettings
   , compilationSettings
   , Seq(
-      Compile / packageDoc / publishArtifact :=
-        (if (isDotty.value) false else (Compile / packageDoc / publishArtifact).value)
-    , packageDoc / publishArtifact :=
-        (if (isDotty.value) false else (packageDoc / publishArtifact).value)
-    , Compile / doc / sources := (Def.taskDyn {
+      Compile / doc / sources := (Def.taskDyn {
         (if (isDotty.value)
           Def.task(Seq.empty[File])
         else
@@ -44,7 +40,7 @@ ThisBuild / scmInfo := Some(
     )
   )
 ThisBuild / scalaVersion := "2.13.3"
-ThisBuild / crossScalaVersions := Seq("2.11.12", "2.12.12", scalaVersion.value, "3.0.0-M1")
+ThisBuild / crossScalaVersions := Seq("2.11.12", "2.12.12", scalaVersion.value, "3.0.0-M2")
 
 lazy val hedgehog = Project(
     id = "hedgehog"
@@ -119,7 +115,7 @@ lazy val minitest = crossProject(JVMPlatform, JSPlatform)
         case Some((2L, 11L)) =>
           Seq("io.monix" %%% "minitest" % "2.8.2")
         case _ =>
-          Seq("io.monix" %%% "minitest" % "2.9.0")
+          Seq("io.monix" %%% "minitest" % "2.9.1")
       })
   ) ++ Seq(
     testFrameworks += TestFramework("minitest.runner.Framework")
