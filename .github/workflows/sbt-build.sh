@@ -27,7 +27,8 @@ else
       ++${SCALA_VERSION}! \
       'set ThisBuild / version := "'$PROJECT_VERSION'"' \
       clean \
-      test
+      test \
+      doc
   fi
 
 fi

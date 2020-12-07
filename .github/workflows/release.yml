@@ -19,7 +19,7 @@ jobs:
           - { name: "Scala 2", version: "2.11.12", binary-version: "2.11", java-version: "8" }
           - { name: "Scala 2", version: "2.12.12", binary-version: "2.12", java-version: "11" }
           - { name: "Scala 2", version: "2.13.3",  binary-version: "2.13", java-version: "11" }
-          - { name: "Scala 3", version: "3.0.0-M1",  binary-version: "3.0.0-M1", java-version: "11" }
+          - { name: "Scala 3", version: "3.0.0-M2",  binary-version: "3.0.0-M2", java-version: "11" }
 
     steps:
       - uses: actions/checkout@v2
