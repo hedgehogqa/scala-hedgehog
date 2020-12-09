@@ -15,6 +15,8 @@ slug: /
 | hedgehog-sbt | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-sbt_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-sbt_2.13) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-sbt_sjs1_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-sbt_sjs1_2.13) | [ ![Download](https://api.bintray.com/packages/hedgehogqa/scala-hedgehog-maven/hedgehog-sbt/images/download.svg) ](https://bintray.com/hedgehogqa/scala-hedgehog-maven/hedgehog-sbt/_latestVersion) |
 | hedgehog-minitest | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-minitest_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-minitest_2.13) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-minitest_sjs1_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-minitest_sjs1_2.13) | [ ![Download](https://api.bintray.com/packages/hedgehogqa/scala-hedgehog-maven/hedgehog-minitest/images/download.svg) ](https://bintray.com/hedgehogqa/scala-hedgehog-maven/hedgehog-minitest/_latestVersion) |
 
+* Supported Scala Versions: @SUPPORTED_SCALA_VERSIONS@
+
 > Hedgehog will eat all your bugs.
 
 <img src="../img/hedgehog-logo-256x256.png" align="right"/>
