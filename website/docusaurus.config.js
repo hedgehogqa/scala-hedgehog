@@ -95,6 +95,9 @@ const websiteConfig = {
       },
     ],
   ],
+  plugins: [
+    require.resolve('docusaurus-lunr-search'),
+  ],
 };
 
 if (isSearchable) {
