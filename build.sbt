@@ -1,5 +1,4 @@
 import sbt._, Keys._
-import sbtcrossproject.crossProject
 
 lazy val noPublish = Seq(
   publish := {},
@@ -27,6 +26,9 @@ lazy val standardSettings: Seq[Setting[_]] = Seq(
     )
   ).flatten
 
+val ProjectScalaVersion = "2.13.3"
+val CrossScalaVersions = Seq("2.11.12", "2.12.12", ProjectScalaVersion, "3.0.0-M2")
+
 ThisBuild / organization := "qa.hedgehog"
 ThisBuild / version := "1.0.0"
 ThisBuild / developers := List(
@@ -39,8 +41,9 @@ ThisBuild / scmInfo := Some(
       "scm:git@github.com:hedgehogqa/scala-hedgehog.git"
     )
   )
-ThisBuild / scalaVersion := "2.13.3"
-ThisBuild / crossScalaVersions := Seq("2.11.12", "2.12.12", scalaVersion.value, "3.0.0-M2")
+
+ThisBuild / scalaVersion := ProjectScalaVersion
+ThisBuild / crossScalaVersions := CrossScalaVersions
 
 lazy val hedgehog = Project(
     id = "hedgehog"
@@ -132,6 +135,37 @@ lazy val test = crossProject(JVMPlatform, JSPlatform)
   ).dependsOn(core, runner, sbtTest)
 lazy val testJVM = test.jvm
 lazy val testJS = test.js
+
+lazy val docs = (project in file("generated-docs"))
+  .enablePlugins(MdocPlugin, DocusaurPlugin)
+  .settings(
+    name := "docs"
+  , mdocVariables := Map(
+      "VERSION" -> {
+          import sys.process._
+          "git fetch --tags".!
+          val tag = "git rev-list --tags --max-count=1".!!.trim
+          s"git describe --tags $tag".!!.trim.stripPrefix("v")
+        },
+      "SUPPORTED_SCALA_VERSIONS" -> {
+        val versions = CrossScalaVersions
+          .map(CrossVersion.binaryScalaVersion)
+          .map(v => s"`$v`")
+        if (versions.length > 1)
+          s"${versions.init.mkString(", ")} and ${versions.last}"
+        else
+          versions.mkString
+      }
+    )
+  , docusaurDir := (ThisBuild / baseDirectory).value / "website"
+  , docusaurBuildDir := docusaurDir.value / "build"
+
+  , gitHubPagesOrgName := "hedgehogqa"
+  , gitHubPagesRepoName := "scala-hedgehog"
+  )
+  .settings(noPublish)
+  .dependsOn(coreJVM, runnerJVM, exampleJVM, minitestJVM)
+
 
 lazy val compilationSettings = Seq(
     maxErrors := 10

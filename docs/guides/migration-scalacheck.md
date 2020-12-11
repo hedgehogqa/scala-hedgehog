@@ -1,5 +1,9 @@
-Migration From ScalaCheck
-=========================
+---
+title: 'Migration From ScalaCheck'
+sidebar_label: 'Migration From ScalaCheck'
+slug: '/guides-migration-from-scalacheck'
+---
+## Migration From ScalaCheck
 
 For many cases migrating from ScalaCheck to Hedgehog should be _fairly_
 straight forward, as the general principals are quite similar, and the changes

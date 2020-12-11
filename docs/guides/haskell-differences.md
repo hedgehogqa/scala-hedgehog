@@ -1,5 +1,9 @@
-Differences to Haskell Hedgehog
-===============================
+---
+title: 'Differences to Haskell Hedgehog'
+sidebar_label: 'Differences to Haskell Hedgehog'
+slug: '/guides-haskell-differences'
+---
+## Differences to Haskell Hedgehog
 
 This page documents where the Scala Hedgehog API deviates significantly from the Haskell version.
 
