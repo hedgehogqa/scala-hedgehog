@@ -88,17 +88,17 @@ object PropertyTest extends Properties {
   def cheap: Gen[Item] =
     for {
       n <- element("sandwich", List("noodles"))
-      p <- long(Range.constant(5, 10)).map(USD)
+      p <- long(Range.constant(5, 10)).map(USD.apply)
     } yield Item(n, p)
 
   def expensive: Gen[Item] =
     for {
       n <- element("oculus", List("vive"))
-      p <- long(Range.linear(1000, 2000)).map(USD)
+      p <- long(Range.linear(1000, 2000)).map(USD.apply)
     } yield Item(n, p)
 
   def order(gen: Gen[Item]): Gen[Order] =
-    gen.list(Range.linear(0, 50)).map(Order)
+    gen.list(Range.linear(0, 50)).map(Order.apply)
 
   def total: Result = {
     val seed = Seed.fromLong(5489)

@@ -348,7 +348,7 @@ object Vars {
           case Nil =>
             None
           case h :: t =>
-            Some(Gen.element(h, t).map(Execute))
+            Some(Gen.element(h, t).map(Execute.apply))
         }
 
       override def execute(env: Environment, s: Input): Either[String, Output] =
