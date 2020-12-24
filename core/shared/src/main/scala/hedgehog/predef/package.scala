@@ -13,7 +13,7 @@ package hedgehog
  */
 package object predef {
 
-  implicit def EitherOps[L, R](e: Either[L, R]): EitherOps[L, R] =
+  implicit def eitherOps[L, R](e: Either[L, R]): EitherOps[L, R] =
     new EitherOps(e)
 
   type State[S, A] = StateT[Identity, S, A]
