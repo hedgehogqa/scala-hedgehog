@@ -1,11 +1,21 @@
-name: Release
+name: Manual-Publish
 
 on:
-  push:
-    branches:
-      - master
-    tags:
-      - '*'
+  workflow_dispatch:
+    inputs:
+      java-version:
+        description: 'Java Version'
+        required: true
+        default: '11'
+      scala-version:
+        description: 'Scala Version (e.g. 2.13.3)'
+        required: true
+      scala-binary-version:
+        description: 'Scala Binary Version (e.g. 2.13) - Make sure it matches with Scala Version above'
+        required: true
+      project_version:
+        description: 'Project version (for SemVer, put v as the prefix. e.g. v1.2.3) - If empty, it will use the latest commit hash of the selected branch'
+        required: false
 
 jobs:
   build_and_publish:
@@ -16,10 +26,12 @@ jobs:
     strategy:
       matrix:
         scala:
-          - { name: "Scala 2", version: "2.11.12", binary-version: "2.11", java-version: "8" }
-          - { name: "Scala 2", version: "2.12.12", binary-version: "2.12", java-version: "11" }
-          - { name: "Scala 2", version: "2.13.3",  binary-version: "2.13", java-version: "11" }
-          - { name: "Scala 3", version: "3.0.0-M3", binary-version: "3.0.0-M3", java-version: "11" }
+          - {
+            name: "Scala",
+            version: "${{ github.event.inputs.scala-version }}",
+            binary-version: "${{ github.event.inputs.scala-binary-version }}",
+            java-version: "${{ github.event.inputs.java-version }}"
+          }
 
     steps:
       - uses: actions/checkout@v2
@@ -38,8 +50,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-sbt-${{ matrix.scala.binary-version }}-
 
-      - name: "sbt Publish non-tag for ${{ matrix.scala.name }} ${{ matrix.scala.version }} - ${{ github.run_number }}"
-        if: startsWith(github.ref, 'refs/heads/')
+      - name: "sbt Publish non-SemVer for ${{ matrix.scala.name }} ${{ matrix.scala.version }} - ${{ github.run_number }}"
+        if: github.event.inputs.project_version == ''
         env:
           BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
           BINTRAY_PASS: ${{ secrets.BINTRAY_PASS }}
@@ -51,33 +63,15 @@ jobs:
           .github/workflows/sbt-build.sh ${{ matrix.scala.version }} $PROJECT_VERSION
           .github/workflows/publish.sh
 
-      - name: "sbt Publish tag for ${{ matrix.scala.name }} ${{ matrix.scala.version }} - ${{ github.run_number }}"
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: "sbt Publish ${{ github.event.inputs.project_version }} for ${{ matrix.scala.name }} ${{ matrix.scala.version }} - ${{ github.run_number }}"
+        if: startsWith(github.event.inputs.project_version, 'v')
         env:
           BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
           BINTRAY_PASS: ${{ secrets.BINTRAY_PASS }}
         run: |
-          export GITHUB_TAG=${GITHUB_REF#refs/tags/}
+          export GITHUB_TAG=${{ github.event.inputs.project_version }}
           export SCALA_VERSION=${{ matrix.scala.version }}
           export PROJECT_VERSION=$(echo "$GITHUB_TAG" | sed 's/^v//')
 
           .github/workflows/sbt-build.sh ${{ matrix.scala.version }} $PROJECT_VERSION
           .github/workflows/publish.sh
-
-  # NOTE: Do not sync multiple repos to Maven Central in parallel. It's unsupported so will fail.
-  publish_maven:
-    needs: build_and_publish
-    if: startsWith(github.ref, 'refs/tags/v')
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Sync to Maven Central
-        env:
-          BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
-          BINTRAY_PASS: ${{ secrets.BINTRAY_PASS }}
-        run: |
-          export GITHUB_TAG=${GITHUB_REF#refs/tags/}
-          .github/workflows/maven_central_sync.sh
