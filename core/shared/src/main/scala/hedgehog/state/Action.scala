@@ -116,12 +116,21 @@ object Action {
       }.fold(e => ((state0, env0), Runner.executionErrorToResult(e)), identity)
     }
 
-  def executeSequential[S](initial: S, actions: List[Action[S]]): Result =
-    stateT
-      .traverse(actions)(executeUpdateEnsure)
+  def executeSequential[S](initial: S, actions: List[Action[S]]): Result = {
+    def goActions: (Result, List[Action[S]]) => StateT[Identity, (S, Environment), Result] = {
+      case (Result.Success, a :: as) => for {
+        result <- executeUpdateEnsure(a)
+        rest   <- goActions(result, as)
+      } yield rest
+      case (result, _) =>
+        StateT.StateTMonad[Identity, (S, Environment)].point(result)
+    }
+
+    goActions(Result.Success, actions)
       .eval((initial, Environment(Map())))
-      .map(Result.all)
       .value
+  }
+
 
   /**
    * Given the initial model state and set of commands, generates prefix
