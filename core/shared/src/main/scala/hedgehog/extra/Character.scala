@@ -44,7 +44,7 @@ trait CharacterOps {
 
   /** Generates an ASCII character */
   def ascii: GenT[Char] =
-    genT.char(0, 125)
+    genT.char(0, 127)
 
   /** Generates an Latin-1 character */
   def latin1: GenT[Char] =
