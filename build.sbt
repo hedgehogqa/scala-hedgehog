@@ -27,7 +27,7 @@ lazy val standardSettings: Seq[Setting[_]] = Seq(
   ).flatten
 
 val ProjectScalaVersion = "2.13.3"
-val CrossScalaVersions = Seq("2.11.12", "2.12.12", ProjectScalaVersion, "3.0.0-M3")
+val CrossScalaVersions = Seq("2.11.12", "2.12.12", ProjectScalaVersion, "3.0.0-RC1")
 
 ThisBuild / organization := "qa.hedgehog"
 ThisBuild / version := "1.0.0"
@@ -118,7 +118,7 @@ lazy val minitest = crossProject(JVMPlatform, JSPlatform)
         case Some((2L, 11L)) =>
           Seq("io.monix" %%% "minitest" % "2.8.2")
         case _ =>
-          Seq("io.monix" %%% "minitest" % "2.9.2")
+          Seq("io.monix" %%% "minitest" % "2.9.3")
       })
   ) ++ Seq(
     testFrameworks += TestFramework("minitest.runner.Framework")
@@ -222,7 +222,7 @@ lazy val compilationSettings = Seq(
         Seq.empty[ModuleID]
       else
         Seq(
-          compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3" cross CrossVersion.binary)
+          compilerPlugin("org.typelevel" %% "kind-projector" % "0.11.3" cross CrossVersion.full)
         )
     )
   )
