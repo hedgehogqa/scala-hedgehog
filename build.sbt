@@ -4,30 +4,22 @@ lazy val noPublish = Seq(
   publish := {},
   publishLocal := {},
   publishArtifact := false,
-  skip in publish := true
+  publish / skip := true
 )
 
 lazy val projectSettings: Seq[Setting[_]] = Seq(
     name := "hedgehog"
-  , fork in run := true
+  , run / fork := true
   )
 
 lazy val standardSettings: Seq[Setting[_]] = Seq(
     Defaults.coreDefaultSettings
   , projectSettings
   , compilationSettings
-  , Seq(
-      Compile / doc / sources := (Def.taskDyn {
-        (if (isDotty.value)
-          Def.task(Seq.empty[File])
-        else
-          Def.task((Compile / doc / sources).value))
-      }).value
-    )
   ).flatten
 
-val ProjectScalaVersion = "2.13.3"
-val CrossScalaVersions = Seq("2.11.12", "2.12.12", ProjectScalaVersion, "3.0.0-RC1")
+val ProjectScalaVersion = "2.13.5"
+val CrossScalaVersions = Seq("2.11.12", "2.12.13", ProjectScalaVersion, "3.0.0-RC1", "3.0.0-RC2")
 
 ThisBuild / organization := "qa.hedgehog"
 ThisBuild / version := "1.0.0"
@@ -55,19 +47,20 @@ lazy val hedgehog = Project(
 
 lazy val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("core"))
-  .settings(standardSettings ++ bintrarySettings ++ Seq(
-    name := "hedgehog-core"
-  ) ++ Seq(libraryDependencies ++= Seq(
-  ).flatten))
+  .settings(
+    standardSettings ++ bintrarySettings ++ Seq(
+      name := "hedgehog-core"
+    )
+  )
 lazy val coreJVM = core.jvm
 lazy val coreJS = core.js
 
 lazy val example = crossProject(JVMPlatform, JSPlatform)
   .in(file("example"))
-  .settings(standardSettings ++ noPublish ++ Seq(
-    name := "hedgehog-example"
-  ) ++ Seq(libraryDependencies ++= Seq(
-  ))
+  .settings(
+    standardSettings ++ noPublish ++ Seq(
+      name := "hedgehog-example"
+    )
   ).dependsOn(core, runner, sbtTest)
 lazy val exampleJVM = example.jvm
 lazy val exampleJS = example.js
@@ -77,7 +70,7 @@ lazy val runner = crossProject(JVMPlatform, JSPlatform)
   .settings(standardSettings ++ bintrarySettings ++ Seq(
     name := "hedgehog-runner"
   ) ++ Seq(libraryDependencies ++= Seq(
-      ("org.portable-scala" %%% "portable-scala-reflect" % "1.0.0")
+      ("org.portable-scala" %%% "portable-scala-reflect" % portableScalaReflectVersion)
         .withDottyCompat(scalaVersion.value)
     ))
   ).dependsOn(core)
@@ -89,7 +82,7 @@ lazy val sbtTest = crossProject(JVMPlatform, JSPlatform)
   .settings(standardSettings ++ testingSettings ++ bintrarySettings ++ Seq(
     name := "hedgehog-sbt",
     libraryDependencies +=
-      ("org.portable-scala" %%% "portable-scala-reflect" % "1.0.0")
+      ("org.portable-scala" %%% "portable-scala-reflect" % portableScalaReflectVersion)
         .withDottyCompat(scalaVersion.value)
   ))
   .jvmSettings(
@@ -99,7 +92,7 @@ lazy val sbtTest = crossProject(JVMPlatform, JSPlatform)
   )
   .jsSettings(
     libraryDependencies +=
-      ("org.scala-js" %% "scalajs-test-interface" % "1.3.0")
+      ("org.scala-js" %% "scalajs-test-interface" % "1.5.1")
         .withDottyCompat(scalaVersion.value)
   )
   .dependsOn(core, runner)
@@ -108,21 +101,22 @@ lazy val sbtTestJS = sbtTest.js
 
 lazy val minitest = crossProject(JVMPlatform, JSPlatform)
   .in(file("minitest"))
-  .settings(standardSettings ++ bintrarySettings ++ Seq(
-    name := "hedgehog-minitest"
-  ) ++ Seq(
-    libraryDependencies ++= Seq(
-        ("org.portable-scala" %%% "portable-scala-reflect" % "1.0.0")
+  .settings(
+    standardSettings ++ bintrarySettings ++ Seq(
+      name := "hedgehog-minitest"
+    ) ++ Seq(
+      libraryDependencies ++= Seq(
+        ("org.portable-scala" %%% "portable-scala-reflect" % portableScalaReflectVersion)
           .withDottyCompat(scalaVersion.value)
       ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2L, 11L)) =>
           Seq("io.monix" %%% "minitest" % "2.8.2")
         case _ =>
-          Seq("io.monix" %%% "minitest" % "2.9.3")
+          Seq("io.monix" %%% "minitest" % "2.9.4")
       })
-  ) ++ Seq(
-    testFrameworks += TestFramework("minitest.runner.Framework")
-  )
+    ) ++ Seq(
+      testFrameworks += TestFramework("minitest.runner.Framework")
+    )
   ).dependsOn(runner)
 lazy val minitestJVM = minitest.jvm
 lazy val minitestJS = minitest.js
@@ -142,11 +136,11 @@ lazy val docs = (project in file("generated-docs"))
     name := "docs"
   , mdocVariables := Map(
       "VERSION" -> {
-          import sys.process._
-          "git fetch --tags".!
-          val tag = "git rev-list --tags --max-count=1".!!.trim
-          s"git describe --tags $tag".!!.trim.stripPrefix("v")
-        },
+        import sys.process._
+        "git fetch --tags".!
+        val tag = "git rev-list --tags --max-count=1".!!.trim
+        s"git describe --tags $tag".!!.trim.stripPrefix("v")
+      },
       "SUPPORTED_SCALA_VERSIONS" -> {
         val versions = CrossScalaVersions
           .map(CrossVersion.binaryScalaVersion)
@@ -169,7 +163,7 @@ lazy val docs = (project in file("generated-docs"))
 
 lazy val compilationSettings = Seq(
     maxErrors := 10
-  , scalacOptions in Compile ++= (if (isDotty.value) {
+  , Compile / scalacOptions ++= (if (scalaVersion.value.startsWith("3.")) {
       Seq(
         "-deprecation"
         , "-unchecked"
@@ -207,10 +201,10 @@ lazy val compilationSettings = Seq(
         }
       )
     })
-  , scalacOptions in (Compile,console) := Seq("-language:_", "-feature")
-  , scalacOptions in (Test,console) := Seq("-language:_", "-feature")
-  , unmanagedSourceDirectories in Compile ++= {
-      (unmanagedSourceDirectories in Compile).value.map { dir =>
+  , Compile / console / scalacOptions := Seq("-language:_", "-feature")
+  , Test / console / scalacOptions := Seq("-language:_", "-feature")
+  , Compile / unmanagedSourceDirectories ++= {
+      (Compile / unmanagedSourceDirectories).value.map { dir =>
         CrossVersion.partialVersion(scalaVersion.value) match {
           case Some((2, 13)) | Some((3, 0)) => file(dir.getPath ++ "-2.13+")
           case _             => file(dir.getPath ++ "-2.13-")
@@ -218,7 +212,7 @@ lazy val compilationSettings = Seq(
       }
     }
   , libraryDependencies ++= (
-      if (isDotty.value)
+      if (scalaVersion.value.startsWith("3."))
         Seq.empty[ModuleID]
       else
         Seq(
@@ -237,3 +231,5 @@ lazy val bintrarySettings = Seq(
   , bintrayVcsUrl := Some("https://github.com/hedgehogqa/scala-hedgehog")
   , licenses += ("Apache-2.0", url("https://opensource.org/licenses/Apache-2.0"))
   )
+
+lazy val portableScalaReflectVersion = "1.1.1"
