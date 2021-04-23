@@ -10,6 +10,7 @@ lazy val noPublish = Seq(
 lazy val projectSettings: Seq[Setting[_]] = Seq(
     name := "hedgehog"
   , run / fork := true
+  , licenses := List("Apache-2.0" -> url("https://opensource.org/licenses/Apache-2.0"))
   )
 
 lazy val standardSettings: Seq[Setting[_]] = Seq(
@@ -22,7 +23,6 @@ val ProjectScalaVersion = "2.13.5"
 val CrossScalaVersions = Seq("2.11.12", "2.12.13", ProjectScalaVersion, "3.0.0-RC1", "3.0.0-RC2")
 
 ThisBuild / organization := "qa.hedgehog"
-ThisBuild / version := "1.0.0"
 ThisBuild / developers := List(
     Developer("charleso", "Charles O'Farrell", "charleso@gmail.com", url("https://github.com/charleso"))
   )
@@ -36,6 +36,7 @@ ThisBuild / scmInfo := Some(
 
 ThisBuild / scalaVersion := ProjectScalaVersion
 ThisBuild / crossScalaVersions := CrossScalaVersions
+ThisBuild / licenses := List("Apache-2.0" -> url("https://opensource.org/licenses/Apache-2.0"))
 
 lazy val hedgehog = Project(
     id = "hedgehog"
@@ -48,7 +49,7 @@ lazy val hedgehog = Project(
 lazy val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("core"))
   .settings(
-    standardSettings ++ bintrarySettings ++ Seq(
+    standardSettings ++ Seq(
       name := "hedgehog-core"
     )
   )
@@ -67,7 +68,7 @@ lazy val exampleJS = example.js
 
 lazy val runner = crossProject(JVMPlatform, JSPlatform)
   .in(file("runner"))
-  .settings(standardSettings ++ bintrarySettings ++ Seq(
+  .settings(standardSettings ++ Seq(
     name := "hedgehog-runner"
   ) ++ Seq(libraryDependencies ++= Seq(
       ("org.portable-scala" %%% "portable-scala-reflect" % portableScalaReflectVersion)
@@ -79,7 +80,7 @@ lazy val runnerJS = runner.js
 
 lazy val sbtTest = crossProject(JVMPlatform, JSPlatform)
   .in(file("sbt-test"))
-  .settings(standardSettings ++ testingSettings ++ bintrarySettings ++ Seq(
+  .settings(standardSettings ++ testingSettings ++ Seq(
     name := "hedgehog-sbt",
     libraryDependencies +=
       ("org.portable-scala" %%% "portable-scala-reflect" % portableScalaReflectVersion)
@@ -102,7 +103,7 @@ lazy val sbtTestJS = sbtTest.js
 lazy val minitest = crossProject(JVMPlatform, JSPlatform)
   .in(file("minitest"))
   .settings(
-    standardSettings ++ bintrarySettings ++ Seq(
+    standardSettings ++ Seq(
       name := "hedgehog-minitest"
     ) ++ Seq(
       libraryDependencies ++= Seq(
@@ -225,11 +226,5 @@ lazy val testingSettings = Seq(
     testFrameworks += TestFramework("hedgehog.sbt.Framework")
   )
 
-lazy val bintrarySettings = Seq(
-    bintrayOrganization := Some("hedgehogqa")
-  , bintrayRepository := sys.env.getOrElse("BINTRAY_REPO", "scala-hedgehog")
-  , bintrayVcsUrl := Some("https://github.com/hedgehogqa/scala-hedgehog")
-  , licenses += ("Apache-2.0", url("https://opensource.org/licenses/Apache-2.0"))
-  )
 
 lazy val portableScalaReflectVersion = "1.1.1"
