@@ -7,77 +7,57 @@ on:
     tags:
       - '*'
 
+env:
+  GH_JAVA_VERSION: "adopt@1.11"
+
 jobs:
   build_and_publish:
     if: github.repository == 'hedgehogqa/scala-hedgehog'
 
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        scala:
-          - { name: "Scala 2", version: "2.11.12", binary-version: "2.11", java-version: "8" }
-          - { name: "Scala 2", version: "2.12.12", binary-version: "2.12", java-version: "11" }
-          - { name: "Scala 2", version: "2.13.3",  binary-version: "2.13", java-version: "11" }
-          - { name: "Scala 3", version: "3.0.0-RC1", binary-version: "3.0.0-RC1", java-version: "11" }
-
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-java@v1
+      - uses: actions/checkout@v2.3.4
         with:
-          java-version: ${{ matrix.scala.java-version }}
+          fetch-depth: 0
+      - uses: olafurpg/setup-scala@v10
+        with:
+          java-version: ${{ env.GH_JAVA_VERSION }}
+      - uses: olafurpg/setup-gpg@v3
 
-      - name: Cache sbt
+      - name: Cache SBT
         uses: actions/cache@v2
         with:
           path: |
             ~/.ivy2/cache
             ~/.cache/coursier
             ~/.sbt
-          key: ${{ runner.os }}-sbt-${{ matrix.scala.binary-version }}-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
           restore-keys: |
-            ${{ runner.os }}-sbt-${{ matrix.scala.binary-version }}-
+            ${{ runner.os }}-sbt
 
-      - name: "sbt Publish non-tag for ${{ matrix.scala.name }} ${{ matrix.scala.version }} - ${{ github.run_number }}"
+      - name: "sbt ci-release (non-tag) - ${{ github.run_number }}"
         if: startsWith(github.ref, 'refs/heads/')
         env:
-          BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
-          BINTRAY_PASS: ${{ secrets.BINTRAY_PASS }}
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
         run: |
           export CURRENT_BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-          export SCALA_VERSION=${{ matrix.scala.version }}
           export PROJECT_VERSION=$(git log --format=%H -1)
 
-          .github/workflows/sbt-build.sh ${{ matrix.scala.version }} $PROJECT_VERSION
           .github/workflows/publish.sh
 
-      - name: "sbt Publish tag for ${{ matrix.scala.name }} ${{ matrix.scala.version }} - ${{ github.run_number }}"
+      - name: "sbt ci-release (tag) - ${{ github.run_number }}"
         if: startsWith(github.ref, 'refs/tags/v')
         env:
-          BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
-          BINTRAY_PASS: ${{ secrets.BINTRAY_PASS }}
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
         run: |
           export GITHUB_TAG=${GITHUB_REF#refs/tags/}
-          export SCALA_VERSION=${{ matrix.scala.version }}
           export PROJECT_VERSION=$(echo "$GITHUB_TAG" | sed 's/^v//')
 
-          .github/workflows/sbt-build.sh ${{ matrix.scala.version }} $PROJECT_VERSION
           .github/workflows/publish.sh
-
-  # NOTE: Do not sync multiple repos to Maven Central in parallel. It's unsupported so will fail.
-  publish_maven:
-    needs: build_and_publish
-    if: startsWith(github.ref, 'refs/tags/v')
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Sync to Maven Central
-        env:
-          BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
-          BINTRAY_PASS: ${{ secrets.BINTRAY_PASS }}
-        run: |
-          export GITHUB_TAG=${GITHUB_REF#refs/tags/}
-          .github/workflows/maven_central_sync.sh
