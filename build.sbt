@@ -1,4 +1,3 @@
-import sbt._, Keys._
 
 lazy val noPublish = Seq(
   publish := {},
@@ -20,7 +19,7 @@ lazy val standardSettings: Seq[Setting[_]] = Seq(
   ).flatten
 
 val ProjectScalaVersion = "2.13.5"
-val CrossScalaVersions = Seq("2.11.12", "2.12.13", ProjectScalaVersion, "3.0.0-RC1", "3.0.0-RC2")
+val CrossScalaVersions = Seq("2.11.12", "2.12.13", ProjectScalaVersion, "3.0.0-RC2", "3.0.0-RC3")
 
 ThisBuild / organization := "qa.hedgehog"
 ThisBuild / developers := List(
@@ -44,7 +43,14 @@ lazy val hedgehog = Project(
   )
   .settings(standardSettings)
   .settings(noPublish)
-  .aggregate(coreJVM, coreJS, runnerJVM, runnerJS, sbtTestJVM, sbtTestJS, testJVM, testJS, exampleJVM, exampleJS, minitestJVM, minitestJS)
+  .aggregate(
+    coreJVM, coreJS,
+    runnerJVM, runnerJS,
+    sbtTestJVM, sbtTestJS,
+    testJVM, testJS,
+    exampleJVM, exampleJS,
+    minitestJVM, minitestJS
+  )
 
 lazy val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("core"))
@@ -72,7 +78,7 @@ lazy val runner = crossProject(JVMPlatform, JSPlatform)
     name := "hedgehog-runner"
   ) ++ Seq(libraryDependencies ++= Seq(
       ("org.portable-scala" %%% "portable-scala-reflect" % portableScalaReflectVersion)
-        .withDottyCompat(scalaVersion.value)
+        .cross(CrossVersion.for3Use2_13)
     ))
   ).dependsOn(core)
 lazy val runnerJVM = runner.jvm
@@ -84,17 +90,16 @@ lazy val sbtTest = crossProject(JVMPlatform, JSPlatform)
     name := "hedgehog-sbt",
     libraryDependencies +=
       ("org.portable-scala" %%% "portable-scala-reflect" % portableScalaReflectVersion)
-        .withDottyCompat(scalaVersion.value)
+        .cross(CrossVersion.for3Use2_13)
   ))
   .jvmSettings(
     libraryDependencies +=
-      ("org.scala-sbt" % "test-interface" % "1.0")
-        .withDottyCompat(scalaVersion.value)
+      "org.scala-sbt" % "test-interface" % "1.0"
   )
   .jsSettings(
     libraryDependencies +=
       ("org.scala-js" %% "scalajs-test-interface" % "1.5.1")
-        .withDottyCompat(scalaVersion.value)
+        .cross(CrossVersion.for3Use2_13)
   )
   .dependsOn(core, runner)
 lazy val sbtTestJVM = sbtTest.jvm
@@ -108,12 +113,12 @@ lazy val minitest = crossProject(JVMPlatform, JSPlatform)
     ) ++ Seq(
       libraryDependencies ++= Seq(
         ("org.portable-scala" %%% "portable-scala-reflect" % portableScalaReflectVersion)
-          .withDottyCompat(scalaVersion.value)
+          .cross(CrossVersion.for3Use2_13)
       ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2L, 11L)) =>
           Seq("io.monix" %%% "minitest" % "2.8.2")
         case _ =>
-          Seq("io.monix" %%% "minitest" % "2.9.4")
+          Seq("io.monix" %%% "minitest" % "2.9.5")
       })
     ) ++ Seq(
       testFrameworks += TestFramework("minitest.runner.Framework")
@@ -125,8 +130,7 @@ lazy val minitestJS = minitest.js
 lazy val test = crossProject(JVMPlatform, JSPlatform)
   .settings(standardSettings ++ noPublish ++ Seq(
     name := "hedgehog-test"
-  ) ++ testingSettings ++ Seq(libraryDependencies ++= Seq(
-    ))
+  ) ++ testingSettings
   ).dependsOn(core, runner, sbtTest)
 lazy val testJVM = test.jvm
 lazy val testJS = test.js
