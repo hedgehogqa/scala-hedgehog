@@ -10,12 +10,10 @@ slug: '/integration-minitest'
 Scala Hedgehog provides an integration module for [minitest](https://github.com/monix/minitest). This allows you to define property-based and example-based Hedgehog tests within a minitest test suite. If you use this integration, you won't need to Scala Hedgehog sbt testing extension, because you're using the one provided by minitest:
 
 ```scala
-val hedgehogVersion = "${COMMIT}"
+val hedgehogVersion = "@VERSION@"
 libraryDependencies ++= "qa.hedgehog" %% "hedgehog-minitest" % hedgehogVersion
 
-resolvers += "bintray-scala-hedgehog" at "https://dl.bintray.com/hedgehogqa/scala-hedgehog"
-
-testFrameworks += new TestFramework("minitest.runner.Framework")
+testFrameworks += TestFramework("minitest.runner.Framework")
 ```
 
 Here's an example of using `hedgehog-minitest`:
