@@ -7,7 +7,7 @@ sidebar_label: 'Alternatives'
 
 In Scala there are other property-testing alternatives:
 
-- https://github.com/rickynils/scalacheck
+- https://github.com/typelevel/scalacheck
 
   The original port of QuickCheck in Scala.
 
