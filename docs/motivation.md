@@ -23,7 +23,7 @@ but now those generated value will shrink without any extra information. Magic!
 
 As a general rule, the current Scala API is intended to be _direct_ port of
 [haskell-hedgehog](https://github.com/hedgehogqa/haskell-hedgehog), much like
-[scalacheck](https://github.com/rickynils/scalacheck) was for [QuickCheck](http://hackage.haskell.org/package/QuickCheck).
+[scalacheck](https://github.com/typelevel/scalacheck) was for [QuickCheck](http://hackage.haskell.org/package/QuickCheck).
 The idea being that people familiar with one of the libraries will be comfortable with the other.
 It also makes it easier not having to re-invent any wheels (or APIs).
 There will obviously be exceptions where Scala forces us to make a different trade-off.

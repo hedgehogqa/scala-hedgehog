@@ -197,8 +197,8 @@ def genData: Gen[Data] =
 
 
 [ScalaCheck]: https://www.scalacheck.org/
-[ScalaCheck Guide]: https://github.com/rickynils/scalacheck/blob/master/doc/UserGuide.md#the-arbitrary-generator
+[ScalaCheck Guide]: https://github.com/typelevel/scalacheck/blob/main/doc/UserGuide.md#the-arbitrary-generator
 [forAll]: https://github.com/hedgehogqa/scala-hedgehog/search?q=%22def+forAll%22&unscoped_q=%22def+forAll%22
 [extra]: https://github.com/hedgehogqa/scala-hedgehog/tree/master/core/src/main/scala/hedgehog/extra
-[label]: https://github.com/rickynils/scalacheck/search?q=%22def+label%22&unscoped_q=%22def+label%22
+[label]: https://github.com/typelevel/scalacheck/search?q=%22def+label%22&unscoped_q=%22def+label%22
 [log]: https://github.com/hedgehogqa/scala-hedgehog/search?q=%22def+log%22&unscoped_q=%22def+log%22

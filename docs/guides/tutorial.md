@@ -5,8 +5,9 @@ slug: '/guides-tutorial'
 ---
 ## Tutorial
 
+- [Tutorial](#tutorial)
 - [Thanks](#thanks)
-- [What is Hedgehog](#what-is-hedgehog)
+- [What is Hedgehog?](#what-is-hedgehog)
 - [Getting started](#getting-started)
   - [A quick example](#a-quick-example)
   - [Just a library](#just-a-library)
@@ -20,13 +21,14 @@ slug: '/guides-tutorial'
     - [Filtering](#filtering)
     - [Sized](#sized)
   - [Shrinking](#shrinking)
+  - [Deterministic results](#deterministic-results)
   - [Classifications](#classifications)
 - [State](#state)
 
 ## Thanks
 
 **This guide was originally copied from the very excellent
-[ScalaCheck Guide](https://github.com/rickynils/scalacheck/blob/master/doc/UserGuide.md)
+[ScalaCheck Guide](https://github.com/typelevel/scalacheck/blob/main/doc/UserGuide.md)
 and repurposed for Hedgehog**.
 
 
