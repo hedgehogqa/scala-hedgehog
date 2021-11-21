@@ -18,7 +18,7 @@ libraryDependencies ++= Seq(
   "qa.hedgehog" %% "hedgehog-core" % hedgehogVersion,
   "qa.hedgehog" %% "hedgehog-runner" % hedgehogVersion,
   "qa.hedgehog" %% "hedgehog-sbt" % hedgehogVersion
-)
+).map(_ % Test)
 
 ```
 > Supported Scala Versions: @SUPPORTED_SCALA_VERSIONS@

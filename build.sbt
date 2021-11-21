@@ -221,7 +221,7 @@ lazy val compilationSettings = Seq(
         Seq.empty[ModuleID]
       else
         Seq(
-          compilerPlugin("org.typelevel" %% "kind-projector" % "0.11.3" cross CrossVersion.full)
+          compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full)
         )
     )
   )
