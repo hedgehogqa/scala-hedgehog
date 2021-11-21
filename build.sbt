@@ -123,9 +123,10 @@ lazy val testJVM = test.jvm
 lazy val testJS = test.js
 
 lazy val docs = (project in file("generated-docs"))
-  .enablePlugins(MdocPlugin, DocusaurPlugin)
+  .enablePlugins(MdocPlugin, DocusaurPlugin, ScalaUnidocPlugin)
   .settings(
     name := "docs",
+    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full),
     mdocVariables := Map(
       "VERSION" -> {
         import sys.process._
@@ -148,6 +149,10 @@ lazy val docs = (project in file("generated-docs"))
     docusaurBuildDir := docusaurDir.value / "build",
     gitHubPagesOrgName := "hedgehogqa",
     gitHubPagesRepoName := "scala-hedgehog",
+    ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(coreJVM, runnerJVM, exampleJVM, minitestJVM),
+    ScalaUnidoc / unidoc / target := docusaurDir.value / "static" / "api",
+    cleanFiles += (ScalaUnidoc / unidoc / target).value,
+    docusaurBuild := docusaurBuild.dependsOn(Compile / unidoc).value,
   )
   .settings(noPublish)
   .dependsOn(coreJVM, runnerJVM, exampleJVM, minitestJVM)

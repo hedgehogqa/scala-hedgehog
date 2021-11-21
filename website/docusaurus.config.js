@@ -12,11 +12,13 @@ const isEmptyObject = obj => {
 const isSearchable = !isEmptyObject(algoliaConfig);
 const hasGoogleAnalytics = !isEmptyObject(googleAnalyticsConfig);
 
+const baseUrl = '/scala-hedgehog/'
+
 const websiteConfig = {
   title: 'Hedgehog',
   tagline: 'Modern property-based testing system for Scala',
   url: 'https://hedgehogqa.github.io',
-  baseUrl: '/scala-hedgehog/',
+  baseUrl: baseUrl,
   onBrokenLinks: 'throw',
   favicon: 'img/favicon.png',
   organizationName: 'hedgehogqa', // Usually your GitHub org/user name.
@@ -44,12 +46,19 @@ const websiteConfig = {
           position: 'left',
         },
         {
+          href: `${baseUrl}api`,
+          label: 'API',
+          target: '_blank',
+          position: 'left',
+        },
+        {
           href: 'https://github.com/hedgehogqa/scala-hedgehog',
           label: 'GitHub',
           position: 'right',
         },
       ],
     },
+    separateCss: ["api"],
     footer: {
       style: 'dark',
       links: [
