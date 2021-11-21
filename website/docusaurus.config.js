@@ -1,6 +1,9 @@
 const algoliaConfig = require('./algolia.config.json');
 const googleAnalyticsConfig = require('./google-analytics.config.json');
 
+const lightCodeTheme = require('prism-react-renderer/themes/nightOwlLight');
+const darkCodeTheme = require('prism-react-renderer/themes/nightOwl');
+
 const isEmptyObject = obj => {
   for (field in obj) return false;
   return true;
@@ -19,14 +22,13 @@ const websiteConfig = {
   organizationName: 'hedgehogqa', // Usually your GitHub org/user name.
   projectName: 'scala-hedgehog', // Usually your repo name.
   themeConfig: {
-    sidebarCollapsible: false,
     colorMode: {
       respectPrefersColorScheme: true,
     },
     prism: {
-      theme: require('prism-react-renderer/themes/nightOwl'),
-      darkTheme: require('prism-react-renderer/themes/nightOwl'),
-      additionalLanguages: ['scala', 'haskell'],
+      theme: lightCodeTheme,
+      darkTheme: darkCodeTheme,
+      additionalLanguages: ['java', 'scala', 'haskell'],
     },
     navbar: {
       title: 'Hedgehog',
@@ -88,6 +90,8 @@ const websiteConfig = {
         docs: {
           path: '../generated-docs/target/mdoc/',
           sidebarPath: require.resolve('./sidebars.js'),
+          sidebarCollapsible: false,
+          sidebarCollapsed: false,
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),

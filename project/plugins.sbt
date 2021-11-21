@@ -1,5 +1,5 @@
 addSbtPlugin("com.geirsson" % "sbt-ci-release" % "1.5.7")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.5.1")
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.0.0")
-addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.2.21" )
-addSbtPlugin("io.kevinlee" % "sbt-docusaur" % "0.5.0")
+addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.2.24" )
+addSbtPlugin("io.kevinlee" % "sbt-docusaur" % "0.8.1")
