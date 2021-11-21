@@ -6,7 +6,7 @@ on:
       java-version:
         description: 'Java Version'
         required: true
-        default: '11'
+        default: 'adopt@1.11'
       scala-version:
         description: 'Scala Version'
         required: true
@@ -33,7 +33,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-java@v1
+      - uses: olafurpg/setup-scala@v13
         with:
           java-version: ${{ matrix.scala.java-version }}
 
