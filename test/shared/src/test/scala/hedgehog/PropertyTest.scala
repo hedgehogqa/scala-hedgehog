@@ -14,6 +14,9 @@ object PropertyTest extends Properties {
     , example("monad shrinking", testMonadShrinking)
     , example("total", total)
     , example("fail", fail)
+    , property("matchPatternExample", matchPatternExample)
+    , property("matchMoreThanOnePatternExample", matchMoreThanOnePatternExample)
+    , property("matchShouldFailureForNonMatchingCaseExample", matchShouldFailureForNonMatchingCaseExample)
     )
 
   def example1: Result = {
@@ -123,4 +126,41 @@ object PropertyTest extends Properties {
       case _ =>
         Nil
     }
+
+  def matchPatternExample: Property =
+    for {
+      x <- Gen.element1("abc").log("x")
+      y <- Gen.integral[Long](Range.constant(5L, 10L), identity).map(USD.apply).lift
+    } yield {
+      Item(x, y) matchPattern { case Item("abc", _) => }
+    }
+
+  def matchMoreThanOnePatternExample: Property =
+    for {
+      x <- Gen.element1("abc", "bbb", "ccc").log("x")
+      y <- Gen.integral[Long](Range.constant(5L, 10L), identity).map(USD.apply).log("y")
+    } yield {
+      Item(x, y) matchPattern {
+        case Item("abc", USD(_)) =>
+        case Item("bbb", USD(_)) =>
+        case Item("ccc", USD(_)) =>
+      }
+    }
+
+  def matchShouldFailureForNonMatchingCaseExample: Property =
+    for {
+      x <- Gen.element1("abc", "bbb", "ccc").log("x")
+      y <- Gen.integral[Long](Range.constant(5L, 10L), identity).map(USD.apply).log("y")
+    } yield {
+      val result = Item(x, y) matchPattern {
+        case Item("abc", USD(_)) =>
+        case Item("ccc", USD(_)) =>
+      }
+      if (x == "bbb") {
+        result ==== Result.failure
+      } else {
+        result ==== Result.success
+      }
+    }
+
 }
