@@ -19,7 +19,7 @@ jobs:
       - uses: olafurpg/setup-scala@v13
         with:
           java-version: ${{ matrix.scala.java-version }}
-      - uses: actions/setup-node@v2.5.1
+      - uses: actions/setup-node@v3
         with:
           node-version: '14.4.0'
           registry-url: 'https://registry.npmjs.org'
