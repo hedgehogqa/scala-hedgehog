@@ -82,7 +82,7 @@ lazy val sbtTest = crossProject(JVMPlatform, JSPlatform)
   )
   .jsSettings(
     libraryDependencies +=
-      ("org.scala-js" %% "scalajs-test-interface" % "1.5.1")
+      ("org.scala-js" %% "scalajs-test-interface" % "1.10.0")
         .cross(CrossVersion.for3Use2_13),
   )
   .dependsOn(core, runner)
