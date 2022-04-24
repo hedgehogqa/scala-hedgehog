@@ -27,6 +27,7 @@ lazy val hedgehog = Project(
     testJVM, testJS,
     exampleJVM, exampleJS,
     minitestJVM, minitestJS,
+    munitJVM, munitJS
   )
 
 lazy val core = crossProject(JVMPlatform, JSPlatform)
@@ -112,6 +113,36 @@ lazy val minitest = crossProject(JVMPlatform, JSPlatform)
 lazy val minitestJVM = minitest.jvm
 lazy val minitestJS = minitest.js
 
+lazy val munit = crossProject(JVMPlatform, JSPlatform)
+  .in(file("munit"))
+  .settings(
+    standardSettings ++ Seq(
+      name := "hedgehog-munit",
+      libraryDependencies ++= Seq("org.scalameta" %%% "munit" % props.MunitVersion) ++
+        (if (scalaBinaryVersion.value.startsWith("2.11")) {
+          val silencerVersion = "1.7.8"
+          Seq(
+            "org.scala-lang.modules" %% "scala-collection-compat" % "2.7.0",
+            compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
+            "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full,
+          )
+        } else {
+          Seq.empty
+        }),
+      Compile / scalacOptions := {
+        val options = (Compile / scalacOptions).value
+        if (scalaVersion.value.startsWith("3"))
+          options.filterNot(_ == "-deprecation")
+        else
+          options
+      }
+    )
+  )
+  .dependsOn(runner)
+
+lazy val munitJVM = munit.jvm
+lazy val munitJS = munit.js
+
 lazy val test = crossProject(JVMPlatform, JSPlatform)
   .settings(
     standardSettings ++ noPublish ++ Seq(
@@ -149,13 +180,13 @@ lazy val docs = (project in file("generated-docs"))
     docusaurBuildDir := docusaurDir.value / "build",
     gitHubPagesOrgName := "hedgehogqa",
     gitHubPagesRepoName := "scala-hedgehog",
-    ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(coreJVM, runnerJVM, exampleJVM, minitestJVM),
+    ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(coreJVM, runnerJVM, exampleJVM, minitestJVM, munitJVM),
     ScalaUnidoc / unidoc / target := docusaurDir.value / "static" / "api",
     cleanFiles += (ScalaUnidoc / unidoc / target).value,
     docusaurBuild := docusaurBuild.dependsOn(Compile / unidoc).value,
   )
   .settings(noPublish)
-  .dependsOn(coreJVM, runnerJVM, exampleJVM, minitestJVM)
+  .dependsOn(coreJVM, runnerJVM, exampleJVM, minitestJVM, munitJVM)
 
 lazy val compilationSettings = Seq(
   maxErrors := 10,
@@ -229,6 +260,8 @@ lazy val props = new {
 
   val MinitestVersion_2_11 = "2.8.2"
   val MinitestVersion = "2.9.6"
+
+  val MunitVersion = "0.7.27"
 }
 
 lazy val projectSettings: Seq[Setting[_]] = Seq(
