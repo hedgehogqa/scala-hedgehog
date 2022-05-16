@@ -204,8 +204,10 @@ lazy val compilationSettings = Seq(
   Compile / unmanagedSourceDirectories ++= {
     (Compile / unmanagedSourceDirectories).value.map { dir =>
       CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, 13)) | Some((3, 0)) => file(dir.getPath ++ "-2.13+")
-        case _                            => file(dir.getPath ++ "-2.13-")
+        case Some((2, 13)) | Some((3, _)) =>
+          file(dir.getParent + "/scala-2.13+")
+        case _                            =>
+          file(dir.getParent + "/scala-2.13-")
       }
     }
   },
