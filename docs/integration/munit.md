@@ -1,6 +1,6 @@
 ---
 title: 'Integration with other test libraries'
-sidebar_label: 'munit'
+sidebar_label: 'MUnit'
 slug: '/integration-munit'
 ---
 ## Integration with other test libraries
