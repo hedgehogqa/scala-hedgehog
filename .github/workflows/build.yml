@@ -63,7 +63,7 @@ jobs:
           RUN_NUMBER: ${{ github.run_number }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          echo "Rull request to the '${CURRENT_BRANCH_NAME}' branch"
+          echo "Pull request to the '${CURRENT_BRANCH_NAME}' branch"
           echo "RUN_ID=${RUN_ID}"
           echo "RUN_NUMBER=${RUN_NUMBER}"
           echo "PR #${PR_NUMBER}"
