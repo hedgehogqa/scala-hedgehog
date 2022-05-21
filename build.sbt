@@ -176,10 +176,9 @@ lazy val docs = (project in file("generated-docs"))
           versions.mkString
       },
     ),
+    gitHubPagesPublishRequestTimeout := 60.seconds,
     docusaurDir := (ThisBuild / baseDirectory).value / "website",
     docusaurBuildDir := docusaurDir.value / "build",
-    gitHubPagesOrgName := "hedgehogqa",
-    gitHubPagesRepoName := "scala-hedgehog",
     ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(coreJVM, runnerJVM, exampleJVM, minitestJVM, munitJVM),
     ScalaUnidoc / unidoc / target := docusaurDir.value / "static" / "api",
     cleanFiles += (ScalaUnidoc / unidoc / target).value,

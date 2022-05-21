@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         scala:
-          - { version: "2.13.3", binary-version: "2.13", java-version: "adopt@1.11" }
+          - { version: "2.13.6", binary-version: "2.13", java-version: "adopt@1.11" }
 
     steps:
       - uses: actions/checkout@v3
@@ -25,7 +25,7 @@ jobs:
           java-version: ${{ matrix.scala.java-version }}
       - uses: actions/setup-node@v3
         with:
-          node-version: '14.4.0'
+          node-version: '14.16.0'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Cache sbt
@@ -54,7 +54,9 @@ jobs:
           GA_TRACKING_ID: ${{ secrets.GA_TRACKING_ID }}
           GA_ANONYMIZE_IP: ${{ secrets.GA_ANONYMIZE_IP }}
         run: |
-          sbt clean \
+          sbt \
+            ++${{ matrix.scala.version }}! \
+            clean \
             docs/mdoc \
             docs/docusaurGenerateAlgoliaConfigFile \
             docs/docusaurGenerateGoogleAnalyticsConfigFile \
