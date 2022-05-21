@@ -8,12 +8,13 @@ slug: /
 [![Release Status](https://github.com/hedgehogqa/scala-hedgehog/workflows/Release/badge.svg)](https://github.com/hedgehogqa/scala-hedgehog/actions?workflow=Release)
 
 
-| Project | Maven Central | Maven Central (JS) |  
-|:-------:|:-------------:|:-------------:|
-| hedgehog-core | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-core_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-core_2.13) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-core_sjs1_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-core_sjs1_2.13) |
-| hedgehog-runner | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-runner_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-runner_2.13) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-runner_sjs1_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-runner_sjs1_2.13) |
-| hedgehog-sbt | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-sbt_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-sbt_2.13) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-sbt_sjs1_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-sbt_sjs1_2.13) |
+|      Project      | Maven Central | Maven Central (JS) |  
+|:-----------------:|:-------------:|:-------------:|
+|   hedgehog-core   | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-core_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-core_2.13) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-core_sjs1_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-core_sjs1_2.13) |
+|  hedgehog-runner  | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-runner_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-runner_2.13) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-runner_sjs1_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-runner_sjs1_2.13) |
+|   hedgehog-sbt    | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-sbt_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-sbt_2.13) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-sbt_sjs1_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-sbt_sjs1_2.13) |
 | hedgehog-minitest | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-minitest_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-minitest_2.13) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-minitest_sjs1_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-minitest_sjs1_2.13) |
+|  hedgehog-munit   | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-munit_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-munit_2.13) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/qa.hedgehog/hedgehog-munit_sjs1_2.13/badge.svg)](https://search.maven.org/artifact/qa.hedgehog/hedgehog-munit_sjs1_2.13) |
 
 * Supported Scala Versions: @SUPPORTED_SCALA_VERSIONS@
 
@@ -45,6 +46,7 @@ so shrinks obey the invariants of generated values by construction.
 - [Alternatives](alternatives.md)
 - Integration with other test libraries
   - [Minitest](integration/minitest.md)
+  - [MUnit](integration/munit.md)
 
 ## Current Status
 

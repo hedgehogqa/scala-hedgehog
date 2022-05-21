@@ -28,6 +28,7 @@ module.exports = {
       'label': 'Integration',
       items: [
         'integration/minitest',
+        'integration/munit',
       ]
     }
   ],
