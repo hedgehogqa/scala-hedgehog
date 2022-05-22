@@ -1,7 +1,9 @@
 ---
 id: 'alternatives'
 title: 'Alternatives'
+sidebar_position: 4
 sidebar_label: 'Alternatives'
+slug: '/alternatives'
 ---
 ## Alternatives
 

@@ -1,5 +1,6 @@
 ---
 title: 'Tutorial'
+sidebar_position: 1
 sidebar_label: 'Tutorial'
 slug: '/guides-tutorial'
 ---
@@ -44,7 +45,7 @@ any missed cases.
 
 ## Getting started
 
-Please follow the general [getting started](getting-started.md)
+Please follow the general [getting started](../hedgehog/getting-started.md)
 guide first.
 
 
@@ -588,7 +589,7 @@ argument before it is reported.
 
 This is done automatically! This is crucially different from [QuickCheck] and
 [ScalaCheck] which requires some hand-holding when it comes to shrinking.
-We recommended watching the [original presentation](motivation.md)
+We recommended watching the [original presentation](../hedgehog/motivation.md)
 for more information on how this works.
 
 Let's look at specifying a property that says that no list has duplicate

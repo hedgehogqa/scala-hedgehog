@@ -28,25 +28,25 @@ so shrinks obey the invariants of generated values by construction.
 
 - [Current Status](#current-status)
 - [Features](#features)
-- [Getting Started](getting-started.md)
-  - [SBT Binary Dependency](getting-started.md#sbt-binary-dependency)
-  - [SBT Source Dependency](getting-started.md#sbt-source-dependency)
-  - [SBT Testing](getting-started.md#sbt-testing)
-  - [IntelliJ](getting-started.md#intellij)
-- [Example](getting-started.md#example)
-- [Guides](guides/guides.md)
-  - [Tutorial](guides/tutorial.md)
-  - [State Tutorial](guides/state-tutorial.md)
-  - [State Tutorial - Vars](guides/state-tutorial-vars.md)
-  - [Migration from ScalaCheck](guides/migration-scalacheck.md)
-  - [Differences to Haskell Hedgehog](guides/haskell-differences.md)
-- [Motivation](motivation.md)
-  - [Design Considerations](motivation.md#design-considerations)
-- [Resources](resources.md)
-- [Alternatives](alternatives.md)
-- Integration with other test libraries
-  - [Minitest](integration/minitest.md)
-  - [MUnit](integration/munit.md)
+- [Getting Started](hedgehog/getting-started.md)
+  - [SBT Binary Dependency](hedgehog/getting-started.md#sbt-binary-dependency)
+  - [SBT Source Dependency](hedgehog/getting-started.md#sbt-source-dependency)
+  - [SBT Testing](hedgehog/getting-started.md#sbt-testing)
+  - [IntelliJ](hedgehog/getting-started.md#intellij)
+- [Example](hedgehog/getting-started.md#example)
+- [Guides](../guides/guides.md)
+  - [Tutorial](../guides/tutorial.md)
+  - [State Tutorial](../guides/state-tutorial.md)
+  - [State Tutorial - Vars](../guides/state-tutorial-vars.md)
+  - [Migration from ScalaCheck](../guides/migration-scalacheck.md)
+  - [Differences to Haskell Hedgehog](../guides/haskell-differences.md)
+- [Motivation](hedgehog/motivation.md)
+  - [Design Considerations](hedgehog/motivation.md#design-considerations)
+- [Resources](hedgehog/resources.md)
+- [Alternatives](hedgehog/alternatives.md)
+- [Integration with other test libraries](../integration/integration.md)
+  - [Minitest](../integration/minitest.md)
+  - [MUnit](../integration/munit.md)
 
 ## Current Status
 
@@ -61,6 +61,6 @@ Please drop us a line if you start using scala-hedgehog in anger, we'd love to h
 - Integrated shrinking, shrinks obey invariants by construction.
 - [Abstract state machine testing.](https://github.com/hedgehogqa/scala-hedgehog/tree/master/example/jvm/src/main/scala/hedgehog/examples/state)
 - Range combinators for full control over the scope of generated numbers and collections.
-- [SBT test runner](#sbt-testing)
+- [SBT test runner](hedgehog/getting-started.md#sbt-testing)
 - Currently _no_ external dependencies in the core module
 

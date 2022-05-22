@@ -1,14 +1,18 @@
 ---
 id: 'motivation'
 title: 'Motivation'
+sidebar_position: 2
 sidebar_label: 'Motivation'
+slug: '/motivation'
 ---
 ## Motivation
 
 The background and motivation for Hedgehog in general is still best described by the original
 author in this excellent presenation:
 
-- [Gens N’ Roses: Appetite for Reduction](https://www.youtube.com/watch?v=AIv_9T0xKEo) ([slides](https://slides.yowconference.com/yowlambdajam2017/Stanley-GensNRoses.pdf))
+<iframe width="640" height="360" src="https://www.youtube.com/embed/AIv_9T0xKEo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+- Watch it on Youtube: [Gens N’ Roses: Appetite for Reduction](https://www.youtube.com/watch?v=AIv_9T0xKEo) ([slides](https://slides.yowconference.com/yowlambdajam2017/Stanley-GensNRoses.pdf))
 
 A very quick summary is that the original QuickCheck and it's derivatives (like ScalaCheck)
 separate the generation of data from the shrinking, which results in something that cannot be
@@ -18,7 +22,7 @@ If you've used ScalaCheck before, it's exactly the same as writing your normal `
 but now those generated value will shrink without any extra information. Magic!
 
 
-### Design Considerations
+## Design Considerations
 
 
 As a general rule, the current Scala API is intended to be _direct_ port of
@@ -27,4 +31,4 @@ As a general rule, the current Scala API is intended to be _direct_ port of
 The idea being that people familiar with one of the libraries will be comfortable with the other.
 It also makes it easier not having to re-invent any wheels (or APIs).
 There will obviously be exceptions where Scala forces us to make a different trade-off.
-See [haskell-differences](guides/haskell-differences.md) for examples and more explanation.
+See [haskell-differences](../guides/haskell-differences.md) for examples and more explanation.

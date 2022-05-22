@@ -1,11 +1,10 @@
 ---
-title: 'Integration with other test libraries'
+title: 'Integration with MUnit'
+sidebar_position: 2
 sidebar_label: 'MUnit'
 slug: '/integration-munit'
 ---
-## Integration with other test libraries
-
-### munit
+## MUnit
 
 Scala Hedgehog provides an integration module for [munit](https://scalameta.org/munit/). This allows you to define property-based and example-based Hedgehog tests within a munit test suite. If you use this integration, you won't need to Scala Hedgehog sbt testing extension, because you're using the one provided by munit:
 
@@ -38,4 +37,4 @@ class ReverseSuite extends HedgehogSuite {
 }
 ```
 
-HedgehogSuite provides `munit`-like assertions, along with all the `hedgehog.Result` methods and members, that return results in the standard hedgehog report format while satisfying munit's exception-based test failures.
+`HedgehogSuite` provides `munit`-like assertions, along with all the `hedgehog.Result` methods and members, that return results in the standard hedgehog report format while satisfying munit's exception-based test failures.

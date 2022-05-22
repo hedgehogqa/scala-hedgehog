@@ -1,11 +1,10 @@
 ---
-title: 'Integration with other test libraries'
+title: 'Integration with Minitest'
+sidebar_position: 1
 sidebar_label: 'Minitest'
 slug: '/integration-minitest'
 ---
-## Integration with other test libraries
-
-### Minitest
+## Minitest
 
 Scala Hedgehog provides an integration module for [minitest](https://github.com/monix/minitest). This allows you to define property-based and example-based Hedgehog tests within a minitest test suite. If you use this integration, you won't need to Scala Hedgehog sbt testing extension, because you're using the one provided by minitest:
 

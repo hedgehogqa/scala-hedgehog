@@ -1,5 +1,6 @@
 ---
 title: 'Migration From ScalaCheck'
+sidebar_position: 4
 sidebar_label: 'Migration From ScalaCheck'
 slug: '/guides-migration-from-scalacheck'
 ---
