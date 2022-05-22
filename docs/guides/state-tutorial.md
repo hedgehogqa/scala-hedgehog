@@ -1,5 +1,6 @@
 ---
 title: 'State-Based Property Testing Tutorial'
+sidebar_position: 2
 sidebar_label: 'State-Based Testing (1)'
 slug: '/guides-state-tutorial'
 ---

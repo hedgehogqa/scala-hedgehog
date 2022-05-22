@@ -1,5 +1,6 @@
 ---
 title: 'State-Based Property Testing Tutorial (Part 2 - Vars)'
+sidebar_position: 3
 sidebar_label: 'State-Based Testing (2)'
 slug: '/guides-state-tutorial-vars'
 ---

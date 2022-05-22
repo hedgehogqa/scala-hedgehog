@@ -1,7 +1,6 @@
 ---
 title: 'Guides'
 sidebar_label: 'Guides'
-slug: '/guides'
 ---
 ## Guides
 

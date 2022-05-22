@@ -75,7 +75,7 @@ const websiteConfig = {
             },
             {
               label: 'Integration',
-              to: 'docs/integration-minitest/',
+              to: 'docs/integration/',
             },
           ],
         },

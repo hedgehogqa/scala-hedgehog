@@ -1,5 +1,6 @@
 ---
 title: 'Differences to Haskell Hedgehog'
+sidebar_position: 5
 sidebar_label: 'Differences to Haskell Hedgehog'
 slug: '/guides-haskell-differences'
 ---

@@ -17,6 +17,8 @@ jobs:
       matrix:
         scala:
           - { version: "2.13.6", binary-version: "2.13", java-version: "adopt@1.11" }
+        node:
+          - { version: "14.16.0" }
 
     steps:
       - uses: actions/checkout@v3
@@ -25,7 +27,7 @@ jobs:
           java-version: ${{ matrix.scala.java-version }}
       - uses: actions/setup-node@v3
         with:
-          node-version: '14.16.0'
+          node-version: ${{ matrix.node.version }}
           registry-url: 'https://registry.npmjs.org'
 
       - name: Cache sbt
@@ -43,9 +45,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-node-${{ matrix.node.version }}-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node-
+            ${{ runner.os }}-node-${{ matrix.node.version }}
 
       - name: Render markdown and build website
         env:
