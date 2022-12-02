@@ -129,13 +129,6 @@ lazy val munit = crossProject(JVMPlatform, JSPlatform)
         } else {
           Seq.empty
         }),
-      Compile / scalacOptions := {
-        val options = (Compile / scalacOptions).value
-        if (scalaVersion.value.startsWith("3"))
-          options.filterNot(_ == "-deprecation")
-        else
-          options
-      }
     )
   )
   .dependsOn(runner)
@@ -205,9 +198,7 @@ lazy val compilationSettings = Seq(
            "reflectiveCalls",
            "experimental.macros",
            "implicitConversions",
-         ).mkString(","),
-         "-siteroot",
-         "./dotty-docs",
+         ).mkString(",")
        )
      } else {
        Seq(
@@ -253,7 +244,7 @@ lazy val compilationSettings = Seq(
 
 lazy val props = new {
   val ProjectScalaVersion = "2.13.5"
-  val CrossScalaVersions = Seq("2.11.12", "2.12.13", ProjectScalaVersion, "3.0.0")
+  val CrossScalaVersions = Seq("2.11.12", "2.12.13", ProjectScalaVersion, "3.1.3")
 
   val PortableScalaReflectVersion = "1.1.1"
 
