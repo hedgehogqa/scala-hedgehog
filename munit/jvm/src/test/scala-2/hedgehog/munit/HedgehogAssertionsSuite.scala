@@ -6,7 +6,7 @@ import _root_.munit.Assertions
 import _root_.munit.FunSuite
 import scala.annotation.nowarn
 
-@nowarn
+@nowarn("msg=method [^\\s]+ in trait HedgehogAssertions is deprecated")
 class HedgehogAssertionsSuite extends FunSuite {
 
   val instance = FunFixture[HedgehogAssertions](
