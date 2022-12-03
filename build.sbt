@@ -161,7 +161,13 @@ lazy val docs = (project in file("generated-docs"))
       "SUPPORTED_SCALA_VERSIONS" -> {
         val versions = props
           .CrossScalaVersions
-          .map(CrossVersion.binaryScalaVersion)
+          .map { scalaVersion =>
+            scalaVersion.split("\\.") match {
+              case Array("3", "0", _) => "3"
+              case Array("3", mn, _) => s"3.$mn+"
+              case _ => CrossVersion.binaryScalaVersion(scalaVersion)
+            }
+          }
           .map(v => s"`$v`")
         if (versions.length > 1)
           s"${versions.init.mkString(", ")} and ${versions.last}"
