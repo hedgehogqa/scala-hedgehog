@@ -6,6 +6,10 @@
  */
 
 /* You can override the default Infima variables here. */
+@import url('https://content-fonts.kevinly.dev/nerd-fonts/font-fira-code-nerd-font/fonts.css');
+
+@import url('https://content-fonts.kevinly.dev/nerd-fonts/font-caskaydia-cove-nerd-font/fonts.css');
+
 :root {
   --ifm-color-primary: #3578e5;
   --ifm-color-primary-dark: #1d68e1;
@@ -16,8 +20,10 @@
   --ifm-color-primary-lightest: #80aaef;
 
   --ifm-code-font-size: 95%;
+  --ifm-font-family-monospace: "FiraCode Retina Nerd Font";
 
   --ifm-container-width: 1240px;
+  --ifm-container-width-xl: 1640px;
 }
 
 .docusaurus-highlight-code-line {

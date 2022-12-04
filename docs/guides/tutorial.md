@@ -183,7 +183,7 @@ Spec$.add: Falsified after 1 passed tests
 
 That's it? What about a useful message telling us what failed?
 For starters, given that we're just doing an assertion Hedgehog comes with the
-convenient `====` operator:
+convenient `====` (quadruple `=`s) operator:
 
 ```scala
 def testAdd: Result =
