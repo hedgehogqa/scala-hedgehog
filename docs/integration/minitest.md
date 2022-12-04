@@ -10,7 +10,7 @@ Scala Hedgehog provides an integration module for [minitest](https://github.com/
 
 ```scala
 val hedgehogVersion = "@VERSION@"
-libraryDependencies ++= "qa.hedgehog" %% "hedgehog-minitest" % hedgehogVersion
+libraryDependencies += "qa.hedgehog" %% "hedgehog-minitest" % hedgehogVersion
 
 testFrameworks += TestFramework("minitest.runner.Framework")
 ```
