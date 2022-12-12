@@ -42,7 +42,7 @@ case class Name(value: Int)
 
 object Name {
 
-  implicit def NameOrdering: Ordering[Name] =
+  implicit val NameOrdering: Ordering[Name] =
     Ordering.by(_.value)
 }
 

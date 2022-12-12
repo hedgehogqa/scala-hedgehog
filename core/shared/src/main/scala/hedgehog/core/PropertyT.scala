@@ -114,7 +114,7 @@ case class PropertyT[A](
 
 object PropertyT {
 
-  implicit def PropertyMonad: Monad[PropertyT] =
+  implicit val PropertyMonad: Monad[PropertyT] =
     new Monad[PropertyT] {
       override def map[A, B](fa: PropertyT[A])(f: A => B): PropertyT[B] =
         fa.map(f)

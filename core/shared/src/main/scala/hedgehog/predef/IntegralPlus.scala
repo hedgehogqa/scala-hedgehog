@@ -10,7 +10,7 @@ trait IntegralPlus[A] {
 
 object IntegralPlus {
 
-  implicit def ByteIntegralPlus: IntegralPlus[Byte] =
+  implicit val ByteIntegralPlus: IntegralPlus[Byte] =
     new IntegralPlus[Byte] {
 
       override def toBigInt(a: Byte): BigInt =
@@ -20,7 +20,7 @@ object IntegralPlus {
         a.toByte
     }
 
-  implicit def ShortIntegralPlus: IntegralPlus[Short] =
+  implicit val ShortIntegralPlus: IntegralPlus[Short] =
     new IntegralPlus[Short] {
 
       override def toBigInt(a: Short): BigInt =
@@ -30,7 +30,7 @@ object IntegralPlus {
         a.toShort
     }
 
-  implicit def IntIntegralPlus: IntegralPlus[Int] =
+  implicit val IntIntegralPlus: IntegralPlus[Int] =
     new IntegralPlus[Int] {
 
       override def toBigInt(a: Int): BigInt =
@@ -40,7 +40,7 @@ object IntegralPlus {
         a.toInt
       }
 
-  implicit def LongIntegralPlus: IntegralPlus[Long] =
+  implicit val LongIntegralPlus: IntegralPlus[Long] =
     new IntegralPlus[Long] {
 
       override def toBigInt(a: Long): BigInt =

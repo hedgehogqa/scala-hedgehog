@@ -14,7 +14,7 @@ trait MonadGenT[M[_]] {
 
 object MonadGenT {
 
-  implicit def GenMonadGenT: MonadGenT[GenT] =
+  implicit val GenMonadGenT: MonadGenT[GenT] =
     new MonadGenT[GenT] {
 
       def lift[A](gen: GenT[A]): GenT[A] =

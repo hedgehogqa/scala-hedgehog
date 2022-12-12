@@ -25,7 +25,7 @@ object Identity {
         a
     }
 
-  implicit def IdentityMonad: Monad[Identity] =
+  implicit val IdentityMonad: Monad[Identity] =
     new Monad[Identity] {
 
       // NOTE: It's critical to override the free Applicative version, otherwise we get stack overflows
