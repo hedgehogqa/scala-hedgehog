@@ -29,7 +29,7 @@ case class Tree[A](value: A, children: Identity[LazyList[Tree[A]]]) {
 
 abstract class TreeImplicits1 {
 
-  implicit def TreeFunctor: Functor[Tree] =
+  implicit val TreeFunctor: Functor[Tree] =
     new Functor[Tree] {
       override def map[A, B](fa: Tree[A])(f: A => B): Tree[B] =
         Tree(f(fa.value), fa.children.map(_.map(_.map(f))))
@@ -38,7 +38,7 @@ abstract class TreeImplicits1 {
 
 abstract class TreeImplicits2 extends TreeImplicits1 {
 
-  implicit def TreeApplicative: Applicative[Tree] =
+  implicit val TreeApplicative: Applicative[Tree] =
     new Applicative[Tree] {
       def point[A](a: => A): Tree[A] =
         Tree(a, Identity(LazyList()))
@@ -55,7 +55,7 @@ abstract class TreeImplicits2 extends TreeImplicits1 {
 
 object Tree extends TreeImplicits2 {
 
-  implicit def TreeMonad: Monad[Tree] =
+  implicit val TreeMonad: Monad[Tree] =
     new Monad[Tree] {
       override def map[A, B](fa: Tree[A])(f: A => B): Tree[B] =
         fa.map(f)

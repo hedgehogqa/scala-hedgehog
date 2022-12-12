@@ -10,7 +10,7 @@ trait DecimalPlus[A] {
 
 object DecimalPlus {
 
-  implicit def FloatDecimalPlus: DecimalPlus[Float] =
+  implicit val FloatDecimalPlus: DecimalPlus[Float] =
     new DecimalPlus[Float] {
 
       override def toBigDecimal(a: Float): BigDecimal =
@@ -20,7 +20,7 @@ object DecimalPlus {
         a.toFloat
     }
 
-  implicit def DoubleDecimalPlus: DecimalPlus[Double] =
+  implicit val DoubleDecimalPlus: DecimalPlus[Double] =
     new DecimalPlus[Double] {
 
       override def toBigDecimal(a: Double): BigDecimal =
