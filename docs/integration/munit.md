@@ -30,7 +30,7 @@ class ReverseSuite extends HedgehogSuite {
   
   test("reverse hello") {
     withMunitAssertions{ assertions =>
-	  asertions.assertEqual("hello".reverse, "olleh")
+	  assertions.assertEquals("hello".reverse, "olleh")
 	}
     "hello".reverse ==== "olleh"
   }
