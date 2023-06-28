@@ -10,10 +10,19 @@ Scala Hedgehog provides an integration module for [minitest](https://github.com/
 
 ```scala
 val hedgehogVersion = "@VERSION@"
-libraryDependencies += "qa.hedgehog" %% "hedgehog-minitest" % hedgehogVersion
-
-testFrameworks += TestFramework("minitest.runner.Framework")
+libraryDependencies += "qa.hedgehog" %% "hedgehog-minitest" % hedgehogVersion % Test
 ```
+
+:::info NOTE
+If you're using sbt version `1.9.0` or **lower**, you need to add the following line to your `build.sbt` file:
+```scala
+testFrameworks += TestFramework("hedgehog.sbt.Framework")
+```
+:::
+
+:::info NOTE
+For sbt version `1.9.1` or **higher**, this step is not necessary, as [Hedgehog is supported by default](https://github.com/sbt/sbt/pull/7287).
+:::
 
 Here's an example of using `hedgehog-minitest`:
 
