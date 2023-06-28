@@ -48,9 +48,16 @@ NOTE: Depending on your scala version(s) SBT might [not resolve](https://github.
 Scala Hedgehog comes with a _very_ primitive runner interface, and supports the
 [SBT testing extension](https://www.scala-sbt.org/1.x/docs/Testing.html#Using+Extensions).
 
-```
+:::info NOTE
+If you're using sbt version `1.9.0` or **lower**, you need to add the following line to your `build.sbt` file:
+```scala
 testFrameworks += TestFramework("hedgehog.sbt.Framework")
 ```
+:::
+
+:::info NOTE
+For sbt version `1.9.1` or **higher**, this step is not necessary, as [Hedgehog is supported by default](https://github.com/sbt/sbt/pull/7287).
+:::
 
 ### IntelliJ
 
