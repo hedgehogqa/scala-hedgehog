@@ -111,6 +111,6 @@ object Test {
         else
           List(x)
       case xs =>
-        List(xs.mkString)
+        List(xs.mkString(", "))
     }
 }
