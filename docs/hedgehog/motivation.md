@@ -12,7 +12,7 @@ author in this excellent presenation:
 
 <iframe width="640" height="360" src="https://www.youtube.com/embed/AIv_9T0xKEo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-- Watch it on Youtube: [Gens N’ Roses: Appetite for Reduction](https://www.youtube.com/watch?v=AIv_9T0xKEo) ([slides](https://slides.yowconference.com/yowlambdajam2017/Stanley-GensNRoses.pdf))
+- Watch it on Youtube: [Gens N’ Roses: Appetite for Reduction](https://www.youtube.com/watch?v=LfD0DHqpeVQ) ([slides](https://slides.yowconference.com/yowlambdajam2017/Stanley-GensNRoses.pdf))
 
 A very quick summary is that the original QuickCheck and it's derivatives (like ScalaCheck)
 separate the generation of data from the shrinking, which results in something that cannot be
