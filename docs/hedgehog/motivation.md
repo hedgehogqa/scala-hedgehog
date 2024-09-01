@@ -10,7 +10,7 @@ slug: '/motivation'
 The background and motivation for Hedgehog in general is still best described by the original
 author in this excellent presenation:
 
-<iframe width="640" height="360" src="https://www.youtube.com/embed/AIv_9T0xKEo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="640" height="360" src="https://www.youtube.com/embed/LfD0DHqpeVQ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 - Watch it on Youtube: [Gens N’ Roses: Appetite for Reduction](https://www.youtube.com/watch?v=LfD0DHqpeVQ) ([slides](https://slides.yowconference.com/yowlambdajam2017/Stanley-GensNRoses.pdf))
 
