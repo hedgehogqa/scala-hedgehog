@@ -70,7 +70,7 @@ lazy val runnerJS = runner.js
 lazy val sbtTest = crossProject(JVMPlatform, JSPlatform)
   .in(file("sbt-test"))
   .settings(
-    standardSettings ++ testingSettings ++ Seq(
+    standardSettings ++ Seq(
       name := "hedgehog-sbt",
       libraryDependencies +=
         ("org.portable-scala" %%% "portable-scala-reflect" % props.PortableScalaReflectVersion)
@@ -140,7 +140,7 @@ lazy val test = crossProject(JVMPlatform, JSPlatform)
   .settings(
     standardSettings ++ noPublish ++ Seq(
       name := "hedgehog-test",
-    ) ++ testingSettings,
+    ),
   )
   .dependsOn(core, runner, sbtTest)
 lazy val testJVM = test.jvm
@@ -271,10 +271,6 @@ lazy val standardSettings: Seq[Setting[_]] = Seq(
   projectSettings,
   compilationSettings,
 ).flatten
-
-lazy val testingSettings = Seq(
-  testFrameworks += TestFramework("hedgehog.sbt.Framework"),
-)
 
 lazy val noPublish = Seq(
   publish := {},
