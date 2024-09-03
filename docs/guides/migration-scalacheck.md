@@ -11,8 +11,8 @@ straight forward, as the general principals are quite similar, and the changes
 are largely syntactic.
 
 - [Properties](#properties)
-- [Arbitrary](#arbitary)
 - [Gen](#gen)
+- [Arbitrary](#arbitrary)
 
 
 ## Properties
