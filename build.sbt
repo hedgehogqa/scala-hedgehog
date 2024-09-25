@@ -250,7 +250,7 @@ lazy val compilationSettings = Seq(
 
 lazy val props = new {
   val ProjectScalaVersion = "2.13.5"
-  val CrossScalaVersions = Seq("2.11.12", "2.12.13", ProjectScalaVersion, "3.1.3")
+  val CrossScalaVersions = Seq("2.12.13", ProjectScalaVersion, "3.1.3")
 
   val PortableScalaReflectVersion = "1.1.1"
 
