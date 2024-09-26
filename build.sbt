@@ -21,16 +21,16 @@ lazy val hedgehog = Project(
   .settings(standardSettings)
   .settings(noPublish)
   .aggregate(
-    coreJVM, coreJS,
-    runnerJVM, runnerJS,
-    sbtTestJVM, sbtTestJS,
-    testJVM, testJS,
+    coreJVM, coreJS, coreNative,
+    runnerJVM, runnerJS, runnerNative,
+    sbtTestJVM, sbtTestJS, sbtTestNative,
+    testJVM, testJS, testNative,
     exampleJVM, exampleJS,
     minitestJVM, minitestJS,
-    munitJVM, munitJS
+    munitJVM, munitJS,
   )
 
-lazy val core = crossProject(JVMPlatform, JSPlatform)
+lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .in(file("core"))
   .settings(
     standardSettings ++ Seq(
@@ -39,6 +39,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform)
   )
 lazy val coreJVM = core.jvm
 lazy val coreJS = core.js
+lazy val coreNative = core.native.settings(nativeSettings)
 
 lazy val example = crossProject(JVMPlatform, JSPlatform)
   .in(file("example"))
@@ -51,7 +52,7 @@ lazy val example = crossProject(JVMPlatform, JSPlatform)
 lazy val exampleJVM = example.jvm
 lazy val exampleJS = example.js
 
-lazy val runner = crossProject(JVMPlatform, JSPlatform)
+lazy val runner = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .in(file("runner"))
   .settings(
     standardSettings ++ Seq(
@@ -66,8 +67,9 @@ lazy val runner = crossProject(JVMPlatform, JSPlatform)
   .dependsOn(core)
 lazy val runnerJVM = runner.jvm
 lazy val runnerJS = runner.js
+lazy val runnerNative = runner.native.settings(nativeSettings)
 
-lazy val sbtTest = crossProject(JVMPlatform, JSPlatform)
+lazy val sbtTest = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .in(file("sbt-test"))
   .settings(
     standardSettings ++ Seq(
@@ -86,9 +88,14 @@ lazy val sbtTest = crossProject(JVMPlatform, JSPlatform)
       ("org.scala-js" %% "scalajs-test-interface" % "1.10.0")
         .cross(CrossVersion.for3Use2_13),
   )
+  .nativeSettings(
+    libraryDependencies +=
+      "org.scala-sbt" % "test-interface" % "1.0",
+  )
   .dependsOn(core, runner)
 lazy val sbtTestJVM = sbtTest.jvm
 lazy val sbtTestJS = sbtTest.js
+lazy val sbtTestNative = sbtTest.native.settings(nativeSettings)
 
 lazy val minitest = crossProject(JVMPlatform, JSPlatform)
   .in(file("minitest"))
@@ -136,7 +143,7 @@ lazy val munit = crossProject(JVMPlatform, JSPlatform)
 lazy val munitJVM = munit.jvm
 lazy val munitJS = munit.js
 
-lazy val test = crossProject(JVMPlatform, JSPlatform)
+lazy val test = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     standardSettings ++ noPublish ++ Seq(
       name := "hedgehog-test",
@@ -145,6 +152,7 @@ lazy val test = crossProject(JVMPlatform, JSPlatform)
   .dependsOn(core, runner, sbtTest)
 lazy val testJVM = test.jvm
 lazy val testJS = test.js
+lazy val testNative = test.native.settings(nativeSettings)
 
 lazy val docs = (project in file("generated-docs"))
   .enablePlugins(MdocPlugin, DocusaurPlugin, ScalaUnidocPlugin)
@@ -250,9 +258,9 @@ lazy val compilationSettings = Seq(
 
 lazy val props = new {
   val ProjectScalaVersion = "2.13.10"
-  val CrossScalaVersions = Seq("2.12.13", ProjectScalaVersion, "3.1.3")
+  val CrossScalaVersions = Seq("2.12.19", ProjectScalaVersion, "3.1.3")
 
-  val PortableScalaReflectVersion = "1.1.1"
+  val PortableScalaReflectVersion = "1.1.3"
 
   val MinitestVersion_2_11 = "2.8.2"
   val MinitestVersion = "2.9.6"
@@ -271,6 +279,10 @@ lazy val standardSettings: Seq[Setting[_]] = Seq(
   projectSettings,
   compilationSettings,
 ).flatten
+
+lazy val nativeSettings: SettingsDefinition = List(
+  Test / fork := false
+)
 
 lazy val noPublish = Seq(
   publish := {},
