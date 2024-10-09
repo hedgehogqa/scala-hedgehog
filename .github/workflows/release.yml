@@ -8,7 +8,8 @@ on:
       - '*'
 
 env:
-  GH_JAVA_VERSION: "adopt@1.11"
+  GH_JAVA_VERSION: "11"
+  GH_JAVA_DISTRIBUTION: "temurin"
 
 jobs:
   build_and_publish:
@@ -20,9 +21,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: olafurpg/setup-scala@v14
+      - uses: actions/setup-java@v4
         with:
           java-version: ${{ env.GH_JAVA_VERSION }}
+          distribution: ${{ env.GH_JAVA_DISTRIBUTION }}
       - uses: olafurpg/setup-gpg@v3
 
       - name: Cache SBT
