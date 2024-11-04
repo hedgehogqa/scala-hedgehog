@@ -14,7 +14,7 @@ author in this excellent presenation:
 
 - Watch it on Youtube: [Gens N’ Roses: Appetite for Reduction](https://www.youtube.com/watch?v=LfD0DHqpeVQ) ([slides](https://slides.yowconference.com/yowlambdajam2017/Stanley-GensNRoses.pdf))
 
-A very quick summary is that the original QuickCheck and it's derivatives (like ScalaCheck)
+A very quick summary is that the original QuickCheck and its derivatives (like ScalaCheck)
 separate the generation of data from the shrinking, which results in something that cannot be
 composed easily. It turns out it's fairly simple to combine them in a single data-type.
 
