@@ -12,6 +12,7 @@ are still relevant despite whatever language they are presented with.
 
 ### Blogs
 
+- [intro to Hedgehog for Scala](https://eed3si9n.com/hedgehog-scala/) (eed3si9n.com)
 - [Choosing properties for property-based testing](https://fsharpforfunandprofit.com/posts/property-based-testing-2/) (sharpforfunandprofit.com)
 - [An introduction to property-based testing](https://fsharpforfunandprofit.com/posts/property-based-testing/) (sharpforfunandprofit.com)
 - [Integrated versus Manual Shrinking](https://www.well-typed.com/blog/2019/05/integrated-shrinking/) (well-typed.com)
