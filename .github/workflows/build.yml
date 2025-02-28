@@ -20,8 +20,8 @@ jobs:
     strategy:
       matrix:
         scala:
-          - { name: "Scala 2", version: "2.12.19", binary-version: "2.12", java-version: "11", java-distribution: "temurin" }
-          - { name: "Scala 2", version: "2.13.10", binary-version: "2.13", java-version: "11", java-distribution: "temurin" }
+          - { name: "Scala 2", version: "2.12.20", binary-version: "2.12", java-version: "11", java-distribution: "temurin" }
+          - { name: "Scala 2", version: "2.13.16", binary-version: "2.13", java-version: "11", java-distribution: "temurin" }
           - { name: "Scala 3", version: "3.3.5",   binary-version: "3",    java-version: "11", java-distribution: "temurin" }
 
     steps:

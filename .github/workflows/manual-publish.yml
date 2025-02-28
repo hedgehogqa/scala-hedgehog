@@ -8,7 +8,7 @@ on:
         required: true
         default: 'adopt@1.11'
       scala-version:
-        description: 'Scala Version (e.g. 2.13.3)'
+        description: 'Scala Version (e.g. 2.13.16)'
         required: true
       scala-binary-version:
         description: 'Scala Binary Version (e.g. 2.13) - Make sure it matches with Scala Version above'
