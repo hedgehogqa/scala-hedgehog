@@ -85,7 +85,7 @@ lazy val sbtTest = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .jsSettings(
     libraryDependencies +=
-      ("org.scala-js" %% "scalajs-test-interface" % "1.10.0")
+      ("org.scala-js" %% "scalajs-test-interface" % "1.18.2")
         .cross(CrossVersion.for3Use2_13),
   )
   .nativeSettings(
@@ -106,12 +106,7 @@ lazy val minitest = crossProject(JVMPlatform, JSPlatform)
       libraryDependencies ++= Seq(
         ("org.portable-scala" %%% "portable-scala-reflect" % props.PortableScalaReflectVersion)
           .cross(CrossVersion.for3Use2_13),
-      ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2L, 11L)) =>
-          Seq("io.monix" %%% "minitest" % props.MinitestVersion_2_11)
-        case _               =>
-          Seq("io.monix" %%% "minitest" % props.MinitestVersion)
-      }),
+      ) ++ Seq("io.monix" %%% "minitest" % props.MinitestVersion),
     ) ++ Seq(
       testFrameworks += TestFramework("minitest.runner.Framework"),
     ),
@@ -125,17 +120,7 @@ lazy val munit = crossProject(JVMPlatform, JSPlatform)
   .settings(
     standardSettings ++ Seq(
       name := "hedgehog-munit",
-      libraryDependencies ++= Seq("org.scalameta" %%% "munit" % props.MunitVersion) ++
-        (if (scalaBinaryVersion.value.startsWith("2.11")) {
-          val silencerVersion = "1.7.8"
-          Seq(
-            "org.scala-lang.modules" %% "scala-collection-compat" % "2.7.0",
-            compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
-            "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full,
-          )
-        } else {
-          Seq.empty
-        }),
+      libraryDependencies ++= Seq("org.scalameta" %%% "munit" % props.MunitVersion)
     )
   )
   .dependsOn(runner)
@@ -198,42 +183,40 @@ lazy val compilationSettings = Seq(
   maxErrors := 10,
   Compile / scalacOptions ++=
     (if (scalaVersion.value.startsWith("3.")) {
-       Seq(
-         "-deprecation",
-         "-unchecked",
-         "-feature",
-         "-Xfatal-warnings",
-         "-source:3.0-migration",
-         "-Ykind-projector",
-         "-language:" + List(
-           "dynamics",
-           "existentials",
-           "higherKinds",
-           "reflectiveCalls",
-           "experimental.macros",
-           "implicitConversions",
-         ).mkString(",")
-       )
-     } else {
-       Seq(
-         "-deprecation",
-         "-unchecked",
-         "-feature",
-         "-language:_",
-         "-Ywarn-value-discard",
-         "-Xlint",
-         "-Xfatal-warnings",
-       ) ++ (
-         CrossVersion.partialVersion(scalaVersion.value) match {
-           case Some((2, 10)) =>
-             Seq("-Yno-adapted-args")
-           case Some((2, 13)) =>
-             Seq.empty
-           case _             =>
-             Seq("-Yno-adapted-args", "-Ywarn-unused-import")
-         }
-       )
-     }),
+      Seq(
+        "-deprecation",
+        "-unchecked",
+        "-feature",
+        "-Xfatal-warnings",
+        "-source:3.0-migration",
+        "-Ykind-projector",
+        "-language:" + List(
+          "dynamics",
+          "existentials",
+          "higherKinds",
+          "reflectiveCalls",
+          "experimental.macros",
+          "implicitConversions",
+        ).mkString(",")
+      )
+    } else {
+      Seq(
+        "-deprecation",
+        "-unchecked",
+        "-feature",
+        "-language:_",
+        "-Ywarn-value-discard",
+        "-Xlint",
+        "-Xfatal-warnings",
+      ) ++ (
+        CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((2, 13)) =>
+            Seq.empty
+          case _ =>
+            Seq("-Yno-adapted-args", "-Ywarn-unused-import")
+        }
+        )
+    }),
   Compile / console / scalacOptions := Seq("-language:_", "-feature"),
   Test / console / scalacOptions := Seq("-language:_", "-feature"),
   Compile / unmanagedSourceDirectories ++= {
@@ -241,7 +224,7 @@ lazy val compilationSettings = Seq(
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, 13)) | Some((3, _)) =>
           file(dir.getParent + "/scala-2.13+")
-        case _                            =>
+        case _ =>
           file(dir.getParent + "/scala-2.13-")
       }
     }
@@ -253,19 +236,18 @@ lazy val compilationSettings = Seq(
       Seq(
         compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full),
       )
-  ),
+    ),
 )
 
 lazy val props = new {
-  val ProjectScalaVersion = "2.13.10"
-  val CrossScalaVersions = Seq("2.12.19", ProjectScalaVersion, "3.3.5")
+  val ProjectScalaVersion = "2.13.16"
+  val CrossScalaVersions = Seq("2.12.20", ProjectScalaVersion, "3.3.5")
 
   val PortableScalaReflectVersion = "1.1.3"
 
-  val MinitestVersion_2_11 = "2.8.2"
   val MinitestVersion = "2.9.6"
 
-  val MunitVersion = "0.7.27"
+  val MunitVersion = "1.1.0"
 }
 
 lazy val projectSettings: Seq[Setting[_]] = Seq(

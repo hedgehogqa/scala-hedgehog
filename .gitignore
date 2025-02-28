@@ -10,3 +10,4 @@ project/source.scala
 .metals
 project/metals.sbt
 .bsp/
+.idea/
