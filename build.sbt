@@ -265,7 +265,7 @@ lazy val props = new {
   val MinitestVersion_2_11 = "2.8.2"
   val MinitestVersion = "2.9.6"
 
-  val MunitVersion = "0.7.27"
+  val MunitVersion = "1.1.0"
 }
 
 lazy val projectSettings: Seq[Setting[_]] = Seq(
