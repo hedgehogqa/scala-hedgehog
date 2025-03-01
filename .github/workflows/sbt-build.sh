@@ -3,7 +3,7 @@
 if [ -z "$2" ]
   then
     echo "Missing parameters. Please enter the [Scala version] and [project version]."
-    echo "sbt-build.sh 2.13.0 0.1.0"
+    echo "sbt-build.sh 2.13.16 0.1.0"
     exit 1
 else
   SCALA_VERSION=$1
