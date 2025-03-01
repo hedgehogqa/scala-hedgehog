@@ -27,7 +27,8 @@ jobs:
         with:
           java-version: ${{ matrix.scala.java-version }}
           distribution: ${{ matrix.scala.java-distribution }}
-          cache: 'sbt'
+          cache: sbt
+      - uses: sbt/setup-sbt@v1
 
       - name: "[Push] Build for ${{ matrix.scala.name }} ${{ matrix.scala.version }} - ${{ github.run_number }}"
         if: github.event_name == 'push'

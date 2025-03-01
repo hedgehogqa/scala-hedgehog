@@ -25,7 +25,9 @@ jobs:
         with:
           java-version: ${{ env.GH_JAVA_VERSION }}
           distribution: ${{ env.GH_JAVA_DISTRIBUTION }}
-          cache: 'sbt'
+          cache: sbt
+      - uses: sbt/setup-sbt@v1
+
       - uses: olafurpg/setup-gpg@v3
 
       - name: "sbt ci-release (non-tag) - ${{ github.run_number }}"
