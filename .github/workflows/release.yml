@@ -10,6 +10,7 @@ on:
 env:
   GH_JAVA_VERSION: "11"
   GH_JAVA_DISTRIBUTION: "temurin"
+  GH_JVM_OPTS: "-Xss64m -Xms1024m -XX:MaxMetaspaceSize=2G -Xmx4G"
 
 jobs:
   build_and_publish:
@@ -37,6 +38,7 @@ jobs:
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          JVM_OPTS: ${{ env.GH_JVM_OPTS }}
         run: |
           export CURRENT_BRANCH_NAME="${GITHUB_REF#refs/heads/}"
           export PROJECT_VERSION=$(git log --format=%H -1)
@@ -50,6 +52,7 @@ jobs:
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          JVM_OPTS: ${{ env.GH_JVM_OPTS }}
         run: |
           export GITHUB_TAG=${GITHUB_REF#refs/tags/}
           export PROJECT_VERSION=$(echo "$GITHUB_TAG" | sed 's/^v//')

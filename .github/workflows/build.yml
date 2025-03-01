@@ -9,6 +9,9 @@ on:
     branches:
       - master
 
+env:
+  GH_JVM_OPTS: "-Xss64m -Xms1024m -XX:MaxMetaspaceSize=2G -Xmx4G"
+
 jobs:
 
   build:
@@ -19,7 +22,7 @@ jobs:
         scala:
           - { name: "Scala 2", version: "2.12.19", binary-version: "2.12", java-version: "11", java-distribution: "temurin" }
           - { name: "Scala 2", version: "2.13.10", binary-version: "2.13", java-version: "11", java-distribution: "temurin" }
-          - { name: "Scala 3", version: "3.1.3",   binary-version: "3",    java-version: "11", java-distribution: "temurin" }
+          - { name: "Scala 3", version: "3.3.5",   binary-version: "3",    java-version: "11", java-distribution: "temurin" }
 
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +39,7 @@ jobs:
           CURRENT_BRANCH_NAME: ${{ github.ref }}
           RUN_ID: ${{ github.run_id }}
           RUN_NUMBER: ${{ github.run_number }}
+          JVM_OPTS: ${{ env.GH_JVM_OPTS }}
         run: |
           echo "[BEFORE]CURRENT_BRANCH_NAME=${CURRENT_BRANCH_NAME}"
           export CURRENT_BRANCH_NAME="${CURRENT_BRANCH_NAME#refs/heads/}"
@@ -53,6 +57,7 @@ jobs:
           RUN_ID: ${{ github.run_id }}
           RUN_NUMBER: ${{ github.run_number }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          JVM_OPTS: ${{ env.GH_JVM_OPTS }}
         run: |
           echo "Pull request to the '${CURRENT_BRANCH_NAME}' branch"
           echo "RUN_ID=${RUN_ID}"

@@ -16,14 +16,14 @@ else
 
   if [[ $CURRENT_BRANCH_NAME == "master" || $GITHUB_TAG != "" ]]
   then
-    sbt -J-Xmx2048m \
+    sbt \
       ++${SCALA_VERSION}! \
       'set ThisBuild / version := "'$PROJECT_VERSION'"' \
       clean \
       test \
       packagedArtifacts
   else
-    sbt -J-Xmx2048m \
+    sbt \
       ++${SCALA_VERSION}! \
       'set ThisBuild / version := "'$PROJECT_VERSION'"' \
       clean \
