@@ -89,8 +89,7 @@ lazy val sbtTest = crossProject(JVMPlatform, JSPlatform, NativePlatform)
         .cross(CrossVersion.for3Use2_13),
   )
   .nativeSettings(
-    libraryDependencies +=
-      "org.scala-sbt" % "test-interface" % "1.0",
+    libraryDependencies += "org.scala-native" %%% "test-interface" % nativeVersion
   )
   .dependsOn(core, runner)
 lazy val sbtTestJVM = sbtTest.jvm
