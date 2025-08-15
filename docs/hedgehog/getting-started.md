@@ -8,6 +8,10 @@ slug: '/getting-started'
 
 ## Getting Started
 
+Documentation assumes that the build tool used is [sbt](https://www.scala-sbt.org/).
+
+Hedgehog is also supported for Gradle by the
+[Gradle multi-backend Scala plugin](https://github.com/dubinsky/scalajs-gradle). 
 
 ### SBT Binary Dependency
 
