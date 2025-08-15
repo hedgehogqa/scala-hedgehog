@@ -2,7 +2,7 @@ ThisBuild / organization := "qa.hedgehog"
 ThisBuild / developers := List(
   Developer("charleso", "Charles O'Farrell", "charleso@gmail.com", url("https://github.com/charleso")),
 )
-ThisBuild / homepage := Some(url("https://hedgehog.qa"))
+ThisBuild / homepage := Some(url("https://hedgehogqa.github.io/scala-hedgehog/"))
 ThisBuild / scmInfo := Some(
   ScmInfo(
     url("https://github.com/hedgehogqa/scala-hedgehog"),
