@@ -142,7 +142,7 @@ lazy val docs = (project in file("generated-docs"))
   .enablePlugins(MdocPlugin, DocusaurPlugin, ScalaUnidocPlugin)
   .settings(
     name := "docs",
-    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full),
+    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.4" cross CrossVersion.full),
     mdocVariables := Map(
       "VERSION" -> {
         import sys.process._
@@ -233,13 +233,13 @@ lazy val compilationSettings = Seq(
       Seq.empty[ModuleID]
     else
       Seq(
-        compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full),
+        compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.4" cross CrossVersion.full),
       )
     ),
 )
 
 lazy val props = new {
-  val ProjectScalaVersion = "2.13.16"
+  val ProjectScalaVersion = "2.13.18"
   val CrossScalaVersions = Seq("2.12.20", ProjectScalaVersion, "3.3.5")
 
   val PortableScalaReflectVersion = "1.1.3"
