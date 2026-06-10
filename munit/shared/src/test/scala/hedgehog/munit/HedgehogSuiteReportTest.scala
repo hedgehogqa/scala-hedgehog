@@ -77,7 +77,7 @@ class HedgehogSuiteReportTest extends _root_.munit.FunSuite {
   test("a property which gave up fails with the report and the seed") {
     val suite = new HedgehogSuite {
       property("gives up", _.copy(discardLimit = DiscardCount(3))) {
-        Property.discard.map(_ => Result.success)
+        Property.discard
       }
     }
     assertFailureMessage(
