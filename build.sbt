@@ -28,6 +28,7 @@ lazy val hedgehog = Project(
     exampleJVM, exampleJS,
     minitestJVM, minitestJS,
     munitJVM, munitJS,
+    scalatestJVM, scalatestJS, scalatestNative
   )
 
 lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -137,6 +138,20 @@ lazy val munit = crossProject(JVMPlatform, JSPlatform)
 lazy val munitJVM = munit.jvm
 lazy val munitJS = munit.js
 
+lazy val scalatest = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .in(file("scalatest"))
+  .settings(
+    standardSettings ++ Seq(
+      name := "hedgehog-scalatest",
+      libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % props.ScalatestVersion)
+    )
+  )
+  .dependsOn(runner)
+
+lazy val scalatestJVM = scalatest.jvm
+lazy val scalatestJS = scalatest.js
+lazy val scalatestNative = scalatest.native
+
 lazy val test = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     standardSettings ++ noPublish ++ Seq(
@@ -183,13 +198,13 @@ lazy val docs = (project in file("generated-docs"))
     gitHubPagesPublishRequestTimeout := 60.seconds,
     docusaurDir := (ThisBuild / baseDirectory).value / "website",
     docusaurBuildDir := docusaurDir.value / "build",
-    ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(coreJVM, runnerJVM, exampleJVM, minitestJVM, munitJVM),
+    ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(coreJVM, runnerJVM, exampleJVM, minitestJVM, munitJVM, scalatestJVM),
     ScalaUnidoc / unidoc / target := docusaurDir.value / "static" / "api",
     cleanFiles += (ScalaUnidoc / unidoc / target).value,
     docusaurBuild := docusaurBuild.dependsOn(Compile / unidoc).value,
   )
   .settings(noPublish)
-  .dependsOn(coreJVM, runnerJVM, exampleJVM, minitestJVM, munitJVM)
+  .dependsOn(coreJVM, runnerJVM, exampleJVM, minitestJVM, munitJVM, scalatestJVM)
 
 lazy val compilationSettings = Seq(
   maxErrors := 10,
@@ -259,6 +274,8 @@ lazy val props = new {
   val MinitestVersion = "2.9.6"
 
   val MunitVersion = "1.1.0"
+
+  val ScalatestVersion = "3.2.20"
 }
 
 lazy val projectSettings: Seq[Setting[_]] = Seq(
