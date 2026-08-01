@@ -219,7 +219,7 @@ repeatedly pass generated data to the function. In this case, the test data is c
  *
  * @author Bill Venners
  */
-trait Checkers extends ScalaCheckConfiguration {
+trait Checkers {
 
   private val asserting: CheckerAsserting[Assertion] { type Result = Assertion }  = CheckerAsserting.assertingNatureOfAssertion
 
@@ -238,7 +238,7 @@ trait Checkers extends ScalaCheckConfiguration {
       pos: source.Position
     ): Assertion = {
     val params = getScalaCheckParams(configParams, config)
-    asserting.check(Prop.forAll(f)(p, a1, s1, pp1), params, prettifier, pos)
+    asserting.check(Prop.forAll(f)(p, a1, s1, pp1), params, pos)
   }
 
   /**
@@ -257,7 +257,7 @@ trait Checkers extends ScalaCheckConfiguration {
       pos: source.Position
     ): Assertion = {
     val params = getScalaCheckParams(configParams, config)
-    asserting.check(Prop.forAll(f)(p, a1, s1, pp1, a2, s2, pp2), params, prettifier, pos)
+    asserting.check(Prop.forAll(f)(p, a1, s1, pp1, a2, s2, pp2), params, pos)
   }
 
   /**
@@ -277,7 +277,7 @@ trait Checkers extends ScalaCheckConfiguration {
       pos: source.Position
     ): Assertion = {
     val params = getScalaCheckParams(configParams, config)
-    asserting.check(Prop.forAll(f)(p, a1, s1, pp1, a2, s2, pp2, a3, s3, pp3), params, prettifier, pos)
+    asserting.check(Prop.forAll(f)(p, a1, s1, pp1, a2, s2, pp2, a3, s3, pp3), params, pos)
   }
 
   /**
@@ -298,7 +298,7 @@ trait Checkers extends ScalaCheckConfiguration {
       pos: source.Position
     ): Assertion = {
     val params = getScalaCheckParams(configParams, config)
-    asserting.check(Prop.forAll(f)(p, a1, s1, pp1, a2, s2, pp2, a3, s3, pp3, a4, s4, pp4), params, prettifier, pos)
+    asserting.check(Prop.forAll(f)(p, a1, s1, pp1, a2, s2, pp2, a3, s3, pp3, a4, s4, pp4), params, pos)
   }
 
   /**
@@ -320,7 +320,7 @@ trait Checkers extends ScalaCheckConfiguration {
       pos: source.Position
     ): Assertion = {
     val params = getScalaCheckParams(configParams, config)
-    asserting.check(Prop.forAll(f)(p, a1, s1, pp1, a2, s2, pp2, a3, s3, pp3, a4, s4, pp4, a5, s5, pp5), params, prettifier, pos)
+    asserting.check(Prop.forAll(f)(p, a1, s1, pp1, a2, s2, pp2, a3, s3, pp3, a4, s4, pp4, a5, s5, pp5), params, pos)
   }
 
   /**
@@ -343,7 +343,7 @@ trait Checkers extends ScalaCheckConfiguration {
       pos: source.Position
     ): Assertion = {
     val params = getScalaCheckParams(configParams, config)
-    asserting.check(Prop.forAll(f)(p, a1, s1, pp1, a2, s2, pp2, a3, s3, pp3, a4, s4, pp4, a5, s5, pp5, a6, s6, pp6), params, prettifier, pos)
+    asserting.check(Prop.forAll(f)(p, a1, s1, pp1, a2, s2, pp2, a3, s3, pp3, a4, s4, pp4, a5, s5, pp5, a6, s6, pp6), params, pos)
   }
 
   /**
@@ -354,7 +354,7 @@ trait Checkers extends ScalaCheckConfiguration {
    * @throws TestFailedException if a test case is discovered for which the property doesn't hold.
    */
   def check(p: Prop, prms: Test.Parameters)(implicit prettifier: Prettifier, pos: source.Position): Assertion = {
-    asserting.check(p, prms, prettifier, pos)
+    asserting.check(p, prms, pos)
   }
 
   /**
@@ -365,7 +365,7 @@ trait Checkers extends ScalaCheckConfiguration {
    */
   def check(p: Prop, configParams: PropertyCheckConfigParam*)(implicit config: PropertyCheckConfiguration, prettifier: Prettifier, pos: source.Position): Assertion = {
     val params = getScalaCheckParams(configParams, config)
-    asserting.check(p, params, prettifier, pos)
+    asserting.check(p, params, pos)
   }
 }
 

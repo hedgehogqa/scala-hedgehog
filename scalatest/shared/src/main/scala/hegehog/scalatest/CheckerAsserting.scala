@@ -16,7 +16,7 @@
 package hegehog.scalatest
 
 import hedgehog.Property
-import hedgehog.core.{PropertyConfig, Seed, Status}
+import hedgehog.core.{PropertyConfig, PropertyT, Result, Seed, Status}
 import hedgehog.runner.{SeedSource, Test}
 import org.scalactic.{FailureMessages => _, Resources => _, UnquotedString => _, _}
 import org.scalatest.{Assertion, Succeeded}
@@ -35,21 +35,34 @@ trait CheckerAsserting[T] {
   /**
    * The result type of the <code>check</code> method.
    */
-  type Result
+  type CheckResult
 
-  def succeed(result: T): (Boolean, Option[Throwable])
+  private val seedSource = SeedSource.fromEnvOrTime()
+  private val seed: Seed = Seed.fromLong(seedSource.seed)
+
+  def succeed(result: T): (Boolean, Option[Throwable]) = (true, None)
+
+  private[scalatest] def indicateSuccess: CheckResult
+
+  private[scalatest] def indicateFailure(messageFun: StackDepthException => String, undecoratedMessage: => String, scalaCheckArgs: List[Any], scalaCheckLabels: List[String], optionalCause: Option[Throwable], pos: source.Position): CheckResult
 
   /**
-   * Perform the property check using the given <code>Prop</code> and <code>Test.Parameters</code>.
+   * Converts the Hedgehog property based test into a result scalatest can understand.  If the property check succeeds, return a <code>CheckResult</code> indicating success, else return a <code>CheckResult</code> indicating failure.
    *
-   * @param test       The `test` to be checked.
-   * @param config     The `config` to be used to check the property.
-   * @param prettifier the <code>Prettifier</code> to be used to prettify error message
-   * @param pos        the <code>Position</code> of the caller site
-   * @param argNames   the list of argument names
+   * @param test   The `test` to be checked.
+   * @param config The `config` to be used to check the property.
+   * @param pos    the <code>Position</code> of the caller site
    * @return the <code>Result</code> of the property check.
    */
-  def check(test: Test, config: PropertyConfig, prettifier: Prettifier, pos: source.Position, argNames: Option[List[String]] = None): Result
+  def check(test: PropertyT[Result], config: PropertyConfig, pos: source.Position): CheckResult = {
+    val report = Property.check(config, test, seed)
+
+    if (report.status != Status.ok) {
+      val rendered = Test.renderReport(this.getClass.getName, Test("todo", test), report, ansiCodesSupported = true)
+      // fail the test using scalatest
+      indicateFailure(_ => rendered, rendered, Nil, Nil, None, pos)
+    } else indicateSuccess
+  }
 }
 
 /**
@@ -57,47 +70,18 @@ trait CheckerAsserting[T] {
  */
 abstract class UnitCheckerAsserting {
 
-  private val seedSource = SeedSource.fromEnvOrTime()
-  private val seed: Seed = Seed.fromLong(seedSource.seed)
-
-  /**
-   * Abstract subclass of <code>CheckerAsserting</code> that provides the bulk of the implementations of <code>CheckerAsserting</code>
-   * <code>check</code> method.
-   */
-  abstract class CheckerAssertingImpl[T] extends CheckerAsserting[T] {
-
-    import CheckerAsserting._
-
-    /** If the check succeeds, call <code>indicateSuccess</code>, else call <code>indicateFailure</code>. */
-    def check(test: Test, config: PropertyConfig, prettifier: Prettifier, pos: source.Position, argNames: Option[List[String]] = None): Result = {
-      val result = Property.check(test.withConfig(config), test.result, seed)
-
-      if (result.status != Status.ok) {
-        val report = Test.renderReport(this.getClass.getName, test, result, ansiCodesSupported = true)
-        // fail the test using scalatest
-        indicateFailure(_ => report, report, Nil, Nil, None, pos)
-      } else indicateSuccess(FailureMessages.propertyCheckSucceeded())
-    }
-
-    private[scalacheck] def indicateSuccess(message: => String): Result
-
-    private[scalacheck] def indicateFailure(messageFun: StackDepthException => String, undecoratedMessage: => String, scalaCheckArgs: List[Any], scalaCheckLabels: List[String], optionalCause: Option[Throwable], pos: source.Position): Result
-  }
-
   /**
    * Provides support of [[org.scalatest.enablers.CheckerAsserting CheckerAsserting]] for Unit.  Do nothing when the check succeeds,
    * but throw [[org.scalatest.exceptions.GeneratorDrivenPropertyCheckFailedException GeneratorDrivenPropertyCheckFailedException]]
    * when check fails.
    */
-  implicit def assertingNatureOfT[T]: CheckerAsserting[T] {type Result = Unit} =
-    new CheckerAssertingImpl[T] {
-      type Result = Unit
+  implicit def assertingNatureOfT[T]: CheckerAsserting[T] {type CheckResult = Unit} =
+    new CheckerAsserting[T] {
+      type CheckResult = Unit
 
-      def succeed(result: T) = (true, None)
+      private[scalatest] def indicateSuccess: Unit = ()
 
-      private[scalacheck] def indicateSuccess(message: => String): Unit = ()
-
-      private[scalacheck] def indicateFailure(messageFun: StackDepthException => String, undecoratedMessage: => String, scalaCheckArgs: List[Any], scalaCheckLabels: List[String], optionalCause: Option[Throwable], pos: source.Position): Unit = {
+      private[scalatest] def indicateFailure(messageFun: StackDepthException => String, undecoratedMessage: => String, scalaCheckArgs: List[Any], scalaCheckLabels: List[String], optionalCause: Option[Throwable], pos: source.Position): Unit = {
         throw new GeneratorDrivenPropertyCheckFailedException(
           messageFun,
           optionalCause,
@@ -116,22 +100,20 @@ abstract class UnitCheckerAsserting {
  * Companion object to <code>CheckerAsserting</code> that provides two implicit providers, a higher priority one for passed functions that have result
  * type <code>Assertion</code>, which also yields result type <code>Assertion</code>, and one for any other type, which yields result type <code>Unit</code>.
  */
-object CheckerAsserting extends UnitCheckerAsserting {
+object CheckerAsserting {
 
   /**
    * Provides support of [[org.scalatest.enablers.CheckerAsserting CheckerAsserting]] for Assertion.  Returns [[org.scalatest.Succeeded Succeeded]] when the check succeeds,
    * but throw [[org.scalatest.exceptions.GeneratorDrivenPropertyCheckFailedException GeneratorDrivenPropertyCheckFailedException]]
    * when check fails.
    */
-  implicit def assertingNatureOfAssertion: CheckerAsserting[Assertion] {type Result = Assertion} = {
-    new CheckerAssertingImpl[Assertion] {
-      type Result = Assertion
+  implicit def assertingNatureOfAssertion: CheckerAsserting[Assertion] {type CheckResult = Assertion} = {
+    new CheckerAsserting[Assertion] {
+      type CheckResult = Assertion
 
-      def succeed(result: Assertion) = (true, None)
+      private[scalatest] def indicateSuccess: Assertion = Succeeded
 
-      private[scalacheck] def indicateSuccess(message: => String): Assertion = Succeeded
-
-      private[scalacheck] def indicateFailure(messageFun: StackDepthException => String, undecoratedMessage: => String, scalaCheckArgs: List[Any], scalaCheckLabels: List[String], optionalCause: Option[Throwable], pos: source.Position): Assertion =
+      private[scalatest] def indicateFailure(messageFun: StackDepthException => String, undecoratedMessage: => String, scalaCheckArgs: List[Any], scalaCheckLabels: List[String], optionalCause: Option[Throwable], pos: source.Position): Assertion =
         throw new GeneratorDrivenPropertyCheckFailedException(
           messageFun,
           optionalCause,

@@ -15,14 +15,13 @@
  */
 package hegehog.scalatest
 
-import org.scalacheck.Arbitrary
-import org.scalacheck.Shrink
-import org.scalacheck.Prop
-import org.scalacheck.Gen
-import org.scalacheck.Prop.{BooleanOperators => _, _}
+import hedgehog.{Gen, Property, Result}
+import hedgehog.core.PropertyConfig
+import org.scalactic.source.Position
 import org.scalatest.exceptions.DiscardedEvaluationException
 import org.scalatest.prop.Whenever
-import org.scalactic._
+
+import scala.sys.Prop
 
 /**
  * Trait containing methods that faciliate property checks against generated data.
@@ -37,18 +36,18 @@ import org.scalactic._
  * <p>
  * For an example of trait <code>ScalaCheckDrivenPropertyChecks</code> in action, imagine you want to test this <code>Fraction</code> class:
  * </p>
- *  
+ *
  * <pre class="stHighlight">
  * class Fraction(n: Int, d: Int) {
  *
- *   require(d != 0)
- *   require(d != Integer.MIN_VALUE)
- *   require(n != Integer.MIN_VALUE)
+ * require(d != 0)
+ * require(d != Integer.MIN_VALUE)
+ * require(n != Integer.MIN_VALUE)
  *
- *   val numer = if (d < 0) -1 * n else n
- *   val denom = d.abs
+ * val numer = if (d < 0) -1 * n else n
+ * val denom = d.abs
  *
- *   override def toString = numer + " / " + denom
+ * override def toString = numer + " / " + denom
  * }
  * </pre>
  *
@@ -60,20 +59,20 @@ import org.scalactic._
  * <pre class="stHighlight">
  * forAll { (n: Int, d: Int) =>
  *
- *   whenever (d != 0 && d != Integer.MIN_VALUE
- *       && n != Integer.MIN_VALUE) {
+ * whenever (d != 0 && d != Integer.MIN_VALUE
+ * && n != Integer.MIN_VALUE) {
  *
- *     val f = new Fraction(n, d)
+ * val f = new Fraction(n, d)
  *
- *     if (n < 0 && d < 0 || n > 0 && d > 0)
- *       f.numer should be > 0
- *     else if (n != 0)
- *       f.numer should be < 0
- *     else
- *       f.numer should be === 0
+ * if (n < 0 && d < 0 || n > 0 && d > 0)
+ * f.numer should be > 0
+ * else if (n != 0)
+ * f.numer should be < 0
+ * else
+ * f.numer should be === 0
  *
- *     f.denom should be > 0
- *   }
+ * f.denom should be > 0
+ * }
  * }
  * </pre>
  *
@@ -114,7 +113,7 @@ import org.scalactic._
  *
  * <pre class="stHighlight">
  * forAll ("a", "b") { (a: String, b: String) =>
- *   a.length + b.length should equal ((a + b).length + 1) // Should fail
+ * a.length + b.length should equal ((a + b).length + 1) // Should fail
  * }
  * </pre>
  *
@@ -124,8 +123,8 @@ import org.scalactic._
  *
  * <pre>
  * Occurred when passed generated values (
- *   a = "",
- *   b = ""
+ * a = "",
+ * b = ""
  * )
  * </pre>
  *
@@ -136,7 +135,7 @@ import org.scalactic._
  *
  * <pre class="stHighlight">
  * forAll { (a: String, b: String) =>
- *   a.length + b.length should equal ((a + b).length + 1) // Should fail
+ * a.length + b.length should equal ((a + b).length + 1) // Should fail
  * }
  * </pre>
  *
@@ -146,8 +145,8 @@ import org.scalactic._
  *
  * <pre>
  * Occurred when passed generated values (
- *   arg0 = "",
- *   arg1 = ""
+ * arg0 = "",
+ * arg1 = ""
  * )
  * </pre>
  *
@@ -186,8 +185,8 @@ import org.scalactic._
  * </p>
  *
  * <pre class="stHighlight">
- *   whenever (d != 0 && d != Integer.MIN_VALUE
- *       && n != Integer.MIN_VALUE) { ...
+ * whenever (d != 0 && d != Integer.MIN_VALUE
+ * && n != Integer.MIN_VALUE) { ...
  * </pre>
  *
  * <p>
@@ -196,9 +195,9 @@ import org.scalactic._
  *
  * <pre class="stHighlight">
  * val validNumers =
- *   for (n <- Gen.choose(Integer.MIN_VALUE + 1, Integer.MAX_VALUE)) yield n
+ * for (n <- Gen.choose(Integer.MIN_VALUE + 1, Integer.MAX_VALUE)) yield n
  * val validDenoms =
- *   for (d <- validNumers if d != 0) yield d
+ * for (d <- validNumers if d != 0) yield d
  * </pre>
  *
  * <p>
@@ -208,20 +207,20 @@ import org.scalactic._
  * <pre class="stHighlight">
  * forAll (validNumers, validDenoms) { (n: Int, d: Int) =>
  *
- *   whenever (d != 0 && d != Integer.MIN_VALUE
- *       && n != Integer.MIN_VALUE) {
+ * whenever (d != 0 && d != Integer.MIN_VALUE
+ * && n != Integer.MIN_VALUE) {
  *
- *     val f = new Fraction(n, d)
+ * val f = new Fraction(n, d)
  *
- *     if (n < 0 && d < 0 || n > 0 && d > 0)
- *       f.numer should be > 0
- *     else if (n != 0)
- *       f.numer should be < 0
- *     else
- *       f.numer should be === 0
+ * if (n < 0 && d < 0 || n > 0 && d > 0)
+ * f.numer should be > 0
+ * else if (n != 0)
+ * f.numer should be < 0
+ * else
+ * f.numer should be === 0
  *
- *     f.denom should be > 0
- *   }
+ * f.denom should be > 0
+ * }
  * }
  * </pre>
  *
@@ -244,20 +243,20 @@ import org.scalactic._
  * <pre class="stHighlight">
  * forAll ((validNumers, "n"), (validDenoms, "d")) { (n: Int, d: Int) =>
  *
- *   whenever (d != 0 && d != Integer.MIN_VALUE
- *       && n != Integer.MIN_VALUE) {
+ * whenever (d != 0 && d != Integer.MIN_VALUE
+ * && n != Integer.MIN_VALUE) {
  *
- *     val f = new Fraction(n, d)
+ * val f = new Fraction(n, d)
  *
- *     if (n < 0 && d < 0 || n > 0 && d > 0)
- *       f.numer should be > 0
- *     else if (n != 0)
- *       f.numer should be < 0
- *     else
- *       f.numer should be === 0
+ * if (n < 0 && d < 0 || n > 0 && d > 0)
+ * f.numer should be > 0
+ * else if (n != 0)
+ * f.numer should be < 0
+ * else
+ * f.numer should be === 0
  *
- *     f.denom should be > 0
- *   }
+ * f.denom should be > 0
+ * }
  * }
  * </pre>
  *
@@ -267,8 +266,8 @@ import org.scalactic._
  *
  * <pre>
  * Occurred when passed generated values (
- *   n = 17,
- *   d = 21
+ * n = 17,
+ * d = 21
  * )
  * </pre>
  *
@@ -361,7 +360,7 @@ import org.scalactic._
  *
  * <pre class="stHighlight">
  * implicit override val generatorDrivenConfig =
- *   PropertyCheckConfiguration(minSize = 10, sizeRange = 10)
+ * PropertyCheckConfiguration(minSize = 10, sizeRange = 10)
  * </pre>
  *
  * <p>
@@ -370,7 +369,7 @@ import org.scalactic._
  *
  * <pre class="stHighlight">
  * implicit val generatorDrivenConfig =
- *   PropertyCheckConfiguration(minSize = 10, sizeRange = 10)
+ * PropertyCheckConfiguration(minSize = 10, sizeRange = 10)
  * </pre>
  *
  * <p>
@@ -390,7 +389,7 @@ import org.scalactic._
  * implicitly passed <code>PropertyCheckConfiguration</code> object for the other configuration parameters.
  * If you want to set multiple configuration parameters in this way, just list them separated by commas:
  * </p>
- * 
+ *
  * <pre class="stHighlight">
  * forAll (minSuccessful(500), maxDiscardedFactor(0.6)) { (n: Int, d: Int) => ...
  * </pre>
@@ -399,456 +398,29 @@ import org.scalactic._
  * If you are using an overloaded form of <code>forAll</code> that already takes an initial parameter list, just
  * add the configuration parameters after the list of generators, names, or generator/name pairs, as in:
  * </p>
- * 
+ *
  * <pre class="stHighlight">
  * // If providing argument names
  * forAll ("n", "d", minSuccessful(500), maxDiscardedFactor(0.6)) {
- *   (n: Int, d: Int) => ...
+ * (n: Int, d: Int) => ...
  *
  * // If providing generators
  * forAll (validNumers, validDenoms, minSuccessful(500), maxDiscardedFactor(0.6)) {
- *   (n: Int, d: Int) => ...
+ * (n: Int, d: Int) => ...
  *
  * // If providing (&lt;generators&gt;, &lt;name&gt;) pairs
  * forAll ((validNumers, "n"), (validDenoms, "d"), minSuccessful(500), maxDiscardedFactor(0.6)) {
- *   (n: Int, d: Int) => ...
+ * (n: Int, d: Int) => ...
  * </pre>
  *
  * <p>
  * For more information, see the documentation for supertrait <a href="Configuration.html"><code>Configuration</code></a>.
  * </p>
- * 
+ *
  * @author Bill Venners
  */
-trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.scalacheck.ScalaCheckConfiguration {
+trait ScalaCheckDrivenPropertyChecks extends Whenever {
 
-  /**
-   * Performs a property check by applying the specified property check function to arguments
-   * supplied by implicitly passed generators, modifying the values in the implicitly passed 
-   * <code>PropertyGenConfig</code> object with explicitly passed parameter values.
-   *
-   * <p>
-   * This method creates a <code>ConfiguredPropertyCheck</code> object that has six overloaded apply methods
-   * that take a function. Thus it is used with functions of all six arities.
-   * Here are some examples:
-   * </p>
-   *
-   * <pre class="stHighlight">
-   * forAll (minSize(1), sizeRange(9)) { (a: String) =>
-   *   a.length should equal ((a).length)
-   * }
-   *
-   * forAll (minSize(1), sizeRange(9)) { (a: String, b: String) =>
-   *   a.length + b.length should equal ((a + b).length)
-   * }
-   *
-   * forAll (minSize(1), sizeRange(9)) { (a: String, b: String, c: String) =>
-   *   a.length + b.length + c.length should equal ((a + b + c).length)
-   * }
-   *
-   * forAll (minSize(1), sizeRange(9)) { (a: String, b: String, c: String, d: String) =>
-   *   a.length + b.length + c.length + d.length should equal ((a + b + c + d).length)
-   * }
-   *
-   * forAll (minSize(1), sizeRange(9)) { (a: String, b: String, c: String, d: String, e: String) =>
-   *   a.length + b.length + c.length + d.length + e.length should equal ((a + b + c + d + e).length)
-   * }
-   *
-   * forAll (minSize(1), sizeRange(9)) { (a: String, b: String, c: String, d: String, e: String, f: String) =>
-   *   a.length + b.length + c.length + d.length + e.length + f.length should equal ((a + b + c + d + e + f).length)
-   * }
-   * </pre>
-   *
-   * @param configParams a variable length list of <code>PropertyCheckConfigParam</code> objects that should override corresponding
-   *   values in the <code>PropertyCheckConfiguration</code> implicitly passed to the <code>apply</code> methods of the <code>ConfiguredPropertyCheck</code>
-   *   object returned by this method.
-   */
-  def forAll(configParams: PropertyCheckConfigParam*): ConfiguredPropertyCheck = new ConfiguredPropertyCheck(configParams)
-
-  /**
-   * Performs a configured property checks by applying property check functions passed to its <code>apply</code> methods to arguments
-   * supplied by implicitly passed generators, modifying the values in the 
-   * <code>PropertyGenConfig</code> object passed implicitly to its <code>apply</code> methods with parameter values passed to its constructor.
-   *
-   * <p>
-   * Instances of this class are returned by trait <code>ScalaCheckDrivenPropertyChecks</code> <code>forAll</code> method that accepts a variable length
-   * argument list of <code>PropertyCheckConfigParam</code> objects. Thus it is used with functions of all six arities.
-   * Here are some examples:
-   * </p>
-   *
-   * <pre class="stHighlight">
-   * forAll (minSize(1), sizeRange(9)) { (a: String) =>
-   *   a.length should equal ((a).length)
-   * }
-   *
-   * forAll (minSize(1), sizeRange(9)) { (a: String, b: String) =>
-   *   a.length + b.length should equal ((a + b).length)
-   * }
-   *
-   * forAll (minSize(1), sizeRange(9)) { (a: String, b: String, c: String) =>
-   *   a.length + b.length + c.length should equal ((a + b + c).length)
-   * }
-   *
-   * forAll (minSize(1), sizeRange(9)) { (a: String, b: String, c: String, d: String) =>
-   *   a.length + b.length + c.length + d.length should equal ((a + b + c + d).length)
-   * }
-   *
-   * forAll (minSize(1), sizeRange(9)) { (a: String, b: String, c: String, d: String, e: String) =>
-   *   a.length + b.length + c.length + d.length + e.length should equal ((a + b + c + d + e).length)
-   * }
-   *
-   * forAll (minSize(1), sizeRange(9)) { (a: String, b: String, c: String, d: String, e: String, f: String) =>
-   *   a.length + b.length + c.length + d.length + e.length + f.length should equal ((a + b + c + d + e + f).length)
-   * }
-   * </pre>
-   *
-   * <p>
-   * In the first example above, the <code>ConfiguredPropertyCheck</code> object is returned by:
-   * </p>
-   *
-   * <pre class="stHighlight">
-   * forAll (minSize(1), sizeRange(9))
-   * </pre>
-   *
-   * <p>
-   * The code that follows is an invocation of one of the <code>ConfiguredPropertyCheck</code> <code>apply</code> methods:
-   * </p>
-   *
-   * <pre class="stHighlight">
-   * { (a: String) =>
-   *   a.length should equal ((a).length)
-   * }
-   * </pre>
-   *
-   * @param configParams a variable length list of <code>PropertyCheckConfigParam</code> objects that should override corresponding
-   *   values in the <code>PropertyCheckConfiguration</code> implicitly passed to the <code>apply</code> methods of instances of this class.
-   *
-   * @author Bill Venners
-  */
-  class ConfiguredPropertyCheck(configParams: Seq[PropertyCheckConfigParam]) {
-
-  /**
-   * Performs a property check by applying the specified property check function to arguments
-   * supplied by implicitly passed generators, modifying the values in the implicitly passed 
-   * <code>PropertyGenConfig</code> object with parameter values passed to this object's constructor.
-   *
-   * <p>
-   * Here's an example:
-   * </p>
-   *
-   * <pre class="stHighlight">
-   * forAll (minSize(1), sizeRange(9)) { (a: String) =>
-   *   a.length should equal ((a).length)
-   * }
-   * </pre>
-   *
-   * @param fun the property check function to apply to the generated arguments
-   */
-    def apply[A, ASSERTION](fun: (A) => ASSERTION)
-      (implicit
-        config: PropertyCheckConfiguration,
-        arbA: Arbitrary[A], shrA: Shrink[A],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-      ): asserting.Result = {
-        val propF = { (a: A) =>
-          val (unmetCondition, succeeded, exception) =
-            try {
-              val (succeeded, cause) = asserting.succeed(fun(a))
-              (false, succeeded, cause)
-            }
-            catch {
-              case e: DiscardedEvaluationException => (true, false, None)
-              case e: Throwable => (false, false, Some(e))
-            }
-          !unmetCondition ==> (
-            if (exception.isEmpty) {
-              if (succeeded)
-                Prop.passed
-              else
-                Prop.falsified
-            }
-            else
-              Prop.exception(exception.get)
-          )
-        }
-        val prop = Prop.forAll(propF)
-        val params = getScalaCheckParams(configParams, config)
-        asserting.check(prop, params, prettifier, pos)
-    }
-
-  /**
-   * Performs a property check by applying the specified property check function to arguments
-   * supplied by implicitly passed generators, modifying the values in the implicitly passed 
-   * <code>PropertyGenConfig</code> object with parameter values passed to this object's constructor.
-   *
-   * <p>
-   * Here's an example:
-   * </p>
-   *
-   * <pre class="stHighlight">
-   * forAll (minSize(1), sizeRange(9)) { (a: String, b: String) =>
-   *   a.length + b.length should equal ((a + b).length)
-   * }
-   * </pre>
-   *
-   * @param fun the property check function to apply to the generated arguments
-   */
-    def apply[A, B, ASSERTION](fun: (A, B) => ASSERTION)
-      (implicit
-        config: PropertyCheckConfiguration,
-        arbA: Arbitrary[A], shrA: Shrink[A],
-        arbB: Arbitrary[B], shrB: Shrink[B],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-      ): asserting.Result = {
-        val propF = { (a: A, b: B) =>
-          val (unmetCondition, succeeded, exception) =
-            try {
-              val (succeeded, cause) = asserting.succeed(fun(a, b))
-              (false, succeeded, cause)
-            }
-            catch {
-              case e: DiscardedEvaluationException => (true, false, None)
-              case e: Throwable => (false, false, Some(e))
-            }
-          !unmetCondition ==> (
-            if (exception.isEmpty) {
-              if (succeeded)
-                Prop.passed
-              else
-                Prop.falsified
-            }
-            else
-              Prop.exception(exception.get)
-          )
-        }
-        val prop = Prop.forAll(propF)
-        val params = getScalaCheckParams(configParams, config)
-        asserting.check(prop, params, prettifier, pos)
-    }
-
-  /**
-   * Performs a property check by applying the specified property check function to arguments
-   * supplied by implicitly passed generators, modifying the values in the implicitly passed 
-   * <code>PropertyGenConfig</code> object with parameter values passed to this object's constructor.
-   *
-   * <p>
-   * Here's an example:
-   * </p>
-   *
-   * <pre class="stHighlight">
-   * forAll (minSize(1), sizeRange(9)) { (a: String, b: String, c: String) =>
-   *   a.length + b.length + c.length should equal ((a + b + c).length)
-   * }
-   * </pre>
-   *
-   * @param fun the property check function to apply to the generated arguments
-   */
-    def apply[A, B, C, ASSERTION](fun: (A, B, C) => ASSERTION)
-      (implicit
-        config: PropertyCheckConfiguration,
-        arbA: Arbitrary[A], shrA: Shrink[A],
-        arbB: Arbitrary[B], shrB: Shrink[B],
-        arbC: Arbitrary[C], shrC: Shrink[C],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-      ): asserting.Result = {
-        val propF = { (a: A, b: B, c: C) =>
-          val (unmetCondition, succeeded, exception) =
-            try {
-              val (succeeded, cause) = asserting.succeed(fun(a, b, c))
-              (false, succeeded, cause)
-            }
-            catch {
-              case e: DiscardedEvaluationException => (true, false, None)
-              case e: Throwable => (false, false, Some(e))
-            }
-          !unmetCondition ==> (
-            if (exception.isEmpty) {
-              if (succeeded)
-                Prop.passed
-              else
-                Prop.falsified
-            }
-            else
-              Prop.exception(exception.get)
-          )
-        }
-        val prop = Prop.forAll(propF)
-        val params = getScalaCheckParams(configParams, config)
-        asserting.check(prop, params, prettifier, pos)
-    }
-
-  /**
-   * Performs a property check by applying the specified property check function to arguments
-   * supplied by implicitly passed generators, modifying the values in the implicitly passed 
-   * <code>PropertyGenConfig</code> object with parameter values passed to this object's constructor.
-   *
-   * <p>
-   * Here's an example:
-   * </p>
-   *
-   * <pre class="stHighlight">
-   * forAll (minSize(1), sizeRange(9)) { (a: String, b: String, c: String, d: String) =>
-   *   a.length + b.length + c.length + d.length should equal ((a + b + c + d).length)
-   * }
-   * </pre>
-   *
-   * @param fun the property check function to apply to the generated arguments
-   */
-    def apply[A, B, C, D, ASSERTION](fun: (A, B, C, D) => ASSERTION)
-      (implicit
-        config: PropertyCheckConfiguration,
-        arbA: Arbitrary[A], shrA: Shrink[A],
-        arbB: Arbitrary[B], shrB: Shrink[B],
-        arbC: Arbitrary[C], shrC: Shrink[C],
-        arbD: Arbitrary[D], shrD: Shrink[D],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-      ): asserting.Result = {
-        val propF = { (a: A, b: B, c: C, d: D) =>
-          val (unmetCondition, succeeded, exception) =
-            try {
-              val (succeeded, cause) = asserting.succeed(fun(a, b, c, d))
-              (false, succeeded, cause)
-            }
-            catch {
-              case e: DiscardedEvaluationException => (true, false, None)
-              case e: Throwable => (false, false, Some(e))
-            }
-          !unmetCondition ==> (
-            if (exception.isEmpty) {
-              if (succeeded)
-                Prop.passed
-              else
-                Prop.falsified
-            }
-            else
-              Prop.exception(exception.get)
-          )
-        }
-        val prop = Prop.forAll(propF)
-        val params = getScalaCheckParams(configParams, config)
-        asserting.check(prop, params, prettifier, pos)
-    }
-
-  /**
-   * Performs a property check by applying the specified property check function to arguments
-   * supplied by implicitly passed generators, modifying the values in the implicitly passed 
-   * <code>PropertyGenConfig</code> object with parameter values passed to this object's constructor.
-   *
-   * <p>
-   * Here's an example:
-   * </p>
-   *
-   * <pre class="stHighlight">
-   * forAll (minSize(1), sizeRange(9)) { (a: String, b: String, c: String, d: String, e: String) =>
-   *   a.length + b.length + c.length + d.length + e.length should equal ((a + b + c + d + e).length)
-   * }
-   * </pre>
-   *
-   * @param fun the property check function to apply to the generated arguments
-   */
-    def apply[A, B, C, D, E, ASSERTION](fun: (A, B, C, D, E) => ASSERTION)
-      (implicit
-        config: PropertyCheckConfiguration,
-        arbA: Arbitrary[A], shrA: Shrink[A],
-        arbB: Arbitrary[B], shrB: Shrink[B],
-        arbC: Arbitrary[C], shrC: Shrink[C],
-        arbD: Arbitrary[D], shrD: Shrink[D],
-        arbE: Arbitrary[E], shrE: Shrink[E],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-      ): asserting.Result = {
-        val propF = { (a: A, b: B, c: C, d: D, e: E) =>
-          val (unmetCondition, succeeded, exception) =
-            try {
-              val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e))
-              (false, succeeded, cause)
-            }
-            catch {
-              case e: DiscardedEvaluationException => (true, false, None)
-              case e: Throwable => (false, false, Some(e))
-            }
-          !unmetCondition ==> (
-            if (exception.isEmpty) {
-              if (succeeded)
-                Prop.passed
-              else
-                Prop.falsified
-            }
-            else
-              Prop.exception(exception.get)
-          )
-        }
-        val prop = Prop.forAll(propF)
-        val params = getScalaCheckParams(configParams, config)
-        asserting.check(prop, params, prettifier, pos)
-    }
-
-  /**
-   * Performs a property check by applying the specified property check function to arguments
-   * supplied by implicitly passed generators, modifying the values in the implicitly passed 
-   * <code>PropertyGenConfig</code> object with parameter values passed to this object's constructor.
-   *
-   * <p>
-   * Here's an example:
-   * </p>
-   *
-   * <pre class="stHighlight">
-   * forAll (minSize(1), sizeRange(9)) { (a: String, b: String, c: String, d: String, e: String, f: String) =>
-   *   a.length + b.length + c.length + d.length + e.length + f.length should equal ((a + b + c + d + e + f).length)
-   * }
-   * </pre>
-   *
-   * @param fun the property check function to apply to the generated arguments
-   */
-    def apply[A, B, C, D, E, F, ASSERTION](fun: (A, B, C, D, E, F) => ASSERTION)
-      (implicit
-        config: PropertyCheckConfiguration,
-        arbA: Arbitrary[A], shrA: Shrink[A],
-        arbB: Arbitrary[B], shrB: Shrink[B],
-        arbC: Arbitrary[C], shrC: Shrink[C],
-        arbD: Arbitrary[D], shrD: Shrink[D],
-        arbE: Arbitrary[E], shrE: Shrink[E],
-        arbF: Arbitrary[F], shrF: Shrink[F],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-      ): asserting.Result = {
-        val propF = { (a: A, b: B, c: C, d: D, e: E, f: F) =>
-          val (unmetCondition, succeeded, exception) =
-            try {
-              val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e, f))
-              (false, succeeded, cause)
-            }
-            catch {
-              case e: DiscardedEvaluationException => (true, false, None)
-              case e: Throwable => (false, false, Some(e))
-            }
-          !unmetCondition ==> (
-            if (exception.isEmpty) {
-              if (succeeded)
-                Prop.passed
-              else
-                Prop.falsified
-            }
-            else
-              Prop.exception(exception.get)
-          )
-        }
-        val prop = Prop.forAll(propF)
-        val params = getScalaCheckParams(configParams, config)
-        asserting.check(prop, params, prettifier, pos)
-    }
-  }
-                              
   /**
    * Performs a property check by applying the specified property check function to arguments
    * supplied by implicitly passed generators.
@@ -859,44 +431,28 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * <pre class="stHighlight">
    * forAll { (a: String) =>
-   *   a.length should equal ((a).length)
+   * a.length should equal ((a).length)
    * }
    * </pre>
    *
-   * @param fun the property check function to apply to the generated arguments
+   * @param test the property check function to apply to the generated arguments
    */
-  def forAll[A, ASSERTION](fun: (A) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      arbA: Arbitrary[A], shrA: Shrink[A],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
-      val propF = { (a: A) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
-          else
-            Prop.exception(exception.get)
-        )
+  def forAll[A, ASSERTION](genA: Gen[A])(test: A => ASSERTION)
+                          (implicit
+                           config: PropertyConfig,
+                           asserting: CheckerAsserting[ASSERTION],
+                           pos: Position
+                          ): asserting.CheckResult = {
+    val property = genA.lift.map { a =>
+      try {
+        test(a)
+        Result.success
       }
-      val prop = Prop.forAll(propF)
-      val params = getScalaCheckParams(Seq(), config)
-      asserting.check(prop, params, prettifier, pos)
+      catch {
+        case e: Exception => Result.error(e)
+      }
+    }
+    asserting.check(property, config, pos)
   }
 
   /**
@@ -909,44 +465,44 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * <pre class="stHighlight">
    * forAll ("a") { (a: String) =>
-   *   a.length should equal ((a).length)
+   * a.length should equal ((a).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, ASSERTION](nameA: String, configParams: PropertyCheckConfigParam*)(fun: (A) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      arbA: Arbitrary[A], shrA: Shrink[A],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
-      val propF = { (a: A) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+                          (implicit
+                           config: PropertyCheckConfiguration,
+                           arbA: Arbitrary[A], shrA: Shrink[A],
+                           asserting: CheckerAsserting[ASSERTION],
+                           prettifier: Prettifier,
+                           pos: source.Position
+                          ): asserting.Result = {
+    val propF = { (a: A) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(propF)
-      val params = getScalaCheckParams(configParams, config)
-      asserting.check(prop, params, prettifier, pos, Some(List(nameA)))
+    }
+    val prop = Prop.forAll(propF)
+    val params = getScalaCheckParams(configParams, config)
+    asserting.check(prop, params, pos)
   }
 
   /**
@@ -962,48 +518,46 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * // Define your own string generator:
    * val famousLastWords = for {
-   *   s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
+   * s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
    * } yield s
-   * 
+   *
    * forAll (famousLastWords) { (a: String) =>
-   *   a.length should equal ((a).length)
+   * a.length should equal ((a).length)
    * }
    * </pre>
    *
-   * @param fun the property check function to apply to the generated arguments
+   * @param test the property check function to apply to the generated arguments
    */
-  def forAll[A, ASSERTION](genA: Gen[A], configParams: PropertyCheckConfigParam*)(fun: (A) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      shrA: Shrink[A],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
-      val propF = { (a: A) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+  def forAll[A, ASSERTION](genA: Gen[A], configParams: PropertyCheckConfigParam*)(test: A => ASSERTION)
+                          (implicit
+                           config: PropertyCheckConfiguration,
+                           asserting: CheckerAsserting[ASSERTION],
+                           pos: source.Position
+                          ): asserting.Result = {
+    val propF = { (a: A) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(genA)(propF)
-      val params = getScalaCheckParams(configParams, config)
-      asserting.check(prop, params, prettifier, pos)
+    }
+    val prop = Prop.forAll(genA)(propF)
+    val params = getScalaCheckParams(configParams, config)
+    asserting.check(prop, params, pos)
   }
 
   /**
@@ -1019,53 +573,53 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * // Define your own string generator:
    * val famousLastWords = for {
-   *   s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
+   * s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
    * } yield s
-   * 
+   *
    * forAll ((famousLastWords, "a")) { (a: String) =>
-   *   a.length should equal ((a).length)
+   * a.length should equal ((a).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, ASSERTION](genAndNameA: (Gen[A], String), configParams: PropertyCheckConfigParam*)(fun: (A) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      shrA: Shrink[A],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
+                          (implicit
+                           config: PropertyCheckConfiguration,
+                           shrA: Shrink[A],
+                           asserting: CheckerAsserting[ASSERTION],
+                           prettifier: Prettifier,
+                           pos: source.Position
+                          ): asserting.Result = {
 
-      val (genA, nameA) = genAndNameA
+    val (genA, nameA) = genAndNameA
 
-      val propF = { (a: A) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+    val propF = { (a: A) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(genA)(propF)
-      val params = getScalaCheckParams(configParams, config)
-      asserting.check(prop, params, prettifier, pos, Some(List(nameA)))
+    }
+    val prop = Prop.forAll(genA)(propF)
+    val params = getScalaCheckParams(configParams, config)
+    asserting.check(prop, params, pos)
   }
-                                    
+
   /**
    * Performs a property check by applying the specified property check function to arguments
    * supplied by implicitly passed generators.
@@ -1076,45 +630,45 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * <pre class="stHighlight">
    * forAll { (a: String, b: String) =>
-   *   a.length + b.length should equal ((a + b).length)
+   * a.length + b.length should equal ((a + b).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, ASSERTION](fun: (A, B) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      arbA: Arbitrary[A], shrA: Shrink[A],
-      arbB: Arbitrary[B], shrB: Shrink[B],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
-      val propF = { (a: A, b: B) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+                             (implicit
+                              config: PropertyCheckConfiguration,
+                              arbA: Arbitrary[A], shrA: Shrink[A],
+                              arbB: Arbitrary[B], shrB: Shrink[B],
+                              asserting: CheckerAsserting[ASSERTION],
+                              prettifier: Prettifier,
+                              pos: source.Position
+                             ): asserting.Result = {
+    val propF = { (a: A, b: B) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(propF)
-      val params = getScalaCheckParams(Seq(), config)
-      asserting.check(prop, params, prettifier, pos)
+    }
+    val prop = Prop.forAll(propF)
+    val params = getScalaCheckParams(Seq(), config)
+    asserting.check(prop, params, pos)
   }
 
   /**
@@ -1127,45 +681,45 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * <pre class="stHighlight">
    * forAll ("a", "b") { (a: String, b: String) =>
-   *   a.length + b.length should equal ((a + b).length)
+   * a.length + b.length should equal ((a + b).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, ASSERTION](nameA: String, nameB: String, configParams: PropertyCheckConfigParam*)(fun: (A, B) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      arbA: Arbitrary[A], shrA: Shrink[A],
-      arbB: Arbitrary[B], shrB: Shrink[B],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
-      val propF = { (a: A, b: B) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+                             (implicit
+                              config: PropertyCheckConfiguration,
+                              arbA: Arbitrary[A], shrA: Shrink[A],
+                              arbB: Arbitrary[B], shrB: Shrink[B],
+                              asserting: CheckerAsserting[ASSERTION],
+                              prettifier: Prettifier,
+                              pos: source.Position
+                             ): asserting.Result = {
+    val propF = { (a: A, b: B) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(propF)
-      val params = getScalaCheckParams(configParams, config)
-      asserting.check(prop, params, prettifier, pos, Some(List(nameA, nameB)))
+    }
+    val prop = Prop.forAll(propF)
+    val params = getScalaCheckParams(configParams, config)
+    asserting.check(prop, params, pos)
   }
 
   /**
@@ -1181,49 +735,49 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * // Define your own string generator:
    * val famousLastWords = for {
-   *   s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
+   * s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
    * } yield s
-   * 
+   *
    * forAll (famousLastWords, famousLastWords) { (a: String, b: String) =>
-   *   a.length + b.length should equal ((a + b).length)
+   * a.length + b.length should equal ((a + b).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, ASSERTION](genA: Gen[A], genB: Gen[B], configParams: PropertyCheckConfigParam*)(fun: (A, B) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      shrA: Shrink[A],
-      shrB: Shrink[B],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
-      val propF = { (a: A, b: B) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+                             (implicit
+                              config: PropertyCheckConfiguration,
+                              shrA: Shrink[A],
+                              shrB: Shrink[B],
+                              asserting: CheckerAsserting[ASSERTION],
+                              prettifier: Prettifier,
+                              pos: source.Position
+                             ): asserting.Result = {
+    val propF = { (a: A, b: B) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(genA, genB)(propF)
-      val params = getScalaCheckParams(configParams, config)
-      asserting.check(prop, params, prettifier, pos)
+    }
+    val prop = Prop.forAll(genA, genB)(propF)
+    val params = getScalaCheckParams(configParams, config)
+    asserting.check(prop, params, pos)
   }
 
   /**
@@ -1239,55 +793,55 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * // Define your own string generator:
    * val famousLastWords = for {
-   *   s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
+   * s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
    * } yield s
-   * 
+   *
    * forAll ((famousLastWords, "a"), (famousLastWords, "b")) { (a: String, b: String) =>
-   *   a.length + b.length should equal ((a + b).length)
+   * a.length + b.length should equal ((a + b).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, ASSERTION](genAndNameA: (Gen[A], String), genAndNameB: (Gen[B], String), configParams: PropertyCheckConfigParam*)(fun: (A, B) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      shrA: Shrink[A],
-      shrB: Shrink[B],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
+                             (implicit
+                              config: PropertyCheckConfiguration,
+                              shrA: Shrink[A],
+                              shrB: Shrink[B],
+                              asserting: CheckerAsserting[ASSERTION],
+                              prettifier: Prettifier,
+                              pos: source.Position
+                             ): asserting.Result = {
 
-      val (genA, nameA) = genAndNameA
-      val (genB, nameB) = genAndNameB
+    val (genA, nameA) = genAndNameA
+    val (genB, nameB) = genAndNameB
 
-      val propF = { (a: A, b: B) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+    val propF = { (a: A, b: B) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(genA, genB)(propF)
-      val params = getScalaCheckParams(configParams, config)
-      asserting.check(prop, params, prettifier, pos, Some(List(nameA, nameB)))
+    }
+    val prop = Prop.forAll(genA, genB)(propF)
+    val params = getScalaCheckParams(configParams, config)
+    asserting.check(prop, params, pos)
   }
-                                    
+
   /**
    * Performs a property check by applying the specified property check function to arguments
    * supplied by implicitly passed generators.
@@ -1298,46 +852,46 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * <pre class="stHighlight">
    * forAll { (a: String, b: String, c: String) =>
-   *   a.length + b.length + c.length should equal ((a + b + c).length)
+   * a.length + b.length + c.length should equal ((a + b + c).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, C, ASSERTION](fun: (A, B, C) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      arbA: Arbitrary[A], shrA: Shrink[A],
-      arbB: Arbitrary[B], shrB: Shrink[B],
-      arbC: Arbitrary[C], shrC: Shrink[C],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
-      val propF = { (a: A, b: B, c: C) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b, c))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+                                (implicit
+                                 config: PropertyCheckConfiguration,
+                                 arbA: Arbitrary[A], shrA: Shrink[A],
+                                 arbB: Arbitrary[B], shrB: Shrink[B],
+                                 arbC: Arbitrary[C], shrC: Shrink[C],
+                                 asserting: CheckerAsserting[ASSERTION],
+                                 prettifier: Prettifier,
+                                 pos: source.Position
+                                ): asserting.Result = {
+    val propF = { (a: A, b: B, c: C) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b, c))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(propF)
-      val params = getScalaCheckParams(Seq(), config)
-      asserting.check(prop, params, prettifier, pos)
+    }
+    val prop = Prop.forAll(propF)
+    val params = getScalaCheckParams(Seq(), config)
+    asserting.check(prop, params, pos)
   }
 
   /**
@@ -1350,46 +904,46 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * <pre class="stHighlight">
    * forAll ("a", "b", "c") { (a: String, b: String, c: String) =>
-   *   a.length + b.length + c.length should equal ((a + b + c).length)
+   * a.length + b.length + c.length should equal ((a + b + c).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, C, ASSERTION](nameA: String, nameB: String, nameC: String, configParams: PropertyCheckConfigParam*)(fun: (A, B, C) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      arbA: Arbitrary[A], shrA: Shrink[A],
-      arbB: Arbitrary[B], shrB: Shrink[B],
-      arbC: Arbitrary[C], shrC: Shrink[C],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
-      val propF = { (a: A, b: B, c: C) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b, c))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+                                (implicit
+                                 config: PropertyCheckConfiguration,
+                                 arbA: Arbitrary[A], shrA: Shrink[A],
+                                 arbB: Arbitrary[B], shrB: Shrink[B],
+                                 arbC: Arbitrary[C], shrC: Shrink[C],
+                                 asserting: CheckerAsserting[ASSERTION],
+                                 prettifier: Prettifier,
+                                 pos: source.Position
+                                ): asserting.Result = {
+    val propF = { (a: A, b: B, c: C) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b, c))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(propF)
-      val params = getScalaCheckParams(configParams, config)
-      asserting.check(prop, params, prettifier, pos, Some(List(nameA, nameB, nameC)))
+    }
+    val prop = Prop.forAll(propF)
+    val params = getScalaCheckParams(configParams, config)
+    asserting.check(prop, params, pos)
   }
 
   /**
@@ -1405,50 +959,50 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * // Define your own string generator:
    * val famousLastWords = for {
-   *   s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
+   * s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
    * } yield s
-   * 
+   *
    * forAll (famousLastWords, famousLastWords, famousLastWords) { (a: String, b: String, c: String) =>
-   *   a.length + b.length + c.length should equal ((a + b + c).length)
+   * a.length + b.length + c.length should equal ((a + b + c).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, C, ASSERTION](genA: Gen[A], genB: Gen[B], genC: Gen[C], configParams: PropertyCheckConfigParam*)(fun: (A, B, C) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      shrA: Shrink[A],
-      shrB: Shrink[B],
-      shrC: Shrink[C],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
-      val propF = { (a: A, b: B, c: C) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b, c))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+                                (implicit
+                                 config: PropertyCheckConfiguration,
+                                 shrA: Shrink[A],
+                                 shrB: Shrink[B],
+                                 shrC: Shrink[C],
+                                 asserting: CheckerAsserting[ASSERTION],
+                                 prettifier: Prettifier,
+                                 pos: source.Position
+                                ): asserting.Result = {
+    val propF = { (a: A, b: B, c: C) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b, c))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(genA, genB, genC)(propF)
-      val params = getScalaCheckParams(configParams, config)
-      asserting.check(prop, params, prettifier, pos)
+    }
+    val prop = Prop.forAll(genA, genB, genC)(propF)
+    val params = getScalaCheckParams(configParams, config)
+    asserting.check(prop, params, pos)
   }
 
   /**
@@ -1464,57 +1018,57 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * // Define your own string generator:
    * val famousLastWords = for {
-   *   s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
+   * s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
    * } yield s
-   * 
+   *
    * forAll ((famousLastWords, "a"), (famousLastWords, "b"), (famousLastWords, "c")) { (a: String, b: String, c: String) =>
-   *   a.length + b.length + c.length should equal ((a + b + c).length)
+   * a.length + b.length + c.length should equal ((a + b + c).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, C, ASSERTION](genAndNameA: (Gen[A], String), genAndNameB: (Gen[B], String), genAndNameC: (Gen[C], String), configParams: PropertyCheckConfigParam*)(fun: (A, B, C) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      shrA: Shrink[A],
-      shrB: Shrink[B],
-      shrC: Shrink[C],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
+                                (implicit
+                                 config: PropertyCheckConfiguration,
+                                 shrA: Shrink[A],
+                                 shrB: Shrink[B],
+                                 shrC: Shrink[C],
+                                 asserting: CheckerAsserting[ASSERTION],
+                                 prettifier: Prettifier,
+                                 pos: source.Position
+                                ): asserting.Result = {
 
-      val (genA, nameA) = genAndNameA
-      val (genB, nameB) = genAndNameB
-      val (genC, nameC) = genAndNameC
+    val (genA, nameA) = genAndNameA
+    val (genB, nameB) = genAndNameB
+    val (genC, nameC) = genAndNameC
 
-      val propF = { (a: A, b: B, c: C) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b, c))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+    val propF = { (a: A, b: B, c: C) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b, c))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(genA, genB, genC)(propF)
-      val params = getScalaCheckParams(configParams, config)
-      asserting.check(prop, params, prettifier, pos, Some(List(nameA, nameB, nameC)))
+    }
+    val prop = Prop.forAll(genA, genB, genC)(propF)
+    val params = getScalaCheckParams(configParams, config)
+    asserting.check(prop, params, pos)
   }
-                                    
+
   /**
    * Performs a property check by applying the specified property check function to arguments
    * supplied by implicitly passed generators.
@@ -1525,47 +1079,47 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * <pre class="stHighlight">
    * forAll { (a: String, b: String, c: String, d: String) =>
-   *   a.length + b.length + c.length + d.length should equal ((a + b + c + d).length)
+   * a.length + b.length + c.length + d.length should equal ((a + b + c + d).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, C, D, ASSERTION](fun: (A, B, C, D) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      arbA: Arbitrary[A], shrA: Shrink[A],
-      arbB: Arbitrary[B], shrB: Shrink[B],
-      arbC: Arbitrary[C], shrC: Shrink[C],
-      arbD: Arbitrary[D], shrD: Shrink[D],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
-      val propF = { (a: A, b: B, c: C, d: D) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b, c, d))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+                                   (implicit
+                                    config: PropertyCheckConfiguration,
+                                    arbA: Arbitrary[A], shrA: Shrink[A],
+                                    arbB: Arbitrary[B], shrB: Shrink[B],
+                                    arbC: Arbitrary[C], shrC: Shrink[C],
+                                    arbD: Arbitrary[D], shrD: Shrink[D],
+                                    asserting: CheckerAsserting[ASSERTION],
+                                    prettifier: Prettifier,
+                                    pos: source.Position
+                                   ): asserting.Result = {
+    val propF = { (a: A, b: B, c: C, d: D) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b, c, d))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(propF)
-      val params = getScalaCheckParams(Seq(), config)
-      asserting.check(prop, params, prettifier, pos)
+    }
+    val prop = Prop.forAll(propF)
+    val params = getScalaCheckParams(Seq(), config)
+    asserting.check(prop, params, pos)
   }
 
   /**
@@ -1578,47 +1132,47 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * <pre class="stHighlight">
    * forAll ("a", "b", "c", "d") { (a: String, b: String, c: String, d: String) =>
-   *   a.length + b.length + c.length + d.length should equal ((a + b + c + d).length)
+   * a.length + b.length + c.length + d.length should equal ((a + b + c + d).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, C, D, ASSERTION](nameA: String, nameB: String, nameC: String, nameD: String, configParams: PropertyCheckConfigParam*)(fun: (A, B, C, D) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      arbA: Arbitrary[A], shrA: Shrink[A],
-      arbB: Arbitrary[B], shrB: Shrink[B],
-      arbC: Arbitrary[C], shrC: Shrink[C],
-      arbD: Arbitrary[D], shrD: Shrink[D],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
-      val propF = { (a: A, b: B, c: C, d: D) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b, c, d))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+                                   (implicit
+                                    config: PropertyCheckConfiguration,
+                                    arbA: Arbitrary[A], shrA: Shrink[A],
+                                    arbB: Arbitrary[B], shrB: Shrink[B],
+                                    arbC: Arbitrary[C], shrC: Shrink[C],
+                                    arbD: Arbitrary[D], shrD: Shrink[D],
+                                    asserting: CheckerAsserting[ASSERTION],
+                                    prettifier: Prettifier,
+                                    pos: source.Position
+                                   ): asserting.Result = {
+    val propF = { (a: A, b: B, c: C, d: D) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b, c, d))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(propF)
-      val params = getScalaCheckParams(configParams, config)
-      asserting.check(prop, params, prettifier, pos, Some(List(nameA, nameB, nameC, nameD)))
+    }
+    val prop = Prop.forAll(propF)
+    val params = getScalaCheckParams(configParams, config)
+    asserting.check(prop, params, pos)
   }
 
   /**
@@ -1634,51 +1188,51 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * // Define your own string generator:
    * val famousLastWords = for {
-   *   s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
+   * s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
    * } yield s
-   * 
+   *
    * forAll (famousLastWords, famousLastWords, famousLastWords, famousLastWords) { (a: String, b: String, c: String, d: String) =>
-   *   a.length + b.length + c.length + d.length should equal ((a + b + c + d).length)
+   * a.length + b.length + c.length + d.length should equal ((a + b + c + d).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, C, D, ASSERTION](genA: Gen[A], genB: Gen[B], genC: Gen[C], genD: Gen[D], configParams: PropertyCheckConfigParam*)(fun: (A, B, C, D) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      shrA: Shrink[A],
-      shrB: Shrink[B],
-      shrC: Shrink[C],
-      shrD: Shrink[D],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
-      val propF = { (a: A, b: B, c: C, d: D) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b, c, d))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+                                   (implicit
+                                    config: PropertyCheckConfiguration,
+                                    shrA: Shrink[A],
+                                    shrB: Shrink[B],
+                                    shrC: Shrink[C],
+                                    shrD: Shrink[D],
+                                    asserting: CheckerAsserting[ASSERTION],
+                                    prettifier: Prettifier,
+                                    pos: source.Position
+                                   ): asserting.Result = {
+    val propF = { (a: A, b: B, c: C, d: D) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b, c, d))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(genA, genB, genC, genD)(propF)
-      val params = getScalaCheckParams(configParams, config)
-      asserting.check(prop, params, prettifier, pos)
+    }
+    val prop = Prop.forAll(genA, genB, genC, genD)(propF)
+    val params = getScalaCheckParams(configParams, config)
+    asserting.check(prop, params, pos)
   }
 
   /**
@@ -1694,59 +1248,59 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * // Define your own string generator:
    * val famousLastWords = for {
-   *   s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
+   * s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
    * } yield s
-   * 
+   *
    * forAll ((famousLastWords, "a"), (famousLastWords, "b"), (famousLastWords, "c"), (famousLastWords, "d")) { (a: String, b: String, c: String, d: String) =>
-   *   a.length + b.length + c.length + d.length should equal ((a + b + c + d).length)
+   * a.length + b.length + c.length + d.length should equal ((a + b + c + d).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, C, D, ASSERTION](genAndNameA: (Gen[A], String), genAndNameB: (Gen[B], String), genAndNameC: (Gen[C], String), genAndNameD: (Gen[D], String), configParams: PropertyCheckConfigParam*)(fun: (A, B, C, D) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      shrA: Shrink[A],
-      shrB: Shrink[B],
-      shrC: Shrink[C],
-      shrD: Shrink[D],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
+                                   (implicit
+                                    config: PropertyCheckConfiguration,
+                                    shrA: Shrink[A],
+                                    shrB: Shrink[B],
+                                    shrC: Shrink[C],
+                                    shrD: Shrink[D],
+                                    asserting: CheckerAsserting[ASSERTION],
+                                    prettifier: Prettifier,
+                                    pos: source.Position
+                                   ): asserting.Result = {
 
-      val (genA, nameA) = genAndNameA
-      val (genB, nameB) = genAndNameB
-      val (genC, nameC) = genAndNameC
-      val (genD, nameD) = genAndNameD
+    val (genA, nameA) = genAndNameA
+    val (genB, nameB) = genAndNameB
+    val (genC, nameC) = genAndNameC
+    val (genD, nameD) = genAndNameD
 
-      val propF = { (a: A, b: B, c: C, d: D) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b, c, d))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+    val propF = { (a: A, b: B, c: C, d: D) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b, c, d))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(genA, genB, genC, genD)(propF)
-      val params = getScalaCheckParams(configParams, config)
-      asserting.check(prop, params, prettifier, pos, Some(List(nameA, nameB, nameC, nameD)))
+    }
+    val prop = Prop.forAll(genA, genB, genC, genD)(propF)
+    val params = getScalaCheckParams(configParams, config)
+    asserting.check(prop, params, pos)
   }
-                                    
+
   /**
    * Performs a property check by applying the specified property check function to arguments
    * supplied by implicitly passed generators.
@@ -1757,48 +1311,48 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * <pre class="stHighlight">
    * forAll { (a: String, b: String, c: String, d: String, e: String) =>
-   *   a.length + b.length + c.length + d.length + e.length should equal ((a + b + c + d + e).length)
+   * a.length + b.length + c.length + d.length + e.length should equal ((a + b + c + d + e).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, C, D, E, ASSERTION](fun: (A, B, C, D, E) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      arbA: Arbitrary[A], shrA: Shrink[A],
-      arbB: Arbitrary[B], shrB: Shrink[B],
-      arbC: Arbitrary[C], shrC: Shrink[C],
-      arbD: Arbitrary[D], shrD: Shrink[D],
-      arbE: Arbitrary[E], shrE: Shrink[E],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
-      val propF = { (a: A, b: B, c: C, d: D, e: E) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+                                      (implicit
+                                       config: PropertyCheckConfiguration,
+                                       arbA: Arbitrary[A], shrA: Shrink[A],
+                                       arbB: Arbitrary[B], shrB: Shrink[B],
+                                       arbC: Arbitrary[C], shrC: Shrink[C],
+                                       arbD: Arbitrary[D], shrD: Shrink[D],
+                                       arbE: Arbitrary[E], shrE: Shrink[E],
+                                       asserting: CheckerAsserting[ASSERTION],
+                                       prettifier: Prettifier,
+                                       pos: source.Position
+                                      ): asserting.Result = {
+    val propF = { (a: A, b: B, c: C, d: D, e: E) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(propF)
-      val params = getScalaCheckParams(Seq(), config)
-      asserting.check(prop, params, prettifier, pos)
+    }
+    val prop = Prop.forAll(propF)
+    val params = getScalaCheckParams(Seq(), config)
+    asserting.check(prop, params, pos)
   }
 
   /**
@@ -1811,48 +1365,48 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * <pre class="stHighlight">
    * forAll ("a", "b", "c", "d", "e") { (a: String, b: String, c: String, d: String, e: String) =>
-   *   a.length + b.length + c.length + d.length + e.length should equal ((a + b + c + d + e).length)
+   * a.length + b.length + c.length + d.length + e.length should equal ((a + b + c + d + e).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, C, D, E, ASSERTION](nameA: String, nameB: String, nameC: String, nameD: String, nameE: String, configParams: PropertyCheckConfigParam*)(fun: (A, B, C, D, E) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      arbA: Arbitrary[A], shrA: Shrink[A],
-      arbB: Arbitrary[B], shrB: Shrink[B],
-      arbC: Arbitrary[C], shrC: Shrink[C],
-      arbD: Arbitrary[D], shrD: Shrink[D],
-      arbE: Arbitrary[E], shrE: Shrink[E],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
-      val propF = { (a: A, b: B, c: C, d: D, e: E) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+                                      (implicit
+                                       config: PropertyCheckConfiguration,
+                                       arbA: Arbitrary[A], shrA: Shrink[A],
+                                       arbB: Arbitrary[B], shrB: Shrink[B],
+                                       arbC: Arbitrary[C], shrC: Shrink[C],
+                                       arbD: Arbitrary[D], shrD: Shrink[D],
+                                       arbE: Arbitrary[E], shrE: Shrink[E],
+                                       asserting: CheckerAsserting[ASSERTION],
+                                       prettifier: Prettifier,
+                                       pos: source.Position
+                                      ): asserting.Result = {
+    val propF = { (a: A, b: B, c: C, d: D, e: E) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(propF)
-      val params = getScalaCheckParams(configParams, config)
-      asserting.check(prop, params, prettifier, pos, Some(List(nameA, nameB, nameC, nameD, nameE)))
+    }
+    val prop = Prop.forAll(propF)
+    val params = getScalaCheckParams(configParams, config)
+    asserting.check(prop, params, pos)
   }
 
   /**
@@ -1868,52 +1422,52 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * // Define your own string generator:
    * val famousLastWords = for {
-   *   s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
+   * s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
    * } yield s
-   * 
+   *
    * forAll (famousLastWords, famousLastWords, famousLastWords, famousLastWords, famousLastWords) { (a: String, b: String, c: String, d: String, e: String) =>
-   *   a.length + b.length + c.length + d.length + e.length should equal ((a + b + c + d + e).length)
+   * a.length + b.length + c.length + d.length + e.length should equal ((a + b + c + d + e).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, C, D, E, ASSERTION](genA: Gen[A], genB: Gen[B], genC: Gen[C], genD: Gen[D], genE: Gen[E], configParams: PropertyCheckConfigParam*)(fun: (A, B, C, D, E) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      shrA: Shrink[A],
-      shrB: Shrink[B],
-      shrC: Shrink[C],
-      shrD: Shrink[D],
-      shrE: Shrink[E],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
-      val propF = { (a: A, b: B, c: C, d: D, e: E) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+                                      (implicit
+                                       config: PropertyCheckConfiguration,
+                                       shrA: Shrink[A],
+                                       shrB: Shrink[B],
+                                       shrC: Shrink[C],
+                                       shrD: Shrink[D],
+                                       shrE: Shrink[E],
+                                       asserting: CheckerAsserting[ASSERTION],
+                                       prettifier: Prettifier,
+                                       pos: source.Position
+                                      ): asserting.Result = {
+    val propF = { (a: A, b: B, c: C, d: D, e: E) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(genA, genB, genC, genD, genE)(propF)
-      val params = getScalaCheckParams(configParams, config)
-      asserting.check(prop, params, prettifier, pos)
+    }
+    val prop = Prop.forAll(genA, genB, genC, genD, genE)(propF)
+    val params = getScalaCheckParams(configParams, config)
+    asserting.check(prop, params, pos)
   }
 
   /**
@@ -1929,61 +1483,61 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * // Define your own string generator:
    * val famousLastWords = for {
-   *   s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
+   * s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
    * } yield s
-   * 
+   *
    * forAll ((famousLastWords, "a"), (famousLastWords, "b"), (famousLastWords, "c"), (famousLastWords, "d"), (famousLastWords, "e")) { (a: String, b: String, c: String, d: String, e: String) =>
-   *   a.length + b.length + c.length + d.length + e.length should equal ((a + b + c + d + e).length)
+   * a.length + b.length + c.length + d.length + e.length should equal ((a + b + c + d + e).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, C, D, E, ASSERTION](genAndNameA: (Gen[A], String), genAndNameB: (Gen[B], String), genAndNameC: (Gen[C], String), genAndNameD: (Gen[D], String), genAndNameE: (Gen[E], String), configParams: PropertyCheckConfigParam*)(fun: (A, B, C, D, E) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      shrA: Shrink[A],
-      shrB: Shrink[B],
-      shrC: Shrink[C],
-      shrD: Shrink[D],
-      shrE: Shrink[E],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
+                                      (implicit
+                                       config: PropertyCheckConfiguration,
+                                       shrA: Shrink[A],
+                                       shrB: Shrink[B],
+                                       shrC: Shrink[C],
+                                       shrD: Shrink[D],
+                                       shrE: Shrink[E],
+                                       asserting: CheckerAsserting[ASSERTION],
+                                       prettifier: Prettifier,
+                                       pos: source.Position
+                                      ): asserting.Result = {
 
-      val (genA, nameA) = genAndNameA
-      val (genB, nameB) = genAndNameB
-      val (genC, nameC) = genAndNameC
-      val (genD, nameD) = genAndNameD
-      val (genE, nameE) = genAndNameE
+    val (genA, nameA) = genAndNameA
+    val (genB, nameB) = genAndNameB
+    val (genC, nameC) = genAndNameC
+    val (genD, nameD) = genAndNameD
+    val (genE, nameE) = genAndNameE
 
-      val propF = { (a: A, b: B, c: C, d: D, e: E) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+    val propF = { (a: A, b: B, c: C, d: D, e: E) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(genA, genB, genC, genD, genE)(propF)
-      val params = getScalaCheckParams(configParams, config)
-      asserting.check(prop, params, prettifier, pos, Some(List(nameA, nameB, nameC, nameD, nameE)))
+    }
+    val prop = Prop.forAll(genA, genB, genC, genD, genE)(propF)
+    val params = getScalaCheckParams(configParams, config)
+    asserting.check(prop, params, pos)
   }
-                                    
+
   /**
    * Performs a property check by applying the specified property check function to arguments
    * supplied by implicitly passed generators.
@@ -1994,49 +1548,49 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * <pre class="stHighlight">
    * forAll { (a: String, b: String, c: String, d: String, e: String, f: String) =>
-   *   a.length + b.length + c.length + d.length + e.length + f.length should equal ((a + b + c + d + e + f).length)
+   * a.length + b.length + c.length + d.length + e.length + f.length should equal ((a + b + c + d + e + f).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, C, D, E, F, ASSERTION](fun: (A, B, C, D, E, F) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      arbA: Arbitrary[A], shrA: Shrink[A],
-      arbB: Arbitrary[B], shrB: Shrink[B],
-      arbC: Arbitrary[C], shrC: Shrink[C],
-      arbD: Arbitrary[D], shrD: Shrink[D],
-      arbE: Arbitrary[E], shrE: Shrink[E],
-      arbF: Arbitrary[F], shrF: Shrink[F],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
-      val propF = { (a: A, b: B, c: C, d: D, e: E, f: F) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e, f))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+                                         (implicit
+                                          config: PropertyCheckConfiguration,
+                                          arbA: Arbitrary[A], shrA: Shrink[A],
+                                          arbB: Arbitrary[B], shrB: Shrink[B],
+                                          arbC: Arbitrary[C], shrC: Shrink[C],
+                                          arbD: Arbitrary[D], shrD: Shrink[D],
+                                          arbE: Arbitrary[E], shrE: Shrink[E],
+                                          arbF: Arbitrary[F], shrF: Shrink[F],
+                                          asserting: CheckerAsserting[ASSERTION],
+                                          prettifier: Prettifier,
+                                          pos: source.Position
+                                         ): asserting.Result = {
+    val propF = { (a: A, b: B, c: C, d: D, e: E, f: F) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e, f))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(propF)
-      val params = getScalaCheckParams(Seq(), config)
-      asserting.check(prop, params, prettifier, pos)
+    }
+    val prop = Prop.forAll(propF)
+    val params = getScalaCheckParams(Seq(), config)
+    asserting.check(prop, params, pos)
   }
 
   /**
@@ -2049,49 +1603,49 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * <pre class="stHighlight">
    * forAll ("a", "b", "c", "d", "e", "f") { (a: String, b: String, c: String, d: String, e: String, f: String) =>
-   *   a.length + b.length + c.length + d.length + e.length + f.length should equal ((a + b + c + d + e + f).length)
+   * a.length + b.length + c.length + d.length + e.length + f.length should equal ((a + b + c + d + e + f).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, C, D, E, F, ASSERTION](nameA: String, nameB: String, nameC: String, nameD: String, nameE: String, nameF: String, configParams: PropertyCheckConfigParam*)(fun: (A, B, C, D, E, F) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      arbA: Arbitrary[A], shrA: Shrink[A],
-      arbB: Arbitrary[B], shrB: Shrink[B],
-      arbC: Arbitrary[C], shrC: Shrink[C],
-      arbD: Arbitrary[D], shrD: Shrink[D],
-      arbE: Arbitrary[E], shrE: Shrink[E],
-      arbF: Arbitrary[F], shrF: Shrink[F],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
-      val propF = { (a: A, b: B, c: C, d: D, e: E, f: F) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e, f))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+                                         (implicit
+                                          config: PropertyCheckConfiguration,
+                                          arbA: Arbitrary[A], shrA: Shrink[A],
+                                          arbB: Arbitrary[B], shrB: Shrink[B],
+                                          arbC: Arbitrary[C], shrC: Shrink[C],
+                                          arbD: Arbitrary[D], shrD: Shrink[D],
+                                          arbE: Arbitrary[E], shrE: Shrink[E],
+                                          arbF: Arbitrary[F], shrF: Shrink[F],
+                                          asserting: CheckerAsserting[ASSERTION],
+                                          prettifier: Prettifier,
+                                          pos: source.Position
+                                         ): asserting.Result = {
+    val propF = { (a: A, b: B, c: C, d: D, e: E, f: F) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e, f))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(propF)
-      val params = getScalaCheckParams(configParams, config)
-      asserting.check(prop, params, prettifier, pos, Some(List(nameA, nameB, nameC, nameD, nameE, nameF)))
+    }
+    val prop = Prop.forAll(propF)
+    val params = getScalaCheckParams(configParams, config)
+    asserting.check(prop, params, pos)
   }
 
   /**
@@ -2107,53 +1661,53 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * // Define your own string generator:
    * val famousLastWords = for {
-   *   s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
+   * s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
    * } yield s
-   * 
+   *
    * forAll (famousLastWords, famousLastWords, famousLastWords, famousLastWords, famousLastWords, famousLastWords) { (a: String, b: String, c: String, d: String, e: String, f: String) =>
-   *   a.length + b.length + c.length + d.length + e.length + f.length should equal ((a + b + c + d + e + f).length)
+   * a.length + b.length + c.length + d.length + e.length + f.length should equal ((a + b + c + d + e + f).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, C, D, E, F, ASSERTION](genA: Gen[A], genB: Gen[B], genC: Gen[C], genD: Gen[D], genE: Gen[E], genF: Gen[F], configParams: PropertyCheckConfigParam*)(fun: (A, B, C, D, E, F) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      shrA: Shrink[A],
-      shrB: Shrink[B],
-      shrC: Shrink[C],
-      shrD: Shrink[D],
-      shrE: Shrink[E],
-      shrF: Shrink[F],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
-      val propF = { (a: A, b: B, c: C, d: D, e: E, f: F) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e, f))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+                                         (implicit
+                                          config: PropertyCheckConfiguration,
+                                          shrA: Shrink[A],
+                                          shrB: Shrink[B],
+                                          shrC: Shrink[C],
+                                          shrD: Shrink[D],
+                                          shrE: Shrink[E],
+                                          shrF: Shrink[F],
+                                          asserting: CheckerAsserting[ASSERTION],
+                                          prettifier: Prettifier,
+                                          pos: source.Position
+                                         ): asserting.Result = {
+    val propF = { (a: A, b: B, c: C, d: D, e: E, f: F) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e, f))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(genA, genB, genC, genD, genE, genF)(propF)
-      val params = getScalaCheckParams(configParams, config)
-      asserting.check(prop, params, prettifier, pos)
+    }
+    val prop = Prop.forAll(genA, genB, genC, genD, genE, genF)(propF)
+    val params = getScalaCheckParams(configParams, config)
+    asserting.check(prop, params, pos)
   }
 
   /**
@@ -2169,63 +1723,63 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever with org.scalatestplus.sca
    *
    * // Define your own string generator:
    * val famousLastWords = for {
-   *   s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
+   * s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")
    * } yield s
-   * 
+   *
    * forAll ((famousLastWords, "a"), (famousLastWords, "b"), (famousLastWords, "c"), (famousLastWords, "d"), (famousLastWords, "e"), (famousLastWords, "f")) { (a: String, b: String, c: String, d: String, e: String, f: String) =>
-   *   a.length + b.length + c.length + d.length + e.length + f.length should equal ((a + b + c + d + e + f).length)
+   * a.length + b.length + c.length + d.length + e.length + f.length should equal ((a + b + c + d + e + f).length)
    * }
    * </pre>
    *
    * @param fun the property check function to apply to the generated arguments
    */
   def forAll[A, B, C, D, E, F, ASSERTION](genAndNameA: (Gen[A], String), genAndNameB: (Gen[B], String), genAndNameC: (Gen[C], String), genAndNameD: (Gen[D], String), genAndNameE: (Gen[E], String), genAndNameF: (Gen[F], String), configParams: PropertyCheckConfigParam*)(fun: (A, B, C, D, E, F) => ASSERTION)
-    (implicit
-      config: PropertyCheckConfiguration,
-      shrA: Shrink[A],
-      shrB: Shrink[B],
-      shrC: Shrink[C],
-      shrD: Shrink[D],
-      shrE: Shrink[E],
-      shrF: Shrink[F],
-        asserting: CheckerAsserting[ASSERTION],
-        prettifier: Prettifier,
-        pos: source.Position
-    ): asserting.Result = {
+                                         (implicit
+                                          config: PropertyCheckConfiguration,
+                                          shrA: Shrink[A],
+                                          shrB: Shrink[B],
+                                          shrC: Shrink[C],
+                                          shrD: Shrink[D],
+                                          shrE: Shrink[E],
+                                          shrF: Shrink[F],
+                                          asserting: CheckerAsserting[ASSERTION],
+                                          prettifier: Prettifier,
+                                          pos: source.Position
+                                         ): asserting.Result = {
 
-      val (genA, nameA) = genAndNameA
-      val (genB, nameB) = genAndNameB
-      val (genC, nameC) = genAndNameC
-      val (genD, nameD) = genAndNameD
-      val (genE, nameE) = genAndNameE
-      val (genF, nameF) = genAndNameF
+    val (genA, nameA) = genAndNameA
+    val (genB, nameB) = genAndNameB
+    val (genC, nameC) = genAndNameC
+    val (genD, nameD) = genAndNameD
+    val (genE, nameE) = genAndNameE
+    val (genF, nameF) = genAndNameF
 
-      val propF = { (a: A, b: B, c: C, d: D, e: E, f: F) =>
-        val (unmetCondition, succeeded, exception) =
-          try {
-            val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e, f))
-            (false, succeeded, cause)
-          }
-          catch {
-            case e: DiscardedEvaluationException => (true, false, None)
-            case e: Throwable => (false, false, Some(e))
-          }
-        !unmetCondition ==> (
-          if (exception.isEmpty) {
-            if (succeeded)
-              Prop.passed
-            else
-              Prop.falsified
-          }
+    val propF = { (a: A, b: B, c: C, d: D, e: E, f: F) =>
+      val (unmetCondition, succeeded, exception) =
+        try {
+          val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e, f))
+          (false, succeeded, cause)
+        }
+        catch {
+          case e: DiscardedEvaluationException => (true, false, None)
+          case e: Throwable => (false, false, Some(e))
+        }
+      !unmetCondition ==> (
+        if (exception.isEmpty) {
+          if (succeeded)
+            Prop.passed
           else
-            Prop.exception(exception.get)
+            Prop.falsified
+        }
+        else
+          Prop.exception(exception.get)
         )
-      }
-      val prop = Prop.forAll(genA, genB, genC, genD, genE, genF)(propF)
-      val params = getScalaCheckParams(configParams, config)
-      asserting.check(prop, params, prettifier, pos, Some(List(nameA, nameB, nameC, nameD, nameE, nameF)))
+    }
+    val prop = Prop.forAll(genA, genB, genC, genD, genE, genF)(propF)
+    val params = getScalaCheckParams(configParams, config)
+    asserting.check(prop, params, pos)
   }
-                                    }
+}
 
 
 object ScalaCheckDrivenPropertyChecks extends ScalaCheckDrivenPropertyChecks

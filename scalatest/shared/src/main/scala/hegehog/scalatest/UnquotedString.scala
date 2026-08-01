@@ -18,7 +18,7 @@ package hegehog.scalatest
 // This is used to pass a string to the FailureMessages apply method
 // but prevent it from being quoted. This is useful when using a string
 // to talk about method names, for example.
-private[scalacheck] class UnquotedString(s: String) {
+private[scalatest] class UnquotedString(s: String) {
   override def toString = s
   override def equals(other: Any): Boolean =
     other match {
@@ -28,6 +28,6 @@ private[scalacheck] class UnquotedString(s: String) {
   override def hashCode: Int = s.hashCode
 }
 
-private[scalacheck] object UnquotedString {
+private[scalatest] object UnquotedString {
   def apply(s: String) = new UnquotedString(s)
 }
