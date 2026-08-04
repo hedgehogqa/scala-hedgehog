@@ -15,9 +15,11 @@
  */
 package hedgehog.scalatest
 
+import hegehog.scalatest.ScalaCheckDrivenPropertyChecks
 import org.scalatest.exceptions.GeneratorDrivenPropertyCheckFailedException
-
-class AssertScalaCheckDrivenPropertyChecksImportSuite extends org.scalatest.funspec.AnyFunSpec  {
+import org.scalatest.funspec.AnyFunSpec
+                               
+class AssertScalaCheckDrivenPropertyChecksSuite extends AnyFunSpec with ScalaCheckDrivenPropertyChecks {
 
   val famousLastWords = for {
     s <- Gen.oneOf("the", "program", "compiles", "therefore", "it", "should", "work")

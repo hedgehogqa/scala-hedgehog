@@ -146,7 +146,7 @@ lazy val scalatest = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % props.ScalatestVersion)
     )
   )
-  .dependsOn(runner)
+  .dependsOn(runner, core)
 
 lazy val scalatestJVM = scalatest.jvm
 lazy val scalatestJS = scalatest.js
