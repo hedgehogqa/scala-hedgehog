@@ -339,16 +339,82 @@ trait ScalaCheckDrivenPropertyChecks {
    * @param fun
    *   the property check function to apply to the generated arguments
    */
-  def forAll[A, B, ASSERTION](genA: Gen[A], genB: Gen[B])(fun: (A, B) => ASSERTION)(implicit
+  def forAll[A, B, ASSERTION](propertyA: PropertyT[A], propertyB: PropertyT[B])(
+      fun: (A, B) => ASSERTION
+  )(implicit
       config: PropertyConfig,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
   ): asserting.CheckResult = {
     val property = for {
-      a <- genA.forAll
-      b <- genB.forAll
+      a <- propertyA
+      b <- propertyB
     } yield try {
       fun(a, b)
+      Result.success
+    } catch {
+      case e: Exception => Result.error(e)
+    }
+    asserting.check(property, config, pos)
+  }
+
+  /**
+   * Performs a property check by applying the specified property check function to arguments
+   * supplied by the specified generators.
+   *
+   * <p> Here's an example: </p>
+   *
+   * <pre class="stHighlight"> import org.scalacheck.Gen
+   *
+   * // Define your own string generator: val famousLastWords = for { s <- Gen.oneOf("the",
+   * "program", "compiles", "therefore", "it", "should", "work") } yield s
+   *
+   * forAll (famousLastWords, famousLastWords) { (a: String, b: String) => a.length + b.length
+   * should equal ((a + b).length) } </pre>
+   *
+   * @param fun
+   *   the property check function to apply to the generated arguments
+   */
+  def forAll[A, B, ASSERTION](genA: Gen[A], genB: Gen[B])(fun: (A, B) => ASSERTION)(implicit
+      config: PropertyConfig,
+      asserting: CheckerAsserting[ASSERTION],
+      pos: Position
+  ): asserting.CheckResult = forAll(genA.forAll, genB.forAll)(fun)
+
+  /**
+   * Performs a property check by applying the specified property check function to arguments
+   * supplied by the specified generators.
+   *
+   * <p> Here's an example: </p>
+   *
+   * <pre class="stHighlight"> import org.scalacheck.Gen
+   *
+   * // Define your own string generator: val famousLastWords = for { s <- Gen.oneOf("the",
+   * "program", "compiles", "therefore", "it", "should", "work") } yield s
+   *
+   * forAll (famousLastWords, famousLastWords, famousLastWords) { (a: String, b: String, c: String)
+   * \=> a.length + b.length + c.length should equal ((a + b + c).length) } </pre>
+   *
+   * @param fun
+   *   the property check function to apply to the generated arguments
+   */
+  def forAll[A, B, C, ASSERTION](
+      propertyA: PropertyT[A],
+      propertyB: PropertyT[B],
+      propertyC: PropertyT[C]
+  )(
+      fun: (A, B, C) => ASSERTION
+  )(implicit
+      config: PropertyConfig,
+      asserting: CheckerAsserting[ASSERTION],
+      pos: Position
+  ): asserting.CheckResult = {
+    val property = for {
+      a <- propertyA
+      b <- propertyB
+      c <- propertyC
+    } yield try {
+      fun(a, b, c)
       Result.success
     } catch {
       case e: Exception => Result.error(e)
@@ -379,13 +445,43 @@ trait ScalaCheckDrivenPropertyChecks {
       config: PropertyConfig,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
+  ): asserting.CheckResult = forAll(genA.forAll, genB.forAll, genC.forAll)(fun)
+
+  /**
+   * Performs a property check by applying the specified property check function to arguments
+   * supplied by the specified generators.
+   *
+   * <p> Here's an example: </p>
+   *
+   * <pre class="stHighlight"> import org.scalacheck.Gen
+   *
+   * // Define your own string generator: val famousLastWords = for { s <- Gen.oneOf("the",
+   * "program", "compiles", "therefore", "it", "should", "work") } yield s
+   *
+   * forAll (famousLastWords, famousLastWords, famousLastWords, famousLastWords) { (a: String, b:
+   * String, c: String, d: String) => a.length + b.length + c.length + d.length should equal ((a + b
+   * + c + d).length) } </pre>
+   *
+   * @param fun
+   *   the property check function to apply to the generated arguments
+   */
+  def forAll[A, B, C, D, ASSERTION](
+      propertyA: PropertyT[A],
+      propertyB: PropertyT[B],
+      propertyC: PropertyT[C],
+      propertyD: PropertyT[D]
+  )(fun: (A, B, C, D) => ASSERTION)(implicit
+      config: PropertyConfig,
+      asserting: CheckerAsserting[ASSERTION],
+      pos: Position
   ): asserting.CheckResult = {
     val property = for {
-      a <- genA.forAll
-      b <- genB.forAll
-      c <- genC.forAll
+      a <- propertyA
+      b <- propertyB
+      c <- propertyC
+      d <- propertyD
     } yield try {
-      fun(a, b, c)
+      fun(a, b, c, d)
       Result.success
     } catch {
       case e: Exception => Result.error(e)
@@ -420,14 +516,45 @@ trait ScalaCheckDrivenPropertyChecks {
       config: PropertyConfig,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
+  ): asserting.CheckResult = forAll(genA.forAll, genB.forAll, genC.forAll, genD.forAll)(fun)
+
+  /**
+   * Performs a property check by applying the specified property check function to arguments
+   * supplied by the specified generators.
+   *
+   * <p> Here's an example: </p>
+   *
+   * <pre class="stHighlight"> import org.scalacheck.Gen
+   *
+   * // Define your own string generator: val famousLastWords = for { s <- Gen.oneOf("the",
+   * "program", "compiles", "therefore", "it", "should", "work") } yield s
+   *
+   * forAll (famousLastWords, famousLastWords, famousLastWords, famousLastWords, famousLastWords) {
+   * (a: String, b: String, c: String, d: String, e: String) => a.length + b.length + c.length +
+   * d.length + e.length should equal ((a + b + c + d + e).length) } </pre>
+   *
+   * @param fun
+   *   the property check function to apply to the generated arguments
+   */
+  def forAll[A, B, C, D, E, ASSERTION](
+      propertyA: PropertyT[A],
+      propertyB: PropertyT[B],
+      propertyC: PropertyT[C],
+      propertyD: PropertyT[D],
+      propertyE: PropertyT[E]
+  )(fun: (A, B, C, D, E) => ASSERTION)(implicit
+      config: PropertyConfig,
+      asserting: CheckerAsserting[ASSERTION],
+      pos: Position
   ): asserting.CheckResult = {
     val property = for {
-      a <- genA.forAll
-      b <- genB.forAll
-      c <- genC.forAll
-      d <- genD.forAll
+      a <- propertyA
+      b <- propertyB
+      c <- propertyC
+      d <- propertyD
+      e <- propertyE
     } yield try {
-      fun(a, b, c, d)
+      fun(a, b, c, d, e)
       Result.success
     } catch {
       case e: Exception => Result.error(e)
@@ -463,21 +590,8 @@ trait ScalaCheckDrivenPropertyChecks {
       config: PropertyConfig,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
-  ): asserting.CheckResult = {
-    val property = for {
-      a <- genA.forAll
-      b <- genB.forAll
-      c <- genC.forAll
-      d <- genD.forAll
-      e <- genE.forAll
-    } yield try {
-      fun(a, b, c, d, e)
-      Result.success
-    } catch {
-      case e: Exception => Result.error(e)
-    }
-    asserting.check(property, config, pos)
-  }
+  ): asserting.CheckResult =
+    forAll(genA.forAll, genB.forAll, genC.forAll, genD.forAll, genE.forAll)(fun)
 
   /**
    * Performs a property check by applying the specified property check function to arguments
