@@ -16,7 +16,7 @@
 package hegehog.scalatest
 
 import hedgehog.core.{PropertyConfig, PropertyT}
-import hedgehog.{Gen, Result}
+import hedgehog.{Gen, Result, forTupled}
 import org.scalactic.source.Position
 import org.scalatest.Assertion
 import org.scalatest.prop.Whenever
@@ -144,32 +144,33 @@ import org.scalatest.prop.Whenever
  */
 trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
 
-  /**
-   * $forAllProperties
-   * @param test
-   *   $test
-   */
-  def forAll[A, ASSERTION](propertyA: PropertyT[A])(test: A => ASSERTION)(implicit
-      config: PropertyConfig,
-      pos: Position
-  ): Assertion = {
-    val property = for {
-      a <- propertyA
-    } yield try {
-      test(a)
+  private def scalaTestToHedgehog[A](assertion: => A): Result =
+    try {
+      assertion
       Result.success
     } catch {
       case e: Exception => Result.error(e)
     }
-    check(property)
-  }
 
   /**
-   * $forAllGenerators
+   * $forAllProperties
+   *
    * @param test
    *   $test
    */
-  def forAll[A, ASSERTION](genA: Gen[A])(test: A => ASSERTION)(implicit
+  def forAll[A](propertyA: PropertyT[A])(test: A => Any)(implicit
+      config: PropertyConfig,
+      pos: Position
+  ): Assertion =
+    check(propertyA.map(a => scalaTestToHedgehog(test(a))))
+
+  /**
+   * $forAllGenerators
+   *
+   * @param test
+   *   $test
+   */
+  def forAll[A](genA: Gen[A])(test: A => Any)(implicit
       config: PropertyConfig,
       pos: Position
   ): Assertion =
@@ -177,72 +178,59 @@ trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
 
   /**
    * $forAllProperties
+   *
    * @param test
    *   $test
    */
-  def forAll[A, B, ASSERTION](propertyA: PropertyT[A], propertyB: PropertyT[B])(
-      test: (A, B) => ASSERTION
+  def forAll[A, B](propertyA: PropertyT[A], propertyB: PropertyT[B])(
+      test: (A, B) => Any
   )(implicit
       config: PropertyConfig,
       pos: Position
-  ): Assertion = {
-    val property = for {
-      a <- propertyA
-      b <- propertyB
-    } yield try {
-      test(a, b)
-      Result.success
-    } catch {
-      case e: Exception => Result.error(e)
-    }
-    check(property)
-  }
+  ): Assertion =
+    check(forTupled(propertyA, propertyB).map { case (a, b) =>
+      scalaTestToHedgehog(test(a, b))
+    })
 
   /**
    * $forAllGenerators
+   *
    * @param test
    *   $test
    */
-  def forAll[A, B, ASSERTION](genA: Gen[A], genB: Gen[B])(test: (A, B) => ASSERTION)(implicit
+  def forAll[A, B](genA: Gen[A], genB: Gen[B])(test: (A, B) => Any)(implicit
       config: PropertyConfig,
       pos: Position
   ): Assertion = forAll(genA.forAll, genB.forAll)(test)(config, pos)
 
   /**
    * $forAllProperties
+   *
    * @param test
    *   $test
    */
-  def forAll[A, B, C, ASSERTION](
+  def forAll[A, B, C](
       propertyA: PropertyT[A],
       propertyB: PropertyT[B],
       propertyC: PropertyT[C]
   )(
-      test: (A, B, C) => ASSERTION
+      test: (A, B, C) => Any
   )(implicit
       config: PropertyConfig,
       pos: Position
-  ): Assertion = {
-    val property = for {
-      a <- propertyA
-      b <- propertyB
-      c <- propertyC
-    } yield try {
-      test(a, b, c)
-      Result.success
-    } catch {
-      case e: Exception => Result.error(e)
-    }
-    check(property)
-  }
+  ): Assertion =
+    check(forTupled(propertyA, propertyB, propertyC).map { case (a, b, c) =>
+      scalaTestToHedgehog(test(a, b, c))
+    })
 
   /**
    * $forAllGenerators
+   *
    * @param test
    *   $test
    */
-  def forAll[A, B, C, ASSERTION](genA: Gen[A], genB: Gen[B], genC: Gen[C])(
-      test: (A, B, C) => ASSERTION
+  def forAll[A, B, C](genA: Gen[A], genB: Gen[B], genC: Gen[C])(
+      test: (A, B, C) => Any
   )(implicit
       config: PropertyConfig,
       pos: Position
@@ -251,43 +239,35 @@ trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
 
   /**
    * $forAllProperties
+   *
    * @param test
    *   $test
    */
-  def forAll[A, B, C, D, ASSERTION](
+  def forAll[A, B, C, D](
       propertyA: PropertyT[A],
       propertyB: PropertyT[B],
       propertyC: PropertyT[C],
       propertyD: PropertyT[D]
-  )(test: (A, B, C, D) => ASSERTION)(implicit
+  )(test: (A, B, C, D) => Any)(implicit
       config: PropertyConfig,
       pos: Position
-  ): Assertion = {
-    val property = for {
-      a <- propertyA
-      b <- propertyB
-      c <- propertyC
-      d <- propertyD
-    } yield try {
-      test(a, b, c, d)
-      Result.success
-    } catch {
-      case e: Exception => Result.error(e)
-    }
-    check(property)
-  }
+  ): Assertion =
+    check(forTupled(propertyA, propertyB, propertyC, propertyD).map { case (a, b, c, d) =>
+      scalaTestToHedgehog(test(a, b, c, d))
+    })
 
   /**
    * $forAllGenerators
+   *
    * @param test
    *   $test
    */
-  def forAll[A, B, C, D, ASSERTION](
+  def forAll[A, B, C, D](
       genA: Gen[A],
       genB: Gen[B],
       genC: Gen[C],
       genD: Gen[D]
-  )(test: (A, B, C, D) => ASSERTION)(implicit
+  )(test: (A, B, C, D) => Any)(implicit
       config: PropertyConfig,
       pos: Position
   ): Assertion =
@@ -295,46 +275,38 @@ trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
 
   /**
    * $forAllProperties
+   *
    * @param test
    *   $test
    */
-  def forAll[A, B, C, D, E, ASSERTION](
+  def forAll[A, B, C, D, E](
       propertyA: PropertyT[A],
       propertyB: PropertyT[B],
       propertyC: PropertyT[C],
       propertyD: PropertyT[D],
       propertyE: PropertyT[E]
-  )(test: (A, B, C, D, E) => ASSERTION)(implicit
+  )(test: (A, B, C, D, E) => Any)(implicit
       config: PropertyConfig = PropertyConfig.default,
       pos: Position
-  ): Assertion = {
-    val property = for {
-      a <- propertyA
-      b <- propertyB
-      c <- propertyC
-      d <- propertyD
-      e <- propertyE
-    } yield try {
-      test(a, b, c, d, e)
-      Result.success
-    } catch {
-      case e: Exception => Result.error(e)
-    }
-    check(property)
-  }
+  ): Assertion =
+    check(forTupled(propertyA, propertyB, propertyC, propertyD, propertyE).map {
+      case (a, b, c, d, e) =>
+        scalaTestToHedgehog(test(a, b, c, d, e))
+    })
 
   /**
    * $forAllGenerators
+   *
    * @param test
    *   $test
    */
-  def forAll[A, B, C, D, E, ASSERTION](
+  def forAll[A, B, C, D, E](
       genA: Gen[A],
       genB: Gen[B],
       genC: Gen[C],
       genD: Gen[D],
       genE: Gen[E]
-  )(test: (A, B, C, D, E) => ASSERTION)(implicit
+  )(test: (A, B, C, D, E) => Any)(implicit
       config: PropertyConfig,
       pos: Position
   ): Assertion =
@@ -345,66 +317,50 @@ trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
 
   /**
    * $forAllProperties
+   *
    * @param test
    *   $test
    */
-  def forAll[A, B, C, D, E, F, ASSERTION](
+  def forAll[A, B, C, D, E, F](
       propertyA: PropertyT[A],
       propertyB: PropertyT[B],
       propertyC: PropertyT[C],
       propertyD: PropertyT[D],
       propertyE: PropertyT[E],
       propertyF: PropertyT[F]
-  )(test: (A, B, C, D, E, F) => ASSERTION)(implicit
+  )(test: (A, B, C, D, E, F) => Any)(implicit
       config: PropertyConfig,
       pos: Position
-  ): Assertion = {
-    val property = for {
-      a <- propertyA
-      b <- propertyB
-      c <- propertyC
-      d <- propertyD
-      e <- propertyE
-      f <- propertyF
-    } yield try {
-      test(a, b, c, d, e, f)
-      Result.success
-    } catch {
-      case e: Exception => Result.error(e)
-    }
-    check(property)
-  }
+  ): Assertion =
+    check(forTupled(propertyA, propertyB, propertyC, propertyD, propertyE, propertyF).map {
+      case (a, b, c, d, e, f) => scalaTestToHedgehog(test(a, b, c, d, e, f))
+    })
 
   /**
    * $forAllGenerators
+   *
    * @param test
    *   $test
    */
-  def forAll[A, B, C, D, E, F, ASSERTION](
+  def forAll[A, B, C, D, E, F](
       genA: Gen[A],
       genB: Gen[B],
       genC: Gen[C],
       genD: Gen[D],
       genE: Gen[E],
       genF: Gen[F]
-  )(test: (A, B, C, D, E, F) => ASSERTION)(implicit
+  )(test: (A, B, C, D, E, F) => Any)(implicit
       config: PropertyConfig,
       pos: Position
   ): Assertion = {
-    val property = for {
-      a <- genA.forAll
-      b <- genB.forAll
-      c <- genC.forAll
-      d <- genD.forAll
-      e <- genE.forAll
-      f <- genF.forAll
-    } yield try {
-      test(a, b, c, d, e, f)
-      Result.success
-    } catch {
-      case e: Exception => Result.error(e)
-    }
-    check(property)
+    forAll(
+      genA.forAll,
+      genB.forAll,
+      genC.forAll,
+      genD.forAll,
+      genE.forAll,
+      genF.forAll
+    )(test)(config, pos)
   }
 }
 
