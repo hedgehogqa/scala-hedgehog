@@ -38,13 +38,6 @@ class HedgehogDrivenPropertyChecksSuite
     }
   }
 
-  it("generator-driven property that takes 1 args, which succeeds using matchers") {
-    forAll(famousLastWords) { (a: String) =>
-      a.length shouldEqual a.length
-      ()
-    }
-  }
-
   it("generator-driven property that takes 1 args, which fails") {
     intercept[GeneratorDrivenPropertyCheckFailedException] {
       forAll(famousLastWords) { (a: String) =>

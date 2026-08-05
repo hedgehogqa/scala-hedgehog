@@ -25,7 +25,7 @@ lazy val hedgehog = Project(
     runnerJVM, runnerJS, runnerNative,
     sbtTestJVM, sbtTestJS, sbtTestNative,
     testJVM, testJS, testNative,
-    exampleJVM, exampleJS,
+    exampleJVM, exampleJS, exampleNative,
     minitestJVM, minitestJS,
     munitJVM, munitJS,
     scalatestJVM, scalatestJS, scalatestNative
@@ -52,7 +52,7 @@ lazy val coreJVM = core.jvm
 lazy val coreJS = core.js
 lazy val coreNative = core.native.settings(nativeSettings)
 
-lazy val example = crossProject(JVMPlatform, JSPlatform)
+lazy val example = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .in(file("example"))
   .settings(
     standardSettings ++ noPublish ++ Seq(
@@ -62,6 +62,7 @@ lazy val example = crossProject(JVMPlatform, JSPlatform)
   .dependsOn(core, runner, sbtTest)
 lazy val exampleJVM = example.jvm
 lazy val exampleJS = example.js
+lazy val exampleNative = example.native.settings(nativeSettings)
 
 lazy val runner = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .in(file("runner"))
@@ -143,10 +144,14 @@ lazy val scalatest = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     standardSettings ++ Seq(
       name := "hedgehog-scalatest",
-      libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % props.ScalatestVersion)
+      libraryDependencies ++= Seq(
+        "org.scalatest" %%% "scalatest-core" % props.ScalatestVersion,
+        "org.scalatest" %%% "scalatest-funspec" % props.ScalatestVersion % Test,
+        "org.scalatest" %%% "scalatest-shouldmatchers" % props.ScalatestVersion % Test
+      )
     )
   )
-  .dependsOn(runner, core)
+  .dependsOn(runner, core, example % Test)
 
 lazy val scalatestJVM = scalatest.jvm
 lazy val scalatestJS = scalatest.js

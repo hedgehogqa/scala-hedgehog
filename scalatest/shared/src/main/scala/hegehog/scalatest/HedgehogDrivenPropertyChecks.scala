@@ -19,6 +19,7 @@ import hedgehog.core.{PropertyConfig, PropertyT}
 import hedgehog.{Gen, Result}
 import org.scalactic.source.Position
 import org.scalatest.Assertion
+import org.scalatest.prop.Whenever
 
 /**
  * Trait containing methods that faciliate property checks against generated data.
@@ -141,7 +142,7 @@ import org.scalatest.Assertion
  * @define test
  *   The property test function to apply to the generated arguments.
  */
-trait HedgehogDrivenPropertyChecks {
+trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
 
   /**
    * $forAllProperties
@@ -160,7 +161,7 @@ trait HedgehogDrivenPropertyChecks {
     } catch {
       case e: Exception => Result.error(e)
     }
-    CheckerAsserting.check(property, config, pos)
+    check(property)
   }
 
   /**
@@ -194,7 +195,7 @@ trait HedgehogDrivenPropertyChecks {
     } catch {
       case e: Exception => Result.error(e)
     }
-    CheckerAsserting.check(property, config, pos)
+    check(property)
   }
 
   /**
@@ -232,7 +233,7 @@ trait HedgehogDrivenPropertyChecks {
     } catch {
       case e: Exception => Result.error(e)
     }
-    CheckerAsserting.check(property, config, pos)
+    check(property)
   }
 
   /**
@@ -273,7 +274,7 @@ trait HedgehogDrivenPropertyChecks {
     } catch {
       case e: Exception => Result.error(e)
     }
-    CheckerAsserting.check(property, config, pos)
+    check(property)
   }
 
   /**
@@ -319,7 +320,7 @@ trait HedgehogDrivenPropertyChecks {
     } catch {
       case e: Exception => Result.error(e)
     }
-    CheckerAsserting.check(property, config, pos)
+    check(property)
   }
 
   /**
@@ -371,7 +372,7 @@ trait HedgehogDrivenPropertyChecks {
     } catch {
       case e: Exception => Result.error(e)
     }
-    CheckerAsserting.check(property, config, pos)
+    check(property)
   }
 
   /**
@@ -403,7 +404,7 @@ trait HedgehogDrivenPropertyChecks {
     } catch {
       case e: Exception => Result.error(e)
     }
-    CheckerAsserting.check(property, config, pos)
+    check(property)
   }
 }
 
