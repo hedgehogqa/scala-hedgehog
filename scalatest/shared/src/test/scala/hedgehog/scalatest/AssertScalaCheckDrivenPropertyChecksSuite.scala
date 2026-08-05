@@ -25,11 +25,8 @@ class AssertScalaCheckDrivenPropertyChecksSuite
     extends AnyFunSpec
     with ScalaCheckDrivenPropertyChecks {
 
-  private val famousLastWords = for {
-    s <- Gen.element1("the", "program", "compiles", "therefore", "it", "should", "work")
-  } yield s
-
-  implicit private val propertyConfig: PropertyConfig = PropertyConfig.default
+  private val famousLastWords =
+    Gen.element1("the", "program", "compiles", "therefore", "it", "should", "work")
 
   it("generator-driven property that takes 1 args, which succeeds") {
     forAll(famousLastWords) { (a: String) =>
@@ -201,7 +198,7 @@ class AssertScalaCheckDrivenPropertyChecksSuite
       forAll(famousLastWords.filter(_ => false), famousLastWords, famousLastWords) {
         (_: String, _: String, _: String) =>
           i += 1
-         succeed
+          succeed
       }
     }
   }
@@ -325,10 +322,15 @@ class AssertScalaCheckDrivenPropertyChecksSuite
 
     intercept[GeneratorDrivenPropertyCheckFailedException] {
       var i = 0
-      forAll(famousLastWords.filter(_ => false), famousLastWords, famousLastWords, famousLastWords, famousLastWords) {
-        (_: String, _: String, _: String, _: String, _: String) =>
-          i += 1
-          succeed
+      forAll(
+        famousLastWords.filter(_ => false),
+        famousLastWords,
+        famousLastWords,
+        famousLastWords,
+        famousLastWords
+      ) { (_: String, _: String, _: String, _: String, _: String) =>
+        i += 1
+        succeed
       }
     }
   }

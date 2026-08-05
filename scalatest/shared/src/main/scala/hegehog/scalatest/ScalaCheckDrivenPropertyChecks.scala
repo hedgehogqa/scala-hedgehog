@@ -103,7 +103,7 @@ import org.scalactic.source.Position
  * mechanisms from Hedgehog itself. In the `Fraction` class shown above, neither the passed
  * numerator or denominator can be `Integer.MIN_VALUE`, and the passed denominator cannot be zero.
  * This shows up in the `whenever` clause like this:
- * {{{whenever (d != 0 && d != Integer.MIN_VALUE && n != Integer.MIN_VALUE) { ... } }}}
+ * {{{whenever (d != 0 && d != Integer.MIN_VALUE && n != Integer.MIN_VALUE) { ... }}}}
  *
  * You could in addition define generators for the numerator and denominator that only produce valid
  * values, like this:
@@ -148,7 +148,7 @@ trait ScalaCheckDrivenPropertyChecks {
    *   $test
    */
   def forAll[A, ASSERTION](propertyA: PropertyT[A])(test: A => ASSERTION)(implicit
-      config: PropertyConfig,
+      config: PropertyConfig = PropertyConfig.default,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
   ): asserting.CheckResult = {
@@ -169,7 +169,7 @@ trait ScalaCheckDrivenPropertyChecks {
    *   $test
    */
   def forAll[A, ASSERTION](genA: Gen[A])(test: A => ASSERTION)(implicit
-      config: PropertyConfig,
+      config: PropertyConfig = PropertyConfig.default,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
   ): asserting.CheckResult =
@@ -183,7 +183,7 @@ trait ScalaCheckDrivenPropertyChecks {
   def forAll[A, B, ASSERTION](propertyA: PropertyT[A], propertyB: PropertyT[B])(
       test: (A, B) => ASSERTION
   )(implicit
-      config: PropertyConfig,
+      config: PropertyConfig = PropertyConfig.default,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
   ): asserting.CheckResult = {
@@ -205,7 +205,7 @@ trait ScalaCheckDrivenPropertyChecks {
    *   $test
    */
   def forAll[A, B, ASSERTION](genA: Gen[A], genB: Gen[B])(test: (A, B) => ASSERTION)(implicit
-      config: PropertyConfig,
+      config: PropertyConfig = PropertyConfig.default,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
   ): asserting.CheckResult = forAll(genA.forAll, genB.forAll)(test)
@@ -222,7 +222,7 @@ trait ScalaCheckDrivenPropertyChecks {
   )(
       test: (A, B, C) => ASSERTION
   )(implicit
-      config: PropertyConfig,
+      config: PropertyConfig = PropertyConfig.default,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
   ): asserting.CheckResult = {
@@ -247,7 +247,7 @@ trait ScalaCheckDrivenPropertyChecks {
   def forAll[A, B, C, ASSERTION](genA: Gen[A], genB: Gen[B], genC: Gen[C])(
       test: (A, B, C) => ASSERTION
   )(implicit
-      config: PropertyConfig,
+      config: PropertyConfig = PropertyConfig.default,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
   ): asserting.CheckResult = forAll(genA.forAll, genB.forAll, genC.forAll)(test)
@@ -263,7 +263,7 @@ trait ScalaCheckDrivenPropertyChecks {
       propertyC: PropertyT[C],
       propertyD: PropertyT[D]
   )(test: (A, B, C, D) => ASSERTION)(implicit
-      config: PropertyConfig,
+      config: PropertyConfig = PropertyConfig.default,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
   ): asserting.CheckResult = {
@@ -292,7 +292,7 @@ trait ScalaCheckDrivenPropertyChecks {
       genC: Gen[C],
       genD: Gen[D]
   )(test: (A, B, C, D) => ASSERTION)(implicit
-      config: PropertyConfig,
+      config: PropertyConfig = PropertyConfig.default,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
   ): asserting.CheckResult = forAll(genA.forAll, genB.forAll, genC.forAll, genD.forAll)(test)
@@ -309,7 +309,7 @@ trait ScalaCheckDrivenPropertyChecks {
       propertyD: PropertyT[D],
       propertyE: PropertyT[E]
   )(test: (A, B, C, D, E) => ASSERTION)(implicit
-      config: PropertyConfig,
+      config: PropertyConfig = PropertyConfig.default,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
   ): asserting.CheckResult = {
@@ -340,7 +340,7 @@ trait ScalaCheckDrivenPropertyChecks {
       genD: Gen[D],
       genE: Gen[E]
   )(test: (A, B, C, D, E) => ASSERTION)(implicit
-      config: PropertyConfig,
+      config: PropertyConfig = PropertyConfig.default,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
   ): asserting.CheckResult =
@@ -359,7 +359,7 @@ trait ScalaCheckDrivenPropertyChecks {
       propertyE: PropertyT[E],
       propertyF: PropertyT[F]
   )(test: (A, B, C, D, E, F) => ASSERTION)(implicit
-      config: PropertyConfig,
+      config: PropertyConfig = PropertyConfig.default,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
   ): asserting.CheckResult = {
@@ -392,7 +392,7 @@ trait ScalaCheckDrivenPropertyChecks {
       genE: Gen[E],
       genF: Gen[F]
   )(test: (A, B, C, D, E, F) => ASSERTION)(implicit
-      config: PropertyConfig,
+      config: PropertyConfig = PropertyConfig.default,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
   ): asserting.CheckResult = {

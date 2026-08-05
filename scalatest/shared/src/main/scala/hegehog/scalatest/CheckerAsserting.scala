@@ -43,8 +43,6 @@ trait CheckerAsserting[T] {
   private val seedSource = SeedSource.fromEnvOrTime()
   private val seed: Seed = Seed.fromLong(seedSource.seed)
 
-  def succeed(result: T): (Boolean, Option[Throwable]) = (true, None)
-
   private[scalatest] def indicateSuccess: CheckResult
 
   private[scalatest] def indicateFailure(
