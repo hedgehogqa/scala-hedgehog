@@ -18,6 +18,7 @@ package hegehog.scalatest
 import hedgehog.core.{PropertyConfig, PropertyT}
 import hedgehog.{Gen, Result}
 import org.scalactic.source.Position
+import org.scalatest.Assertion
 
 /**
  * Trait containing methods that faciliate property checks against generated data.
@@ -26,8 +27,8 @@ import org.scalactic.source.Position
  * generated data. Use of this trait requires that Hedgehog be on the class path when you compile
  * and run your tests.
  *
- * For an example of trait [[ScalaCheckDrivenPropertyChecks]] in action, imagine you want to test
- * this `Fraction` class:
+ * For an example of trait [[HedgehogDrivenPropertyChecks]] in action, imagine you want to test this
+ * `Fraction` class:
  *
  * {{{
  * class Fraction(n: Int, d: Int) {
@@ -140,7 +141,7 @@ import org.scalactic.source.Position
  * @define test
  *   The property test function to apply to the generated arguments.
  */
-trait ScalaCheckDrivenPropertyChecks {
+trait HedgehogDrivenPropertyChecks {
 
   /**
    * $forAllProperties
@@ -148,10 +149,9 @@ trait ScalaCheckDrivenPropertyChecks {
    *   $test
    */
   def forAll[A, ASSERTION](propertyA: PropertyT[A])(test: A => ASSERTION)(implicit
-      config: PropertyConfig = PropertyConfig.default,
-      asserting: CheckerAsserting[ASSERTION],
+      config: PropertyConfig,
       pos: Position
-  ): asserting.CheckResult = {
+  ): Assertion = {
     val property = for {
       a <- propertyA
     } yield try {
@@ -160,7 +160,7 @@ trait ScalaCheckDrivenPropertyChecks {
     } catch {
       case e: Exception => Result.error(e)
     }
-    asserting.check(property, config, pos)
+    CheckerAsserting.check(property, config, pos)
   }
 
   /**
@@ -169,11 +169,10 @@ trait ScalaCheckDrivenPropertyChecks {
    *   $test
    */
   def forAll[A, ASSERTION](genA: Gen[A])(test: A => ASSERTION)(implicit
-      config: PropertyConfig = PropertyConfig.default,
-      asserting: CheckerAsserting[ASSERTION],
+      config: PropertyConfig,
       pos: Position
-  ): asserting.CheckResult =
-    forAll(genA.forAll)(test)
+  ): Assertion =
+    forAll(genA.forAll)(test)(config, pos)
 
   /**
    * $forAllProperties
@@ -183,10 +182,9 @@ trait ScalaCheckDrivenPropertyChecks {
   def forAll[A, B, ASSERTION](propertyA: PropertyT[A], propertyB: PropertyT[B])(
       test: (A, B) => ASSERTION
   )(implicit
-      config: PropertyConfig = PropertyConfig.default,
-      asserting: CheckerAsserting[ASSERTION],
+      config: PropertyConfig,
       pos: Position
-  ): asserting.CheckResult = {
+  ): Assertion = {
     val property = for {
       a <- propertyA
       b <- propertyB
@@ -196,7 +194,7 @@ trait ScalaCheckDrivenPropertyChecks {
     } catch {
       case e: Exception => Result.error(e)
     }
-    asserting.check(property, config, pos)
+    CheckerAsserting.check(property, config, pos)
   }
 
   /**
@@ -205,10 +203,9 @@ trait ScalaCheckDrivenPropertyChecks {
    *   $test
    */
   def forAll[A, B, ASSERTION](genA: Gen[A], genB: Gen[B])(test: (A, B) => ASSERTION)(implicit
-      config: PropertyConfig = PropertyConfig.default,
-      asserting: CheckerAsserting[ASSERTION],
+      config: PropertyConfig,
       pos: Position
-  ): asserting.CheckResult = forAll(genA.forAll, genB.forAll)(test)
+  ): Assertion = forAll(genA.forAll, genB.forAll)(test)(config, pos)
 
   /**
    * $forAllProperties
@@ -222,10 +219,9 @@ trait ScalaCheckDrivenPropertyChecks {
   )(
       test: (A, B, C) => ASSERTION
   )(implicit
-      config: PropertyConfig = PropertyConfig.default,
-      asserting: CheckerAsserting[ASSERTION],
+      config: PropertyConfig,
       pos: Position
-  ): asserting.CheckResult = {
+  ): Assertion = {
     val property = for {
       a <- propertyA
       b <- propertyB
@@ -236,7 +232,7 @@ trait ScalaCheckDrivenPropertyChecks {
     } catch {
       case e: Exception => Result.error(e)
     }
-    asserting.check(property, config, pos)
+    CheckerAsserting.check(property, config, pos)
   }
 
   /**
@@ -247,10 +243,10 @@ trait ScalaCheckDrivenPropertyChecks {
   def forAll[A, B, C, ASSERTION](genA: Gen[A], genB: Gen[B], genC: Gen[C])(
       test: (A, B, C) => ASSERTION
   )(implicit
-      config: PropertyConfig = PropertyConfig.default,
-      asserting: CheckerAsserting[ASSERTION],
+      config: PropertyConfig,
       pos: Position
-  ): asserting.CheckResult = forAll(genA.forAll, genB.forAll, genC.forAll)(test)
+  ): Assertion =
+    forAll(genA.forAll, genB.forAll, genC.forAll)(test)(config, pos)
 
   /**
    * $forAllProperties
@@ -263,10 +259,9 @@ trait ScalaCheckDrivenPropertyChecks {
       propertyC: PropertyT[C],
       propertyD: PropertyT[D]
   )(test: (A, B, C, D) => ASSERTION)(implicit
-      config: PropertyConfig = PropertyConfig.default,
-      asserting: CheckerAsserting[ASSERTION],
+      config: PropertyConfig,
       pos: Position
-  ): asserting.CheckResult = {
+  ): Assertion = {
     val property = for {
       a <- propertyA
       b <- propertyB
@@ -278,7 +273,7 @@ trait ScalaCheckDrivenPropertyChecks {
     } catch {
       case e: Exception => Result.error(e)
     }
-    asserting.check(property, config, pos)
+    CheckerAsserting.check(property, config, pos)
   }
 
   /**
@@ -292,10 +287,10 @@ trait ScalaCheckDrivenPropertyChecks {
       genC: Gen[C],
       genD: Gen[D]
   )(test: (A, B, C, D) => ASSERTION)(implicit
-      config: PropertyConfig = PropertyConfig.default,
-      asserting: CheckerAsserting[ASSERTION],
+      config: PropertyConfig,
       pos: Position
-  ): asserting.CheckResult = forAll(genA.forAll, genB.forAll, genC.forAll, genD.forAll)(test)
+  ): Assertion =
+    forAll(genA.forAll, genB.forAll, genC.forAll, genD.forAll)(test)(config, pos)
 
   /**
    * $forAllProperties
@@ -310,9 +305,8 @@ trait ScalaCheckDrivenPropertyChecks {
       propertyE: PropertyT[E]
   )(test: (A, B, C, D, E) => ASSERTION)(implicit
       config: PropertyConfig = PropertyConfig.default,
-      asserting: CheckerAsserting[ASSERTION],
       pos: Position
-  ): asserting.CheckResult = {
+  ): Assertion = {
     val property = for {
       a <- propertyA
       b <- propertyB
@@ -325,7 +319,7 @@ trait ScalaCheckDrivenPropertyChecks {
     } catch {
       case e: Exception => Result.error(e)
     }
-    asserting.check(property, config, pos)
+    CheckerAsserting.check(property, config, pos)
   }
 
   /**
@@ -340,11 +334,13 @@ trait ScalaCheckDrivenPropertyChecks {
       genD: Gen[D],
       genE: Gen[E]
   )(test: (A, B, C, D, E) => ASSERTION)(implicit
-      config: PropertyConfig = PropertyConfig.default,
-      asserting: CheckerAsserting[ASSERTION],
+      config: PropertyConfig,
       pos: Position
-  ): asserting.CheckResult =
-    forAll(genA.forAll, genB.forAll, genC.forAll, genD.forAll, genE.forAll)(test)
+  ): Assertion =
+    forAll(genA.forAll, genB.forAll, genC.forAll, genD.forAll, genE.forAll)(test)(
+      config,
+      pos
+    )
 
   /**
    * $forAllProperties
@@ -359,10 +355,9 @@ trait ScalaCheckDrivenPropertyChecks {
       propertyE: PropertyT[E],
       propertyF: PropertyT[F]
   )(test: (A, B, C, D, E, F) => ASSERTION)(implicit
-      config: PropertyConfig = PropertyConfig.default,
-      asserting: CheckerAsserting[ASSERTION],
+      config: PropertyConfig,
       pos: Position
-  ): asserting.CheckResult = {
+  ): Assertion = {
     val property = for {
       a <- propertyA
       b <- propertyB
@@ -376,7 +371,7 @@ trait ScalaCheckDrivenPropertyChecks {
     } catch {
       case e: Exception => Result.error(e)
     }
-    asserting.check(property, config, pos)
+    CheckerAsserting.check(property, config, pos)
   }
 
   /**
@@ -392,10 +387,9 @@ trait ScalaCheckDrivenPropertyChecks {
       genE: Gen[E],
       genF: Gen[F]
   )(test: (A, B, C, D, E, F) => ASSERTION)(implicit
-      config: PropertyConfig = PropertyConfig.default,
-      asserting: CheckerAsserting[ASSERTION],
+      config: PropertyConfig,
       pos: Position
-  ): asserting.CheckResult = {
+  ): Assertion = {
     val property = for {
       a <- genA.forAll
       b <- genB.forAll
@@ -409,8 +403,8 @@ trait ScalaCheckDrivenPropertyChecks {
     } catch {
       case e: Exception => Result.error(e)
     }
-    asserting.check(property, config, pos)
+    CheckerAsserting.check(property, config, pos)
   }
 }
 
-object ScalaCheckDrivenPropertyChecks extends ScalaCheckDrivenPropertyChecks
+object HedgehogDrivenPropertyChecks extends HedgehogDrivenPropertyChecks

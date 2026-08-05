@@ -17,13 +17,17 @@ package hedgehog.scalatest
 
 import hedgehog.Gen
 import hedgehog.core.{DiscardCount, PropertyConfig}
-import hegehog.scalatest.ScalaCheckDrivenPropertyChecks
+import hegehog.scalatest.HedgehogDrivenPropertyChecks
 import org.scalatest.exceptions.GeneratorDrivenPropertyCheckFailedException
 import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class AssertScalaCheckDrivenPropertyChecksSuite
+class HedgehogDrivenPropertyChecksSuite
     extends AnyFunSpec
-    with ScalaCheckDrivenPropertyChecks {
+    with Matchers
+    with HedgehogDrivenPropertyChecks {
+
+  implicit private val propertyConfig: PropertyConfig = PropertyConfig.default
 
   private val famousLastWords =
     Gen.element1("the", "program", "compiles", "therefore", "it", "should", "work")
@@ -31,6 +35,13 @@ class AssertScalaCheckDrivenPropertyChecksSuite
   it("generator-driven property that takes 1 args, which succeeds") {
     forAll(famousLastWords) { (a: String) =>
       assert(a.length === a.length)
+    }
+  }
+
+  it("generator-driven property that takes 1 args, which succeeds using matchers") {
+    forAll(famousLastWords) { (a: String) =>
+      a.length shouldEqual a.length
+      ()
     }
   }
 
