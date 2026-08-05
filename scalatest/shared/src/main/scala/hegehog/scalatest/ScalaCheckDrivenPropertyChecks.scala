@@ -15,14 +15,9 @@
  */
 package hegehog.scalatest
 
-import hedgehog.core.PropertyConfig
+import hedgehog.core.{PropertyConfig, PropertyT}
 import hedgehog.{Gen, Result}
 import org.scalactic.source.Position
-import org.scalatest.exceptions.DiscardedEvaluationException
-import org.scalatest.prop.Configuration.{PropertyCheckConfigParam, PropertyCheckConfiguration}
-import org.scalatest.prop.Whenever
-
-import scala.sys.Prop
 
 /**
  * Trait containing methods that faciliate property checks against generated data.
@@ -280,7 +275,34 @@ import scala.sys.Prop
  * @author
  *   Bill Venners
  */
-trait ScalaCheckDrivenPropertyChecks extends Whenever {
+trait ScalaCheckDrivenPropertyChecks {
+
+  /**
+   * Performs a property check by applying the specified property check function to arguments
+   * supplied by implicitly passed generators.
+   *
+   * <p> Here's an example: </p>
+   *
+   * <pre class="stHighlight"> forAll { (a: String) => a.length should equal ((a).length) } </pre>
+   *
+   * @param test
+   *   the property check function to apply to the generated arguments
+   */
+  def forAll[A, ASSERTION](propertyA: PropertyT[A])(test: A => ASSERTION)(implicit
+      config: PropertyConfig,
+      asserting: CheckerAsserting[ASSERTION],
+      pos: Position
+  ): asserting.CheckResult = {
+    val property = for {
+      a <- propertyA
+    } yield try {
+      test(a)
+      Result.success
+    } catch {
+      case e: Exception => Result.error(e)
+    }
+    asserting.check(property, config, pos)
+  }
 
   /**
    * Performs a property check by applying the specified property check function to arguments
@@ -297,17 +319,8 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever {
       config: PropertyConfig,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
-  ): asserting.CheckResult = {
-    val property = genA.lift.map { a =>
-      try {
-        test(a)
-        Result.success
-      } catch {
-        case e: Exception => Result.error(e)
-      }
-    }
-    asserting.check(property, config, pos)
-  }
+  ): asserting.CheckResult =
+    forAll(genA.forAll)(test)
 
   /**
    * Performs a property check by applying the specified property check function to arguments
@@ -327,32 +340,20 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever {
    *   the property check function to apply to the generated arguments
    */
   def forAll[A, B, ASSERTION](genA: Gen[A], genB: Gen[B])(fun: (A, B) => ASSERTION)(implicit
-      config: PropertyCheckConfiguration,
+      config: PropertyConfig,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
   ): asserting.CheckResult = {
-    val propF = { (a: A, b: B) =>
-      val (unmetCondition, succeeded, exception) =
-        try {
-          val (succeeded, cause) = asserting.succeed(fun(a, b))
-          (false, succeeded, cause)
-        } catch {
-          case e: DiscardedEvaluationException => (true, false, None)
-          case e: Throwable => (false, false, Some(e))
-        }
-      !unmetCondition ==> (
-        if (exception.isEmpty) {
-          if (succeeded)
-            Prop.passed
-          else
-            Prop.falsified
-        } else
-          Prop.exception(exception.get)
-      )
+    val property = for {
+      a <- genA.forAll
+      b <- genB.forAll
+    } yield try {
+      fun(a, b)
+      Result.success
+    } catch {
+      case e: Exception => Result.error(e)
     }
-    val prop = Prop.forAll(genA, genB)(propF)
-    val params = getScalaCheckParams(configParams, config)
-    asserting.check(prop, params, pos)
+    asserting.check(property, config, pos)
   }
 
   /**
@@ -375,32 +376,21 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever {
   def forAll[A, B, C, ASSERTION](genA: Gen[A], genB: Gen[B], genC: Gen[C])(
       fun: (A, B, C) => ASSERTION
   )(implicit
-      config: PropertyCheckConfiguration,
+      config: PropertyConfig,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
   ): asserting.CheckResult = {
-    val propF = { (a: A, b: B, c: C) =>
-      val (unmetCondition, succeeded, exception) =
-        try {
-          val (succeeded, cause) = asserting.succeed(fun(a, b, c))
-          (false, succeeded, cause)
-        } catch {
-          case e: DiscardedEvaluationException => (true, false, None)
-          case e: Throwable => (false, false, Some(e))
-        }
-      !unmetCondition ==> (
-        if (exception.isEmpty) {
-          if (succeeded)
-            Prop.passed
-          else
-            Prop.falsified
-        } else
-          Prop.exception(exception.get)
-      )
+    val property = for {
+      a <- genA.forAll
+      b <- genB.forAll
+      c <- genC.forAll
+    } yield try {
+      fun(a, b, c)
+      Result.success
+    } catch {
+      case e: Exception => Result.error(e)
     }
-    val prop = Prop.forAll(genA, genB, genC)(propF)
-    val params = getScalaCheckParams(configParams, config)
-    asserting.check(prop, params, pos)
+    asserting.check(property, config, pos)
   }
 
   /**
@@ -425,35 +415,24 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever {
       genA: Gen[A],
       genB: Gen[B],
       genC: Gen[C],
-      genD: Gen[D],
-      configParams: PropertyCheckConfigParam*
+      genD: Gen[D]
   )(fun: (A, B, C, D) => ASSERTION)(implicit
-      config: PropertyCheckConfiguration,
+      config: PropertyConfig,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
   ): asserting.CheckResult = {
-    val propF = { (a: A, b: B, c: C, d: D) =>
-      val (unmetCondition, succeeded, exception) =
-        try {
-          val (succeeded, cause) = asserting.succeed(fun(a, b, c, d))
-          (false, succeeded, cause)
-        } catch {
-          case e: DiscardedEvaluationException => (true, false, None)
-          case e: Throwable => (false, false, Some(e))
-        }
-      !unmetCondition ==> (
-        if (exception.isEmpty) {
-          if (succeeded)
-            Prop.passed
-          else
-            Prop.falsified
-        } else
-          Prop.exception(exception.get)
-      )
+    val property = for {
+      a <- genA.forAll
+      b <- genB.forAll
+      c <- genC.forAll
+      d <- genD.forAll
+    } yield try {
+      fun(a, b, c, d)
+      Result.success
+    } catch {
+      case e: Exception => Result.error(e)
     }
-    val prop = Prop.forAll(genA, genB, genC, genD)(propF)
-    val params = getScalaCheckParams(configParams, config)
-    asserting.check(prop, params, pos)
+    asserting.check(property, config, pos)
   }
 
   /**
@@ -479,35 +458,25 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever {
       genB: Gen[B],
       genC: Gen[C],
       genD: Gen[D],
-      genE: Gen[E],
-      configParams: PropertyCheckConfigParam*
+      genE: Gen[E]
   )(fun: (A, B, C, D, E) => ASSERTION)(implicit
-      config: PropertyCheckConfiguration,
+      config: PropertyConfig,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
   ): asserting.CheckResult = {
-    val propF = { (a: A, b: B, c: C, d: D, e: E) =>
-      val (unmetCondition, succeeded, exception) =
-        try {
-          val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e))
-          (false, succeeded, cause)
-        } catch {
-          case e: DiscardedEvaluationException => (true, false, None)
-          case e: Throwable => (false, false, Some(e))
-        }
-      !unmetCondition ==> (
-        if (exception.isEmpty) {
-          if (succeeded)
-            Prop.passed
-          else
-            Prop.falsified
-        } else
-          Prop.exception(exception.get)
-      )
+    val property = for {
+      a <- genA.forAll
+      b <- genB.forAll
+      c <- genC.forAll
+      d <- genD.forAll
+      e <- genE.forAll
+    } yield try {
+      fun(a, b, c, d, e)
+      Result.success
+    } catch {
+      case e: Exception => Result.error(e)
     }
-    val prop = Prop.forAll(genA, genB, genC, genD, genE)(propF)
-    val params = getScalaCheckParams(configParams, config)
-    asserting.check(prop, params, pos)
+    asserting.check(property, config, pos)
   }
 
   /**
@@ -535,35 +504,26 @@ trait ScalaCheckDrivenPropertyChecks extends Whenever {
       genC: Gen[C],
       genD: Gen[D],
       genE: Gen[E],
-      genF: Gen[F],
-      configParams: PropertyCheckConfigParam*
+      genF: Gen[F]
   )(fun: (A, B, C, D, E, F) => ASSERTION)(implicit
-      config: PropertyCheckConfiguration,
+      config: PropertyConfig,
       asserting: CheckerAsserting[ASSERTION],
       pos: Position
   ): asserting.CheckResult = {
-    val propF = { (a: A, b: B, c: C, d: D, e: E, f: F) =>
-      val (unmetCondition, succeeded, exception) =
-        try {
-          val (succeeded, cause) = asserting.succeed(fun(a, b, c, d, e, f))
-          (false, succeeded, cause)
-        } catch {
-          case e: DiscardedEvaluationException => (true, false, None)
-          case e: Throwable => (false, false, Some(e))
-        }
-      !unmetCondition ==> (
-        if (exception.isEmpty) {
-          if (succeeded)
-            Prop.passed
-          else
-            Prop.falsified
-        } else
-          Prop.exception(exception.get)
-      )
+    val property = for {
+      a <- genA.forAll
+      b <- genB.forAll
+      c <- genC.forAll
+      d <- genD.forAll
+      e <- genE.forAll
+      f <- genF.forAll
+    } yield try {
+      fun(a, b, c, d, e, f)
+      Result.success
+    } catch {
+      case e: Exception => Result.error(e)
     }
-    val prop = Prop.forAll(genA, genB, genC, genD, genE, genF)(propF)
-    val params = getScalaCheckParams(configParams, config)
-    asserting.check(prop, params, pos)
+    asserting.check(property, config, pos)
   }
 }
 

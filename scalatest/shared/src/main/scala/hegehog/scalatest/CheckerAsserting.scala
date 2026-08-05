@@ -23,15 +23,18 @@ import org.scalatest.{Assertion, Succeeded}
 import org.scalatest.exceptions.{GeneratorDrivenPropertyCheckFailedException, StackDepthException}
 
 /**
- * Supertrait for <code>CheckerAsserting</code> typeclasses, which are used to implement and determine the result
- * type of [[org.scalatest.prop.GeneratorDrivenPropertyChecks GeneratorDrivenPropertyChecks]]'s <code>apply</code> and <code>forAll</code> method.
+ * Supertrait for <code>CheckerAsserting</code> typeclasses, which are used to implement and
+ * determine the result type of
+ * [[org.scalatest.prop.GeneratorDrivenPropertyChecks GeneratorDrivenPropertyChecks]]'s
+ * <code>apply</code> and <code>forAll</code> method.
  *
- * <p>
- * Currently, an [[org.scalatest.prop.GeneratorDrivenPropertyChecks GeneratorDrivenPropertyChecks]] expression will have result type <code>Assertion</code>, if the function passed has result type <code>Assertion</code>,
- * else it will have result type <code>Unit</code>.
- * </p>
+ * <p> Currently, an
+ * [[org.scalatest.prop.GeneratorDrivenPropertyChecks GeneratorDrivenPropertyChecks]] expression
+ * will have result type <code>Assertion</code>, if the function passed has result type
+ * <code>Assertion</code>, else it will have result type <code>Unit</code>. </p>
  */
 trait CheckerAsserting[T] {
+
   /**
    * The result type of the <code>check</code> method.
    */
@@ -44,44 +47,75 @@ trait CheckerAsserting[T] {
 
   private[scalatest] def indicateSuccess: CheckResult
 
-  private[scalatest] def indicateFailure(messageFun: StackDepthException => String, undecoratedMessage: => String, scalaCheckArgs: List[Any], scalaCheckLabels: List[String], optionalCause: Option[Throwable], pos: source.Position): CheckResult
+  private[scalatest] def indicateFailure(
+      messageFun: StackDepthException => String,
+      undecoratedMessage: => String,
+      scalaCheckArgs: List[Any],
+      scalaCheckLabels: List[String],
+      optionalCause: Option[Throwable],
+      pos: source.Position
+  ): CheckResult
 
   /**
-   * Converts the Hedgehog property based test into a result scalatest can understand.  If the property check succeeds, return a <code>CheckResult</code> indicating success, else return a <code>CheckResult</code> indicating failure.
+   * Converts the Hedgehog property based test into a result scalatest can understand. If the
+   * property check succeeds, return a <code>CheckResult</code> indicating success, else return a
+   * <code>CheckResult</code> indicating failure.
    *
-   * @param test   The `test` to be checked.
-   * @param config The `config` to be used to check the property.
-   * @param pos    the <code>Position</code> of the caller site
-   * @return the <code>Result</code> of the property check.
+   * @param test
+   *   The `test` to be checked.
+   * @param config
+   *   The `config` to be used to check the property.
+   * @param pos
+   *   the <code>Position</code> of the caller site
+   * @return
+   *   the <code>Result</code> of the property check.
    */
   def check(test: PropertyT[Result], config: PropertyConfig, pos: source.Position): CheckResult = {
     val report = Property.check(config, test, seed)
 
+    val rendered = Test.renderReport(
+      this.getClass.getName,
+      Test("todo", test),
+      report,
+      ansiCodesSupported = true
+    )
     if (report.status != Status.ok) {
-      val rendered = Test.renderReport(this.getClass.getName, Test("todo", test), report, ansiCodesSupported = true)
       // fail the test using scalatest
       indicateFailure(_ => rendered, rendered, Nil, Nil, None, pos)
-    } else indicateSuccess
+    } else {
+      println(rendered)
+      indicateSuccess
+    }
   }
 }
 
 /**
- * Class holding lowest priority <code>CheckerAsserting</code> implicit, which enables [[org.scalatest.prop.GeneratorDrivenPropertyChecks GeneratorDrivenPropertyChecks]] expressions that have result type <code>Unit</code>.
+ * Class holding lowest priority <code>CheckerAsserting</code> implicit, which enables
+ * [[org.scalatest.prop.GeneratorDrivenPropertyChecks GeneratorDrivenPropertyChecks]] expressions
+ * that have result type <code>Unit</code>.
  */
 abstract class UnitCheckerAsserting {
 
   /**
-   * Provides support of [[org.scalatest.enablers.CheckerAsserting CheckerAsserting]] for Unit.  Do nothing when the check succeeds,
-   * but throw [[org.scalatest.exceptions.GeneratorDrivenPropertyCheckFailedException GeneratorDrivenPropertyCheckFailedException]]
+   * Provides support of [[org.scalatest.enablers.CheckerAsserting CheckerAsserting]] for Unit. Do
+   * nothing when the check succeeds, but throw
+   * [[org.scalatest.exceptions.GeneratorDrivenPropertyCheckFailedException GeneratorDrivenPropertyCheckFailedException]]
    * when check fails.
    */
-  implicit def assertingNatureOfT[T]: CheckerAsserting[T] {type CheckResult = Unit} =
+  implicit def assertingNatureOfT[T]: CheckerAsserting[T] { type CheckResult = Unit } =
     new CheckerAsserting[T] {
       type CheckResult = Unit
 
       private[scalatest] def indicateSuccess: Unit = ()
 
-      private[scalatest] def indicateFailure(messageFun: StackDepthException => String, undecoratedMessage: => String, scalaCheckArgs: List[Any], scalaCheckLabels: List[String], optionalCause: Option[Throwable], pos: source.Position): Unit = {
+      private[scalatest] def indicateFailure(
+          messageFun: StackDepthException => String,
+          undecoratedMessage: => String,
+          scalaCheckArgs: List[Any],
+          scalaCheckLabels: List[String],
+          optionalCause: Option[Throwable],
+          pos: source.Position
+      ): Unit = {
         throw new GeneratorDrivenPropertyCheckFailedException(
           messageFun,
           optionalCause,
@@ -97,23 +131,34 @@ abstract class UnitCheckerAsserting {
 }
 
 /**
- * Companion object to <code>CheckerAsserting</code> that provides two implicit providers, a higher priority one for passed functions that have result
- * type <code>Assertion</code>, which also yields result type <code>Assertion</code>, and one for any other type, which yields result type <code>Unit</code>.
+ * Companion object to <code>CheckerAsserting</code> that provides two implicit providers, a higher
+ * priority one for passed functions that have result type <code>Assertion</code>, which also yields
+ * result type <code>Assertion</code>, and one for any other type, which yields result type
+ * <code>Unit</code>.
  */
 object CheckerAsserting {
 
   /**
-   * Provides support of [[org.scalatest.enablers.CheckerAsserting CheckerAsserting]] for Assertion.  Returns [[org.scalatest.Succeeded Succeeded]] when the check succeeds,
-   * but throw [[org.scalatest.exceptions.GeneratorDrivenPropertyCheckFailedException GeneratorDrivenPropertyCheckFailedException]]
+   * Provides support of [[org.scalatest.enablers.CheckerAsserting CheckerAsserting]] for Assertion.
+   * Returns [[org.scalatest.Succeeded Succeeded]] when the check succeeds, but throw
+   * [[org.scalatest.exceptions.GeneratorDrivenPropertyCheckFailedException GeneratorDrivenPropertyCheckFailedException]]
    * when check fails.
    */
-  implicit def assertingNatureOfAssertion: CheckerAsserting[Assertion] {type CheckResult = Assertion} = {
+  implicit def assertingNatureOfAssertion
+      : CheckerAsserting[Assertion] { type CheckResult = Assertion } = {
     new CheckerAsserting[Assertion] {
       type CheckResult = Assertion
 
       private[scalatest] def indicateSuccess: Assertion = Succeeded
 
-      private[scalatest] def indicateFailure(messageFun: StackDepthException => String, undecoratedMessage: => String, scalaCheckArgs: List[Any], scalaCheckLabels: List[String], optionalCause: Option[Throwable], pos: source.Position): Assertion =
+      private[scalatest] def indicateFailure(
+          messageFun: StackDepthException => String,
+          undecoratedMessage: => String,
+          scalaCheckArgs: List[Any],
+          scalaCheckLabels: List[String],
+          optionalCause: Option[Throwable],
+          pos: source.Position
+      ): Assertion =
         throw new GeneratorDrivenPropertyCheckFailedException(
           messageFun,
           optionalCause,
@@ -127,4 +172,3 @@ object CheckerAsserting {
     }
   }
 }
-
