@@ -80,7 +80,9 @@ import org.scalatest.prop.Whenever
  * than [[org.scalatest.exceptions.DiscardedEvaluationException]]. A `DiscardedEvaluationException`,
  * which is thrown by the `whenever` method (defined in trait [[org.scalatest.prop.Whenever]], which
  * this trait extends) to indicate a condition required by the property function is not met by a row
- * of passed data, will simply cause `forAll` to discard that row of data.
+ * of passed data, will simply cause `forAll` to discard that row of data. Other meta-exceptions to
+ * cancel or mark a test as pending will be marked as errors. Exceptions cannot escape from the
+ * property function, and if they do, they will be caught and reported as errors.
  *
  * <a name="supplyingGenerators"></a><h2>Supplying generators</h2>
  *
@@ -152,7 +154,6 @@ trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
         test(a)
         Property.point(Result.success)
       } catch {
-        // todo: catch even more exceptions, maybe some exceptions should not be caught, see Scalatest implementation
         case _: DiscardedEvaluationException => Property.discard[Result]
         case e: Exception => Property.error(e)
       }

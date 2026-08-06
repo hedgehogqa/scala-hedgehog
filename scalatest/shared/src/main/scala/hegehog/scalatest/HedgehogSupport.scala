@@ -21,7 +21,7 @@ import hedgehog.runner.{SeedSource, Test}
 import org.scalactic.source.Position
 import org.scalatest.Assertion
 import org.scalatest.Assertions.succeed
-import org.scalatest.exceptions.GeneratorDrivenPropertyCheckFailedException
+import org.scalatest.exceptions.TestFailedException
 
 /**
  * A trait that provides a method to check Hedgehog properties and assert the results using
@@ -73,16 +73,7 @@ trait HedgehogSupport {
     val completeMessage = s"${seedSource.renderLog}\n$rendered"
     if (report.status != Status.ok) {
       // fail the test using scalatest
-      throw new GeneratorDrivenPropertyCheckFailedException(
-        _ => completeMessage,
-        None,
-        pos,
-        None,
-        completeMessage,
-        Nil,
-        None,
-        Nil
-      )
+      throw new TestFailedException(_ => Some(completeMessage), None, pos)
     } else {
       println(completeMessage)
       succeed

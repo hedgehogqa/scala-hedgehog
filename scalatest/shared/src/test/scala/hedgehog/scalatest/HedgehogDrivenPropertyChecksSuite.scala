@@ -18,7 +18,7 @@ package hedgehog.scalatest
 import hedgehog.Gen
 import hedgehog.core.{DiscardCount, PropertyConfig}
 import hegehog.scalatest.HedgehogDrivenPropertyChecks
-import org.scalatest.exceptions.GeneratorDrivenPropertyCheckFailedException
+import org.scalatest.exceptions.TestFailedException
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -39,7 +39,7 @@ class HedgehogDrivenPropertyChecksSuite
   }
 
   it("generator-driven property that takes 1 args, which fails") {
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       forAll(famousLastWords) { (a: String) =>
         assert(a.length < 0)
       }
@@ -47,7 +47,7 @@ class HedgehogDrivenPropertyChecksSuite
   }
 
   it("should correctly convert DiscardedTestExceptions to hedgehog discarded tests") {
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       forAll(famousLastWords) { _ => whenever(false) { succeed } }
     }
   }
@@ -67,7 +67,7 @@ class HedgehogDrivenPropertyChecksSuite
     "generator-driven property that takes 1 args, which fails, with testLimit set to 5"
   ) {
     implicit val propertyConfig: PropertyConfig = PropertyConfig.default.copy(testLimit = 5)
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       var i = 0
       forAll(famousLastWords) { (_: String) =>
         i += 1
@@ -82,7 +82,7 @@ class HedgehogDrivenPropertyChecksSuite
     implicit val propertyConfig: PropertyConfig =
       PropertyConfig.default.copy(discardLimit = DiscardCount(1))
 
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       forAll(famousLastWords.filter(_ => false)) { (_: String) =>
         succeed
       }
@@ -96,7 +96,7 @@ class HedgehogDrivenPropertyChecksSuite
   }
 
   it("generator-driven property that takes 2 args, which fails") {
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       forAll(famousLastWords, famousLastWords) { (a: String, b: String) =>
         assert(a.length + b.length < 0)
       }
@@ -109,7 +109,7 @@ class HedgehogDrivenPropertyChecksSuite
 
     implicit val propertyConfig: PropertyConfig = PropertyConfig.default.copy(testLimit = 5)
 
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       var i = 0
       forAll(famousLastWords, famousLastWords) { (_: String, _: String) =>
         i += 1
@@ -124,7 +124,7 @@ class HedgehogDrivenPropertyChecksSuite
     implicit val propertyConfig: PropertyConfig =
       PropertyConfig.default.copy(testLimit = 5, discardLimit = DiscardCount(1))
 
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       var i = 0
       forAll(famousLastWords.filter(_ => false), famousLastWords) { (_: String, _: String) =>
         i += 1
@@ -140,7 +140,7 @@ class HedgehogDrivenPropertyChecksSuite
   }
 
   it("generator-driven property that takes 3 args, which fails") {
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       forAll(famousLastWords, famousLastWords, famousLastWords) {
         (a: String, b: String, c: String) =>
           assert(a.length + b.length + c.length < 0)
@@ -165,7 +165,7 @@ class HedgehogDrivenPropertyChecksSuite
   ) {
     implicit val propertyConfig: PropertyConfig = PropertyConfig.default.copy(testLimit = 5)
 
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       var i = 0
       forAll(famousLastWords, famousLastWords, famousLastWords) {
         (_: String, _: String, _: String) =>
@@ -181,7 +181,7 @@ class HedgehogDrivenPropertyChecksSuite
     implicit val propertyConfig: PropertyConfig =
       PropertyConfig.default.copy(discardLimit = DiscardCount(1))
 
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       var i = 0
       forAll(famousLastWords.filter(_ => false), famousLastWords, famousLastWords) {
         (_: String, _: String, _: String) =>
@@ -200,7 +200,7 @@ class HedgehogDrivenPropertyChecksSuite
   }
 
   it("generator-driven property that takes 4 args, which fails") {
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       forAll(famousLastWords, famousLastWords, famousLastWords, famousLastWords) {
         (a: String, b: String, c: String, d: String) =>
           assert(a.length + b.length + c.length + d.length < 0)
@@ -226,7 +226,7 @@ class HedgehogDrivenPropertyChecksSuite
   ) {
     implicit val propertyConfig: PropertyConfig = PropertyConfig.default.copy(testLimit = 5)
 
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       var i = 0
       forAll(famousLastWords, famousLastWords, famousLastWords, famousLastWords) {
         (_: String, _: String, _: String, _: String) =>
@@ -242,7 +242,7 @@ class HedgehogDrivenPropertyChecksSuite
     implicit val propertyConfig: PropertyConfig =
       PropertyConfig.default.copy(discardLimit = DiscardCount(1))
 
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       var i = 0
       forAll(
         famousLastWords.filter(_ => false),
@@ -266,7 +266,7 @@ class HedgehogDrivenPropertyChecksSuite
   }
 
   it("generator-driven property that takes 5 args, which fails") {
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       forAll(famousLastWords, famousLastWords, famousLastWords, famousLastWords, famousLastWords) {
         (a: String, b: String, c: String, d: String, e: String) =>
           assert(a.length + b.length + c.length + d.length + e.length < 0)
@@ -292,7 +292,7 @@ class HedgehogDrivenPropertyChecksSuite
   ) {
     implicit val propertyConfig: PropertyConfig = PropertyConfig.default.copy(testLimit = 5)
 
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       var i = 0
       forAll(famousLastWords, famousLastWords, famousLastWords, famousLastWords, famousLastWords) {
         (_: String, _: String, _: String, _: String, _: String) =>
@@ -308,7 +308,7 @@ class HedgehogDrivenPropertyChecksSuite
     implicit val propertyConfig: PropertyConfig =
       PropertyConfig.default.copy(discardLimit = DiscardCount(1))
 
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       var i = 0
       forAll(
         famousLastWords.filter(_ => false),
@@ -339,7 +339,7 @@ class HedgehogDrivenPropertyChecksSuite
   }
 
   it("generator-driven property that takes 6 args, which fails") {
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       forAll(
         famousLastWords,
         famousLastWords,
@@ -377,7 +377,7 @@ class HedgehogDrivenPropertyChecksSuite
   ) {
     implicit val propertyConfig: PropertyConfig = PropertyConfig.default.copy(testLimit = 5)
 
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       var i = 0
       forAll(
         famousLastWords,
@@ -399,7 +399,7 @@ class HedgehogDrivenPropertyChecksSuite
     implicit val propertyConfig: PropertyConfig =
       PropertyConfig.default.copy(discardLimit = DiscardCount(1))
 
-    intercept[GeneratorDrivenPropertyCheckFailedException] {
+    intercept[TestFailedException] {
       var i = 0
       forAll(
         famousLastWords.filter(_ => false),
