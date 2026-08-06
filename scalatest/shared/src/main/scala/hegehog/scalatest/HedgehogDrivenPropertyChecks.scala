@@ -16,9 +16,10 @@
 package hegehog.scalatest
 
 import hedgehog.core.{PropertyConfig, PropertyT}
-import hedgehog.{Gen, Result, forTupled}
+import hedgehog.{Gen, Property, Result, forTupled}
 import org.scalactic.source.Position
 import org.scalatest.Assertion
+import org.scalatest.exceptions.DiscardedEvaluationException
 import org.scalatest.prop.Whenever
 
 /**
@@ -33,12 +34,15 @@ import org.scalatest.prop.Whenever
  *
  * {{{
  * class Fraction(n: Int, d: Int) {
+ *  require(d != 0)
+ *  require(d != Integer.MIN_VALUE)
+ *  require(n != Integer.MIN_VALUE)
  *
- * require(d != 0) require(d != Integer.MIN_VALUE) require(n != Integer.MIN_VALUE)
+ *  val numer = if (d < 0) -1 * n else n
+ *  val denom = d.abs
  *
- * val numer = if (d < 0) -1 * n else n val denom = d.abs
- *
- * override def toString = numer + " / " + denom }
+ *  override def toString = s"$numer / $denom"
+ * }
  * }}}
  *
  * To test the behavior of `Fraction`, you could mix in or import the members of
@@ -46,19 +50,17 @@ import org.scalatest.prop.Whenever
  * like this:
  *
  * {{{
+ * val allIntegers = Gen.int(hedgehog.Range.linear(Integer.MIN_VALUE, Integer.MAX_VALUE))
+ * forAll(allIntegers, allIntegers) { (n, d) =>
+ *   whenever(d != 0 && d != Integer.MIN_VALUE && n != Integer.MIN_VALUE) {
+ *     val f = new Fraction(n, d)
+ *     if (n < 0 && d < 0 || n > 0 && d > 0) f.numer should be > 0
+ *     else if (n != 0) f.numer should be < 0
+ *     else f.numer should equal(0)
  *
- * // todo
- * forAll { (n: Int, d: Int) =>
- *
- * whenever (d != 0 && d != Integer.MIN_VALUE && n != Integer.MIN_VALUE) {
- *
- * val f = new Fraction(n, d)
- *
- * if (n < 0 && d < 0 || n > 0 && d > 0) f.numer should be > 0 else if (n != 0) f.numer should be <
- * 0 else f.numer should be === 0
- *
- * f.denom should be > 0 }
- * }
+ *     f.denom should be > 0
+ *    }
+ *  }
  * }}}
  *
  * Trait `ScalaCheckDrivenPropertyChecks` provides overloaded `forAll` methods that allow you to
@@ -67,17 +69,15 @@ import org.scalatest.prop.Whenever
  * generators, or properties that need to be evaluated. The second parameter list contains the
  * property function to be checked, which takes as many parameters as there are generators or
  * properties in the first parameter list. The third parameter list contains an implicit
- * `PropertyCheckConfiguration` object that provides configuration parameters for the property
- * check, an implicit `CheckerAsserting` object that provides a way to assert the result of the
- * property check, and an implicit `Position` object that provides information about the source code
- * position of the `forAll` invocation.
+ * [[PropertyConfig]] object that provides configuration parameters for the property check, and an
+ * implicit `Position` object that provides information about the source code position of the
+ * `forAll` invocation.
  *
  * The `forAll` methods use the supplied generators to generate example arguments and pass them to
  * the property function, and generate a
  * [[org.scalatest.exceptions.GeneratorDrivenPropertyCheckFailedException]] if the function
- * completes abruptly for any exception that would <a href="../Suite.html#errorHandling">normally
- * cause</a> a test to fail in ScalaTest other than
- * [[org.scalatest.exceptions.DiscardedEvaluationException]]. A `DiscardedEvaluationException`,
+ * completes abruptly for any exception that would normally cause a test to fail in ScalaTest other
+ * than [[org.scalatest.exceptions.DiscardedEvaluationException]]. A `DiscardedEvaluationException`,
  * which is thrown by the `whenever` method (defined in trait [[org.scalatest.prop.Whenever]], which
  * this trait extends) to indicate a condition required by the property function is not met by a row
  * of passed data, will simply cause `forAll` to discard that row of data.
@@ -91,13 +91,13 @@ import org.scalatest.prop.Whenever
  * For example, to create a generator of even integers between (and including) -2000 and 2000, you
  * could write this:
  * {{{
- * import org.scalacheck.Gen
+ * import hedgehog.Gen
  *
- * val evenInts = for (n <- Gen.choose(-1000, 1000)) yield 2 * n
+ * val eventInts = for (n <- Gen.int(hedgehog.Range.linear(-1000, 1000))) yield 2 * n
  * }}}
  *
  * Given this generator, you could use it on a property check like this:
- * {{{forAll (evenInts) { (n) => n % 2 should equal (0) }}}}
+ * {{{forAll (eventInts) { n => n % 2 should equal (0) }}}}
  *
  * Custom generators are necessary when you want to pass data types not supported by Hedgehog's
  * provided generators, but are also useful when some of the values in the full range for the passed
@@ -111,21 +111,22 @@ import org.scalatest.prop.Whenever
  * values, like this:
  *
  * {{{
- * val validNumers = for (n <- Gen.choose(Integer.MIN_VALUE + 1, Integer.MAX_VALUE)) yield n
- * val validDenoms = for (d <- validNumers if d != 0) yield d
+ * val validNumers = Gen.int(hedgehog.Range.linear(Integer.MIN_VALUE + 1, Integer.MAX_VALUE))
+ * val validDenoms = validNumers.filter(_ != 0)
  * }}}
  *
  * You could then use them in the property check like this:
  *
  * {{{
- * forAll (validNumers, validDenoms) { (n: Int, d: Int) =>
+ * forAll(validNumers, validDenoms) { (n, d) =>
+ *   val f = new Fraction(n, d)
  *
- * val f = new Fraction(n, d)
+ *   if (n < 0 && d < 0 || n > 0 && d > 0) f.numer should be > 0
+ *   else if (n != 0) f.numer should be < 0
+ *   else f.numer should equal(0)
  *
- * if (n < 0 && d < 0 || n > 0 && d > 0) f.numer should be > 0 else if (n != 0) f.numer should be <
- * 0 else f.numer should be === 0
- *
- * f.denom should be > 0 }
+ *   f.denom should be > 0
+ * }
  * }}}
  *
  * <a name="propCheckConfig"></a><h2>Property check configuration</h2>
@@ -144,12 +145,17 @@ import org.scalatest.prop.Whenever
  */
 trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
 
-  private def scalaTestToHedgehog[A](assertion: => A): Result =
-    try {
-      assertion
-      Result.success
-    } catch {
-      case e: Exception => Result.error(e)
+  /** Convert a Scalatest test which works by throwing exceptions to a Hedgehog Property */
+  private def scalaTestToHedgehog[A](propertyA: PropertyT[A], test: A => Any): Property =
+    propertyA.flatMap { a =>
+      try {
+        test(a)
+        Property.point(Result.success)
+      } catch {
+        // todo: catch even more exceptions, maybe some exceptions should not be caught, see Scalatest implementation
+        case _: DiscardedEvaluationException => Property.discard[Result]
+        case e: Exception => Property.error(e)
+      }
     }
 
   /**
@@ -161,8 +167,7 @@ trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
   def forAll[A](propertyA: PropertyT[A])(test: A => Any)(implicit
       config: PropertyConfig,
       pos: Position
-  ): Assertion =
-    check(propertyA.map(a => scalaTestToHedgehog(test(a))))
+  ): Assertion = check(scalaTestToHedgehog(propertyA, test))
 
   /**
    * $forAllGenerators
@@ -173,8 +178,7 @@ trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
   def forAll[A](genA: Gen[A])(test: A => Any)(implicit
       config: PropertyConfig,
       pos: Position
-  ): Assertion =
-    forAll(genA.forAll)(test)(config, pos)
+  ): Assertion = forAll(genA.forAll)(test)(config, pos)
 
   /**
    * $forAllProperties
@@ -187,10 +191,7 @@ trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
   )(implicit
       config: PropertyConfig,
       pos: Position
-  ): Assertion =
-    check(forTupled(propertyA, propertyB).map { case (a, b) =>
-      scalaTestToHedgehog(test(a, b))
-    })
+  ): Assertion = forAll(forTupled(propertyA, propertyB))(test.tupled(_))
 
   /**
    * $forAllGenerators
@@ -201,7 +202,7 @@ trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
   def forAll[A, B](genA: Gen[A], genB: Gen[B])(test: (A, B) => Any)(implicit
       config: PropertyConfig,
       pos: Position
-  ): Assertion = forAll(genA.forAll, genB.forAll)(test)(config, pos)
+  ): Assertion = forAll(forTupled(genA, genB).forAll)(test.tupled(_))(config, pos)
 
   /**
    * $forAllProperties
@@ -219,9 +220,7 @@ trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
       config: PropertyConfig,
       pos: Position
   ): Assertion =
-    check(forTupled(propertyA, propertyB, propertyC).map { case (a, b, c) =>
-      scalaTestToHedgehog(test(a, b, c))
-    })
+    forAll(forTupled(propertyA, propertyB, propertyC))(test.tupled(_))
 
   /**
    * $forAllGenerators
@@ -234,8 +233,7 @@ trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
   )(implicit
       config: PropertyConfig,
       pos: Position
-  ): Assertion =
-    forAll(genA.forAll, genB.forAll, genC.forAll)(test)(config, pos)
+  ): Assertion = forAll(forTupled(genA, genB, genC))(test.tupled(_))
 
   /**
    * $forAllProperties
@@ -251,10 +249,7 @@ trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
   )(test: (A, B, C, D) => Any)(implicit
       config: PropertyConfig,
       pos: Position
-  ): Assertion =
-    check(forTupled(propertyA, propertyB, propertyC, propertyD).map { case (a, b, c, d) =>
-      scalaTestToHedgehog(test(a, b, c, d))
-    })
+  ): Assertion = forAll(forTupled(propertyA, propertyB, propertyC, propertyD))(test.tupled(_))
 
   /**
    * $forAllGenerators
@@ -270,8 +265,7 @@ trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
   )(test: (A, B, C, D) => Any)(implicit
       config: PropertyConfig,
       pos: Position
-  ): Assertion =
-    forAll(genA.forAll, genB.forAll, genC.forAll, genD.forAll)(test)(config, pos)
+  ): Assertion = forAll(forTupled(genA, genB, genC, genD))(test.tupled(_))
 
   /**
    * $forAllProperties
@@ -289,10 +283,7 @@ trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
       config: PropertyConfig = PropertyConfig.default,
       pos: Position
   ): Assertion =
-    check(forTupled(propertyA, propertyB, propertyC, propertyD, propertyE).map {
-      case (a, b, c, d, e) =>
-        scalaTestToHedgehog(test(a, b, c, d, e))
-    })
+    forAll(forTupled(propertyA, propertyB, propertyC, propertyD, propertyE))(test.tupled(_))
 
   /**
    * $forAllGenerators
@@ -310,10 +301,7 @@ trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
       config: PropertyConfig,
       pos: Position
   ): Assertion =
-    forAll(genA.forAll, genB.forAll, genC.forAll, genD.forAll, genE.forAll)(test)(
-      config,
-      pos
-    )
+    forAll(forTupled(genA, genB, genC, genD, genE))(test.tupled(_))
 
   /**
    * $forAllProperties
@@ -332,9 +320,9 @@ trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
       config: PropertyConfig,
       pos: Position
   ): Assertion =
-    check(forTupled(propertyA, propertyB, propertyC, propertyD, propertyE, propertyF).map {
-      case (a, b, c, d, e, f) => scalaTestToHedgehog(test(a, b, c, d, e, f))
-    })
+    forAll(forTupled(propertyA, propertyB, propertyC, propertyD, propertyE, propertyF))(
+      test.tupled(_)
+    )
 
   /**
    * $forAllGenerators
@@ -352,16 +340,10 @@ trait HedgehogDrivenPropertyChecks extends Whenever with HedgehogSupport {
   )(test: (A, B, C, D, E, F) => Any)(implicit
       config: PropertyConfig,
       pos: Position
-  ): Assertion = {
-    forAll(
-      genA.forAll,
-      genB.forAll,
-      genC.forAll,
-      genD.forAll,
-      genE.forAll,
-      genF.forAll
-    )(test)(config, pos)
-  }
+  ): Assertion =
+    forAll(forTupled(genA, genB, genC, genD, genE, genF))(
+      test.tupled(_)
+    )
 }
 
 object HedgehogDrivenPropertyChecks extends HedgehogDrivenPropertyChecks

@@ -46,6 +46,12 @@ class HedgehogDrivenPropertyChecksSuite
     }
   }
 
+  it("should correctly convert DiscardedTestExceptions to hedgehog discarded tests") {
+    intercept[GeneratorDrivenPropertyCheckFailedException] {
+      forAll(famousLastWords) { _ => whenever(false) { succeed } }
+    }
+  }
+
   it(
     "generator-driven property that takes 1 args, which succeeds, with testLimit set to 5"
   ) {

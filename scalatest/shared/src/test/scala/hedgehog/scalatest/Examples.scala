@@ -1,11 +1,15 @@
 package hedgehog.scalatest
 
+import hedgehog.Gen
 import hedgehog.core.PropertyConfig
-import hegehog.scalatest.HedgehogSupport
+import hegehog.scalatest.HedgehogDrivenPropertyChecks
+import org.scalatest.DoNotDiscover
 import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
 /** Runs the example tests from the example subproject using Scalatest */
-class Examples extends AnyFunSpec with HedgehogSupport {
+@DoNotDiscover // Not meant as a test suite, because it contains test that fail on purpose.
+class Examples extends AnyFunSpec with HedgehogDrivenPropertyChecks with Matchers {
 
   implicit val config: PropertyConfig = PropertyConfig.default
 
@@ -39,5 +43,10 @@ class Examples extends AnyFunSpec with HedgehogSupport {
         check(test)
       }
     }
+  }
+
+  it("should only generate event ints") {
+    val eventInts = for (n <- Gen.int(hedgehog.Range.linear(-1000, 1000))) yield 2 * n
+    forAll(eventInts) { n => n % 2 should equal(0) }
   }
 }
