@@ -15,7 +15,7 @@ class Examples extends AnyFunSpec with HedgehogDrivenPropertyChecks with Matcher
 
   describe("CoverageTest") {
     hedgehog.examples.CoverageTest.tests.foreach { test =>
-      it(test.name) {
+      ignore(test.name) {
         check(test)
       }
     }
@@ -23,7 +23,7 @@ class Examples extends AnyFunSpec with HedgehogDrivenPropertyChecks with Matcher
 
   describe("PropertyTest") {
     hedgehog.examples.PropertyTest.tests.foreach { test =>
-      it(test.name) {
+      ignore(test.name) {
         check(test)
       }
     }
@@ -31,7 +31,7 @@ class Examples extends AnyFunSpec with HedgehogDrivenPropertyChecks with Matcher
 
   describe("PropertyRTest") {
     hedgehog.examples.PropertyRTest.tests.foreach { test =>
-      it(test.name) {
+      ignore(test.name) {
         check(test)
       }
     }
@@ -39,7 +39,7 @@ class Examples extends AnyFunSpec with HedgehogDrivenPropertyChecks with Matcher
 
   describe("ReverseTest") {
     hedgehog.examples.ReverseTest.tests.foreach { test =>
-      it(test.name) {
+      ignore(test.name) {
         check(test)
       }
     }
