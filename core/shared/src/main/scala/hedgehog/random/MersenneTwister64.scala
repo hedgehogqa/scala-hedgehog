@@ -28,6 +28,8 @@ package hedgehog.random
 import java.nio.ByteBuffer
 import java.util.Arrays
 
+import scala.util.hashing.MurmurHash3
+
 final class MersenneTwister64 private(private val mt0: Array[Long], private val mti0: Int = 313) { // N + 1 = 313
 
   import MersenneTwister64._
@@ -38,7 +40,11 @@ final class MersenneTwister64 private(private val mt0: Array[Long], private val 
       case _ => false
     }
 
-  override def hashCode = mti0
+  /* Unlike the scalaprops original (which returns only mti0), hash the full state so
+   * that distinct states rarely collide - keep this on any re-sync with upstream.
+   */
+  override def hashCode: Int =
+    MurmurHash3.finalizeHash(MurmurHash3.mix(MurmurHash3.arrayHash(mt0), mti0), N + 1)
 
   def ===(that: MersenneTwister64): Boolean =
     (this.mti0 == that.mti0) && Arrays.equals(this.mt0, that.mt0)
