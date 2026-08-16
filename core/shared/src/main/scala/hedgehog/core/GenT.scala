@@ -19,6 +19,42 @@ case class GenT[A](run: (Size, Seed) => Tree[(Seed, Option[A])]) {
   def mapTree[B](f: Tree[(Seed, Option[A])] => Tree[(Seed, Option[B])]): GenT[B] =
     GenT((size, seed) => f(run(size, seed)))
 
+  /**
+   * Widens this generator to produce values of a supertype `B` of `A`.
+   *
+   * `GenT` is invariant, so a `Gen[Cat]` is not a `Gen[Animal]` even when
+   * `Cat` extends `Animal`. Use `widen` to combine generators of subtypes
+   * into a generator of their common supertype:
+   *
+   * {{{
+   * sealed trait Animal
+   * final case class Cat(name: String) extends Animal
+   * final case class Dog(name: String) extends Animal
+   *
+   * // Either name the supertype at each call site:
+   * val genAnimal: Gen[Animal] =
+   *   Gen.choice1(genCat.widen[Animal], genDog.widen[Animal])
+   *
+   * // or name it once on the combinator:
+   * val genAnimal2: Gen[Animal] =
+   *   Gen.choice1[Animal](genCat.widen, genDog.widen)
+   * }}}
+   *
+   * Prefer naming the target type explicitly, as in both examples above.
+   * Leaving it fully inferred (e.g. `Gen.choice1(genCat.widen, genDog.widen)`)
+   * may infer an unintended type such as `Animal with Product with Serializable`
+   * on Scala 2, while Scala 3 infers `Animal`.
+   *
+   * Sampling and shrinking are unchanged: the widened generator produces
+   * exactly the values and shrink tree of the original.
+   */
+  def widen[B >: A]: GenT[B] =
+    /* Safe: `A` occurs only in the output of `run`, so a `GenT[A]` is
+     * behaviourally a `GenT[B]` for any `B >: A`. Same approach as cats'
+     * `Functor.widen`.
+     */
+    this.asInstanceOf[GenT[B]]
+
   /**********************************************************************/
   // Shrinking
 
