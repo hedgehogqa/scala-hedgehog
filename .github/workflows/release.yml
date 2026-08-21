@@ -58,3 +58,23 @@ jobs:
           export PROJECT_VERSION=$(echo "$GITHUB_TAG" | sed 's/^v//')
 
           .github/workflows/publish.sh
+
+  create_github_release:
+    name: Create GitHub release
+    needs: build_and_publish
+    if: github.repository == 'hedgehogqa/scala-hedgehog' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Create release from tag
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --generate-notes
