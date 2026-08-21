@@ -1,4 +1,6 @@
-addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.11.1")
+addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.11.2")
+
+addSbtPlugin("com.eed3si9n" % "sbt-salad-days" % "0.2.0")
 
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.21.0")
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.3.2")
