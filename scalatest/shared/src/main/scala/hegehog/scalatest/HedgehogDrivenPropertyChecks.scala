@@ -41,7 +41,7 @@ import org.scalatest.prop.Whenever
  *  val numer = if (d < 0) -1 * n else n
  *  val denom = d.abs
  *
- *  override def toString = s"$numer / $denom"
+ *  override def toString = s"$$numer / $$denom"
  * }
  * }}}
  *
@@ -69,16 +69,15 @@ import org.scalatest.prop.Whenever
  * generators, or properties that need to be evaluated. The second parameter list contains the
  * property function to be checked, which takes as many parameters as there are generators or
  * properties in the first parameter list. The third parameter list contains an implicit
- * [[PropertyConfig]] object that provides configuration parameters for the property check, and an
+ * `hedgehog.core.PropertyConfig` object that provides configuration parameters for the property check, and an
  * implicit `Position` object that provides information about the source code position of the
  * `forAll` invocation.
  *
  * The `forAll` methods use the supplied generators to generate example arguments and pass them to
- * the property function, and generate a
- * [[org.scalatest.exceptions.GeneratorDrivenPropertyCheckFailedException]] if the function
+ * the property function, and generate a `org.scalatest.exceptions.TestFailedException` if the function
  * completes abruptly for any exception that would normally cause a test to fail in ScalaTest other
- * than [[org.scalatest.exceptions.DiscardedEvaluationException]]. A `DiscardedEvaluationException`,
- * which is thrown by the `whenever` method (defined in trait [[org.scalatest.prop.Whenever]], which
+ * than `org.scalatest.exceptions.DiscardedEvaluationException`. A `DiscardedEvaluationException`,
+ * which is thrown by the `whenever` method (defined in trait `org.scalatest.prop.Whenever`, which
  * this trait extends) to indicate a condition required by the property function is not met by a row
  * of passed data, will simply cause `forAll` to discard that row of data. Other meta-exceptions to
  * cancel or mark a test as pending will be marked as errors. Exceptions cannot escape from the
@@ -134,7 +133,7 @@ import org.scalatest.prop.Whenever
  * <a name="propCheckConfig"></a><h2>Property check configuration</h2>
  *
  * The property checks performed by the `forAll` methods of this trait can be flexibly configured
- * via implicitly passing a [[PropertyConfig]] object to the `forAll` method.
+ * via implicitly passing a `hedgehog.core.PropertyConfig` object to the `forAll` method.
  *
  * @define forAllProperties
  *   Performs a property check by applying the specified property test function to arguments
