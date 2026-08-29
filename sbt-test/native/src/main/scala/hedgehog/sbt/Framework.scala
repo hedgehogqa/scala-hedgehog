@@ -1,7 +1,5 @@
 package hedgehog.sbt
 
-import java.io.{PrintStream, PrintWriter}
-
 import hedgehog._
 import hedgehog.core._
 import hedgehog.runner._
@@ -143,7 +141,9 @@ object Event {
   def fromReport(taskDef: sbtt.TaskDef, selector: sbtt.Selector, report: Report, duration: Long): Event = {
     val (status, maybeThrowable) = report.status match {
       case Failed(_, log) =>
-        (sbtt.Status.Failure, Some[Throwable](new MessageOnlyException(log.map(Test.renderLog).mkString("\n"))))
+        val e = new MessageOnlyException(log.map(Test.renderLog).mkString("\n"))
+        e.setStackTrace(sourceLocationStackTrace(taskDef, selector, log))
+        (sbtt.Status.Failure, Some[Throwable](e))
       case GaveUp =>
         (sbtt.Status.Error, None)
       case OK =>
@@ -151,18 +151,42 @@ object Event {
     }
     Event(taskDef.fullyQualifiedName(), taskDef.fingerprint(), selector, status, maybeThrowable, duration)
   }
+
+  /**
+    * One frame per source location captured at a failing assertion, so an IDE can jump
+    * straight to it. The array is set even when it is empty, so that a failure without
+    * any captured location does not fall back to the meaningless frames from in here.
+    */
+  private def sourceLocationStackTrace(
+      taskDef: sbtt.TaskDef
+    , selector: sbtt.Selector
+    , log: List[Log]
+    ): Array[StackTraceElement] = {
+    val methodName =
+      selector match {
+        case ts: sbtt.TestSelector =>
+          ts.testName()
+        case _ =>
+          "<unknown>"
+      }
+    log.collect { case SourceLocation(pos) =>
+      new StackTraceElement(taskDef.fullyQualifiedName(), methodName, pos.fileName, pos.line)
+    }.toArray
+  }
 }
 
 /**
-  * This exception ignores printStackTrace with the given PrintStream or PrintWriter argument
-  * in order to avoid printing noisy and meaningless stacktrace
-  * which is done in writing a JUnit test report XML file.
+  * This exception carries the rendered failure message, plus a stack trace synthesised from
+  * the source locations captured at the failing assertions - at most one frame per failure,
+  * and none at all when no location was captured.
+  *
+  * It used to suppress printStackTrace entirely to keep the JUnit test report XML free of a
+  * noisy and meaningless stacktrace. That is no longer necessary now that the trace is
+  * synthesised rather than filled in from wherever this happened to be constructed, and
+  * letting it print is what makes the failure navigable.
   *
   * Reference:
   * - https://github.com/hedgehogqa/scala-hedgehog/pull/93#issuecomment-512032204
   * - https://github.com/sbt/sbt/blob/d4df289f2d6a0b8f6582346f331cd44408112c95/testing/src/main/scala/sbt/JUnitXmlTestsListener.scala#L128
   */
-class MessageOnlyException(message: String) extends Exception(message) {
-  override def printStackTrace(err: PrintStream): Unit = ()
-  override def printStackTrace(err: PrintWriter): Unit = ()
-}
+class MessageOnlyException(message: String) extends Exception(message)

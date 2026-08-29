@@ -94,6 +94,7 @@ Check it!
 ```
 - Spec$.property: Falsified after 8 passed tests
 > -1
+> file:///home/username/proj/src/test/scala/Spec.scala:4
 > === Not Equal ===
 > --- lhs ---
 > 1.0
@@ -179,9 +180,15 @@ def testAdd: Result =
 
 ```
 Spec$.add: Falsified after 1 passed tests
+> file:///home/username/proj/src/test/scala/Spec.scala:2
 ```
 
-That's it? What about a useful message telling us what failed?
+At least we are told where to look. That location line is the absolute path and
+line number of the assertion that failed, so most terminals and editors will turn
+it into a link you can click straight through to. See
+[Failure locations](#failure-locations) below.
+
+It still doesn't tell us what the values actually were, though.
 For starters, given that we're just doing an assertion Hedgehog comes with the
 convenient `====` (quadruple `=`s) operator:
 
@@ -192,6 +199,7 @@ def testAdd: Result =
 
 ```
 Spec$.testAdd: Falsified after 1 passed tests
+> file:///home/username/proj/src/test/scala/Spec.scala:2
 > === Not Equal ===
 > --- lhs ---
 > 3
@@ -213,6 +221,7 @@ def testAdd: Result =
 
 ```
 Spec$.testAdd: Falsified after 1 passed tests
+> file:///home/username/proj/src/test/scala/Spec.scala:2
 > === Failed ===
 > --- lhs ---
 > 3
@@ -227,6 +236,7 @@ def a1GtA2: Result =
 
 ```
 Spec$.a1GtA2: Falsified after 0 passed tests
+> file:///home/username/proj/src/test/scala/Spec.scala:2
 > === Failed ===
 > --- lhs ---
 > 3
@@ -243,6 +253,7 @@ Result.diffNamed("=== Not Equal ===", 1 + 2, 3 + 4)(_ == _)
 ```
 ```
 Spec$.testAdd: Falsified after 1 passed tests
+> file:///home/username/proj/src/test/scala/Spec.scala:1
 > === Not Equal ===
 > --- lhs ---
 > 3
@@ -251,6 +262,43 @@ Spec$.testAdd: Falsified after 1 passed tests
 ```
 
 In fact, `====` internally uses the `diffNamed` method.
+
+#### Failure locations
+
+Every failure log opens with the location of the assertion which produced it:
+
+```
+> file:///home/username/proj/src/test/scala/Spec.scala:17
+```
+
+It is written as a `file://` URI because that is the form editors and terminals
+both recognise. In iTerm2 it is cmd-clickable once
+[semantic history](https://alexn.org/blog/2021/07/18/iterm-open-file-cmd-click-ide-semantic-history/)
+is configured, and in IntelliJ IDEA clicking it navigates to the exact line. The
+sbt test framework attaches the same locations to the failure it reports, so an
+IDE test runner can also jump straight to the assertion from the test tree.
+
+Space, `%`, `#` and `?` are percent-encoded, since each would otherwise cut the
+link short. Everything else is left as written, so paths containing Korean,
+Japanese or accented characters stay readable rather than turning into a wall of
+`%XX`.
+
+On Windows the form is `file:///C:/...`, with the separators flipped. That form
+follows the file URI specification but has not been tested on Windows.
+
+The location points at the assertion itself rather than at the test declaration,
+and there is one for each failing assertion. A few details worth knowing:
+
+* `.log(...)` never moves the reported line. When `(a ==== b)` sits on one line
+  and `.log("...")` on the next, the line reported is the one with the `====`.
+* An infix operator split over two lines follows the operator, not the left hand
+  operand.
+* `Result.all` reports one location per failing element, in order, so you can see
+  exactly which of them failed.
+* An assertion whose call spans several lines reports its first line on Scala 2
+  and its last line on Scala 3. Both land inside the same expression.
+* `Result.error` records no location, since the exception it carries already has
+  a stack trace of its own.
 
 #### Logging
 
@@ -309,6 +357,7 @@ val complexProp: Property =
 - Spec.property: Falsified after 0 passed tests.
 > m: 0
 > n: 0
+> file:///home/username/proj/src/test/scala/Spec.scala:10
 > result not sum
 ```
 
@@ -343,7 +392,9 @@ When we check the property, Hedgehog tells us the following:
 - Spec$.example: Falsified after 0 passed tests.
 > n: 1
 > n: 1
+> file:///home/username/proj/src/test/scala/Spec.scala:11
 > lt1
+> file:///home/username/proj/src/test/scala/Spec.scala:12
 > lt2
 > evidence = 1
 ```
@@ -608,6 +659,7 @@ Now, run the tests:
 ```
 - Spec$.example: Falsified after 5 passed tests
 > l: List(0,0)
+> file:///home/username/proj/src/test/scala/Spec.scala:4
 > === Not Equal ===
 > --- lhs ---
 > List(0,0)

@@ -28,8 +28,11 @@ object Runner {
     }
   }
 
+  /* Built directly rather than via `Result.failure`: a macro cannot expand inside the
+   * module which defines it, so no code in hedgehog-core can summon a `SourcePos`.
+   */
   def executionErrorToResult(e: ExecutionError): Result =
-    Result.failure.log(renderExecutionError(e))
+    Result.Failure(List(Info(renderExecutionError(e))))
 
   def renderExecutionError(ee: ExecutionError): String =
     ee match {

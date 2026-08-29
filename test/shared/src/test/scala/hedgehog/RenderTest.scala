@@ -17,8 +17,12 @@ object RenderTest extends Properties {
     , example("renderExample joins ForAll and Info logs in order with ', '", testRenderExampleMixedLogs)
     , property("property test renderExample joins ForAll and Info logs in order with ', '", propertyTestRenderExampleMixedLogs)
     , example("renderCoverage renders each label's example logs separated by ', '", testRenderCoverageMultipleLogs)
+    , example("renderLog renders a SourceLocation as path:line", testRenderLogSourceLocation)
     , property("property test renderCoverage renders each label's example logs separated by ', '", propertyTestRenderCoverageMultipleLogs)
     )
+
+  def testRenderLogSourceLocation: Result =
+    Test.renderLog(SourceLocation(SourcePos("/a/b/Spec.scala", "Spec.scala", 17))) ==== "file:///a/b/Spec.scala:17"
 
   def testRenderExampleNoLogs: Result =
     Result.all(List(

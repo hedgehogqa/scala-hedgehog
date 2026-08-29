@@ -28,7 +28,9 @@ object PropertyTest extends Properties {
     } yield Result.assert(y < 87 && x <= 'r'), seed)
     r ==== Report(SuccessCount(2), DiscardCount(4), Coverage.empty, Examples.empty, Failed(ShrinkCount(2), List(
         ForAll("x", "s")
-      , ForAll("y", "1"))
+      , ForAll("y", "1")
+      // `SourceLocation` equality ignores the position, so any `SourcePos` will do here.
+      , SourceLocation(SourcePos.unknown))
       ))
   }
 
@@ -44,7 +46,9 @@ object PropertyTest extends Properties {
     )}, seed)
     r ==== Report(SuccessCount(2), DiscardCount(4), Coverage.empty, Examples.empty, Failed(ShrinkCount(2), List(
         ForAll("x", "s")
-      , ForAll("y", "1"))
+      , ForAll("y", "1")
+      // `SourceLocation` equality ignores the position, so any `SourcePos` will do here.
+      , SourceLocation(SourcePos.unknown))
       ))
   }
 
@@ -57,7 +61,7 @@ object PropertyTest extends Properties {
         Gen.int(Range.linear(0, 10)).log("x")
       , Gen.int(Range.linear(0, 10)).log("y")
       ).map { case (x, y) => Result.assert(x < y) })
-      statusLog(r.status) ==== List(ForAll("x", "0"), ForAll("y", "0"))
+      statusLog(r.status) ==== List(ForAll("x", "0"), ForAll("y", "0"), SourceLocation(SourcePos.unknown))
     }
   }
 
@@ -68,7 +72,7 @@ object PropertyTest extends Properties {
       x <- Gen.int(Range.linear(0, 10)).log("x")
       y <- Gen.int(Range.linear(0, 10)).log("y")
     } yield Result.assert(x < y))
-    statusLog(r.status) ==== List(ForAll("x", "7"), ForAll("y", "0"))
+    statusLog(r.status) ==== List(ForAll("x", "7"), ForAll("y", "0"), SourceLocation(SourcePos.unknown))
   }
 
   case class USD(value: Long)
@@ -112,12 +116,14 @@ object PropertyTest extends Properties {
       , seed)
     r ==== Report(SuccessCount(1), DiscardCount(0), Coverage.empty, Examples.empty, Failed(ShrinkCount(4), List(
         ForAll("cheap", "Order(List())")
-      , ForAll("expensive", "Order(List(Item(oculus,USD(1000))))"
-      ))))
+      , ForAll("expensive", "Order(List(Item(oculus,USD(1000))))")
+      , SourceLocation(SourcePos.unknown)
+      )))
   }
 
   def fail: Result =
-    Property.checkRandom(PropertyConfig.default, Property.point(Result.failure)).status ==== Failed(ShrinkCount(0), Nil)
+    Property.checkRandom(PropertyConfig.default, Property.point(Result.failure)).status ====
+      Failed(ShrinkCount(0), List(SourceLocation(SourcePos.unknown)))
 
   def statusLog(s: Status): List[Log]=
     s match {

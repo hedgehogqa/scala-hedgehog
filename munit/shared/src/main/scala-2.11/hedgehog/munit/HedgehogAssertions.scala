@@ -3,6 +3,7 @@ package munit
 
 import hedgehog.{core => hc}
 import _root_.munit.Assertions
+import hedgehog.core.SourcePos
 
 import java.{lang => jl}
 
@@ -77,7 +78,7 @@ trait HedgehogAssertions { self: Assertions =>
     * @see
     *   hedgehog.core.Result.failure
     */
-  def failure = Result.failure
+  def failure(implicit pos: SourcePos) = Result.failure
 
   /** Alias for Result.error
     *
@@ -105,14 +106,17 @@ trait HedgehogAssertions { self: Assertions =>
     * @see
     *   hedgehog.core.Result.diff
     */
-  def diff[A, B](a: A, b: B)(f: (A, B) => Boolean) = Result.diff(a, b)(f)
+  def diff[A, B](a: A, b: B)(f: (A, B) => Boolean)(implicit pos: SourcePos) =
+    Result.diff(a, b)(f)
 
   /** Alias for Result.diffNamed
     *
     * @see
     *   hedgehog.core.Result.diffNamed
     */
-  def diffNamed[A, B](logName: String, a: A, b: B)(f: (A, B) => Boolean) =
+  def diffNamed[A, B](logName: String, a: A, b: B)(f: (A, B) => Boolean)(implicit
+      pos: SourcePos
+  ) =
     Result.diffNamed(logName, a, b)(f)
 
   /** Fails the test with a failure Result when `cond` is `false`.
@@ -131,7 +135,7 @@ trait HedgehogAssertions { self: Assertions =>
     "Clues are unnecessary with hedgehog. Use HedgehogAssertions.diff, which will automatically output clues",
     ""
   )
-  def assert(cond: => Boolean, clue: => Any): Result =
+  def assert(cond: => Boolean, clue: => Any)(implicit pos: SourcePos): Result =
     Result.assert(
       cond
     )
@@ -142,7 +146,7 @@ trait HedgehogAssertions { self: Assertions =>
     * @return
     *   Success iff cond is true. Failure otherwise.
     */
-  def assert(cond: => Boolean): Result = Result.assert(cond)
+  def assert(cond: => Boolean)(implicit pos: SourcePos): Result = Result.assert(cond)
 
   /** Fails the test if `obtained` and `expected` are non-equal using `==`.
     *
@@ -166,7 +170,8 @@ trait HedgehogAssertions { self: Assertions =>
     ""
   )
   def assertEquals[A, B](obtained: A, expected: B, clue: => Any)(implicit
-      ev: B <:< A
+      ev: B <:< A,
+      pos: SourcePos
   ): Result = assertEquals(obtained, expected)
 
   /** Fails the test if `obtained` and `expected` are non-equal using `==`.
@@ -179,7 +184,8 @@ trait HedgehogAssertions { self: Assertions =>
     *   Success iff obtained == expected. Failure otherwise.
     */
   def assertEquals[A, B](obtained: A, expected: B)(implicit
-      ev: B <:< A
+      ev: B <:< A,
+      pos: SourcePos
   ): Result =
     diff(obtained, expected)(_ == _)
 
@@ -212,7 +218,7 @@ trait HedgehogAssertions { self: Assertions =>
       expected: Double,
       delta: Double,
       clue: => Any
-  ): Result = diffDouble(obtained, expected, delta)
+  )(implicit pos: SourcePos): Result = diffDouble(obtained, expected, delta)
 
   /** Asserts two doubles are equal +- some erorr value.
     *
@@ -230,7 +236,7 @@ trait HedgehogAssertions { self: Assertions =>
       obtained: Double,
       expected: Double,
       delta: Double = 0.00
-  ): Result =
+  )(implicit pos: SourcePos): Result =
     diff(obtained, expected) { (a, b) =>
       jl.Double.compare(expected, obtained) == 0 || Math.abs(
         expected - obtained
@@ -264,7 +270,7 @@ trait HedgehogAssertions { self: Assertions =>
       expected: Float,
       delta: Float,
       clue: => Any
-  ): Result = diffFloat(obtained, expected, delta)
+  )(implicit pos: SourcePos): Result = diffFloat(obtained, expected, delta)
 
   /** Float specialized version of HedgehogAssertions.assertEquals.
     *
@@ -280,7 +286,9 @@ trait HedgehogAssertions { self: Assertions =>
     *   Success iff obtained approximately equals expected +- delta. Failure
     *   otherwise.
     */
-  def diffFloat(obtained: Float, expected: Float, delta: Float = 0.0f): Result =
+  def diffFloat(obtained: Float, expected: Float, delta: Float = 0.0f)(implicit
+      pos: SourcePos
+  ): Result =
     Result.diff(obtained, expected) { (a, b) =>
       jl.Float.compare(a, b) == 0 || Math.abs(expected - obtained) <= delta
     }
@@ -302,7 +310,9 @@ trait HedgehogAssertions { self: Assertions =>
     "Clues are unnecessary with hedgehog. Use HedgehogAssertions.diff, which will automatically output clues",
     ""
   )
-  def assertNoDiff(obtained: String, expected: String, clue: => Any): Result =
+  def assertNoDiff(obtained: String, expected: String, clue: => Any)(implicit
+      pos: SourcePos
+  ): Result =
     assertNoDiff(obtained, expected)
 
   /** Asserts two strings are equal.
@@ -314,7 +324,9 @@ trait HedgehogAssertions { self: Assertions =>
     * @return
     *   Success iff actual is obtained. Failure otherwise.
     */
-  def assertNoDiff(obtained: String, expected: String): Result = assert(
+  def assertNoDiff(obtained: String, expected: String)(implicit
+      pos: SourcePos
+  ): Result = assert(
     obtained == expected
   )
 
@@ -338,7 +350,8 @@ trait HedgehogAssertions { self: Assertions =>
     ""
   )
   def assertNotEquals[A, B](obtained: A, expected: B, clue: => Any)(implicit
-      ev: A =:= B
+      ev: A =:= B,
+      pos: SourcePos
   ): Result = assertNotEquals(obtained, expected)
 
   /** Asserts two values are nonequal.
@@ -353,7 +366,8 @@ trait HedgehogAssertions { self: Assertions =>
     *   Success iff obtained != actua.
     */
   def assertNotEquals[A, B](obtained: A, expected: B)(implicit
-      ev: A =:= B
+      ev: A =:= B,
+      pos: SourcePos
   ): Result = diff(obtained, expected)(_ != _)
 
   /** Fails a test.
@@ -368,7 +382,7 @@ trait HedgehogAssertions { self: Assertions =>
     *   Failure, always.
     */
   def fail(message: String, cause: Throwable): Result =
-    failure.log(hc.Error(new Exception(message, cause)))
+    Result.error(new Exception(message, cause))
 
   /** Fails a test with the given message
     *
@@ -377,6 +391,6 @@ trait HedgehogAssertions { self: Assertions =>
     *   Failure, always.
     */
   def fail(message: String): Result =
-    failure.log(hc.Error(new Exception(message)))
+    Result.error(new Exception(message))
 
 }

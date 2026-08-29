@@ -17,6 +17,36 @@ case class ForAll(name: Name, value: String) extends Log
 case class Info(value: String) extends Log
 case class Error(value: Exception) extends Log
 
+/**
+ * The location in the source file of the assertion which failed.
+ *
+ * Equality deliberately ignores the `SourcePos` it carries, so any two
+ * `SourceLocation` values are equal. A location is provenance for a failure
+ * rather than part of the logical outcome, and making it significant would mean
+ * that two otherwise identical `Result`s written on different lines compared
+ * unequal.
+ */
+final class SourceLocation(val pos: SourcePos) extends Log {
+
+  override def equals(other: Any): Boolean =
+    other.isInstanceOf[SourceLocation]
+
+  override def hashCode: Int =
+    "SourceLocation".hashCode
+
+  override def toString: String =
+    "SourceLocation(" + pos.toString + ")"
+}
+
+object SourceLocation {
+
+  def apply(pos: SourcePos): SourceLocation =
+    new SourceLocation(pos)
+
+  def unapply(l: SourceLocation): Option[SourcePos] =
+    Some(l.pos)
+}
+
 object Log {
 
   implicit def String2Log(s: String): Log =
