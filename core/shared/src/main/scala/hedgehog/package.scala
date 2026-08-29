@@ -34,10 +34,10 @@ package object hedgehog extends ApplicativeSyntax {
   implicit class Syntax[A](private val a1: A) extends AnyVal {
 
     // FIX Is there a way to get this to work with PropertyT and type-inference?
-    def ====(a2: A): Result =
+    def ====(a2: A)(implicit pos: SourcePos): Result =
       Result.diffNamed("=== Not Equal ===", a1, a2)(_ == _)
 
-    def matchPattern(right: PartialFunction[A, _]): Result =
+    def matchPattern(right: PartialFunction[A, _])(implicit pos: SourcePos): Result =
       if (right.isDefinedAt(a1)) Result.success else Result.failure
 
   }

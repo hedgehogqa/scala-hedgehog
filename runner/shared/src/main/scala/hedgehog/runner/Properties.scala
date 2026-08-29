@@ -80,6 +80,11 @@ object Test {
         s"${name.value}: $value"
       case Info(value) =>
         value
+      /* A type pattern rather than `SourceLocation(pos)`: the exhaustivity checker
+       * cannot see through a hand-written `unapply`.
+       */
+      case l: SourceLocation =>
+        l.pos.fileUri + ":" + l.pos.line.toString
       case Error(e) =>
         val sw = new java.io.StringWriter()
         e.printStackTrace(new java.io.PrintWriter(sw))

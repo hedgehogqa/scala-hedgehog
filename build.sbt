@@ -35,6 +35,16 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     standardSettings ++ Seq(
       name := "hedgehog-core",
+      /* Required only to compile the Scala 2 `SourcePos` macro. `Provided` keeps it off
+       * downstream compile classpaths, and avoids leaking a `scalaVersion`-pinned
+       * transitive dependency. Scala 3 needs nothing: `inline` is built into the language.
+       */
+      libraryDependencies ++= (
+        if (scalaVersion.value.startsWith("3."))
+          Seq.empty[ModuleID]
+        else
+          Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided)
+      ),
     ),
   )
 lazy val coreJVM = core.jvm
@@ -141,6 +151,8 @@ lazy val testNative = test.native.settings(nativeSettings)
 lazy val docs = (project in file("generated-docs"))
   .enablePlugins(MdocPlugin, DocusaurPlugin, ScalaUnidocPlugin)
   .settings(
+    scalaVersion := props.ProjectScalaVersion,
+    scalacOptions ++= Seq("-language:experimental.macros"),
     name := "docs",
     addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.4" cross CrossVersion.full),
     mdocVariables := Map(
@@ -188,7 +200,6 @@ lazy val compilationSettings = Seq(
         "-unchecked",
         "-feature",
         "-Xfatal-warnings",
-        "-source:3.0-migration",
         "-Ykind-projector",
         "-language:" + List(
           "dynamics",
