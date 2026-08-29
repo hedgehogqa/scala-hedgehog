@@ -146,7 +146,8 @@ lazy val docs = (project in file("generated-docs"))
     mdocVariables := Map(
       "VERSION" -> {
         import sys.process._
-        "git fetch --tags".!
+        val isCi = sys.env.get("CI").flatMap(ci => scala.util.Try(ci.toBoolean).toOption).getOrElse(false)
+        val _ = if (isCi) "git fetch --tags".! else 0
         val tag = "git rev-list --tags --max-count=1".!!.trim
         s"git describe --tags $tag".!!.trim.stripPrefix("v")
       },
