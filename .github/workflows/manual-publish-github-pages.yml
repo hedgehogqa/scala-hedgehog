@@ -38,14 +38,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-${{ matrix.node.version }}
 
-      - name: Create Algolia verification config
+      - name: Create Algolia site verification config
         env:
           ALGOLIA_SITE_VERIFICATION: ${{ secrets.ALGOLIA_SITE_VERIFICATION }}
         run: |
-          jq -n \
-          --arg content "$ALGOLIA_SITE_VERIFICATION" \
-          '{name: "algolia-site-verification", content: $content}' \
-          > website/algolia-site-verification.json
+          if [[ -n "$ALGOLIA_SITE_VERIFICATION" ]]; then
+            jq -n \
+              --arg content "$ALGOLIA_SITE_VERIFICATION" \
+              '{
+                tagName: "meta",
+                attributes: {
+                  name: "algolia-site-verification",
+                  content: $content
+                }
+              }' > website/algolia-site-verification.json
+          else
+            echo '{}' > website/algolia-site-verification.json
+          fi
 
       - name: Build and publish website
         env:
