@@ -5,6 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const algoliaConfig = require('./algolia.config.json');
 const googleAnalyticsConfig = require('./google-analytics.config.json');
+const algoliaSiteVerification = require('./algolia-site-verification.json');
 
 const lightCodeTheme = prismThemes.nightOwlLight;
 const darkCodeTheme = prismThemes.nightOwl;
@@ -112,6 +113,9 @@ const websiteConfig = {
   ],
   plugins: [
     require.resolve('docusaurus-lunr-search'),
+  ],
+  headTags: [
+    ...(Object.keys(algoliaSiteVerification).length > 0 ? [algoliaSiteVerification]: []),
   ],
 };
 
