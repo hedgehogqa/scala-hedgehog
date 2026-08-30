@@ -38,6 +38,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-${{ matrix.node.version }}
 
+      - name: Create Algolia verification config
+        env:
+          ALGOLIA_SITE_VERIFICATION: ${{ secrets.ALGOLIA_SITE_VERIFICATION }}
+        run: |
+          jq -n \
+          --arg content "$ALGOLIA_SITE_VERIFICATION" \
+          '{name: "algolia-site-verification", content: $content}' \
+          > website/algolia-site-verification.json
+
       - name: Build and publish website
         env:
           ALGOLIA_API_KEY: ${{ secrets.ALGOLIA_API_KEY }}
