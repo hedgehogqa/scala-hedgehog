@@ -53,5 +53,5 @@ object SourceRootTest extends Properties {
       "src\\Spec.scala"
 
   def testUnknown: Result =
-    SourceRoot.relativize(SourcePos.unknown.filePath, "/home/u/proj") ==== "<unknown>"
+    SourceRoot.relativize(SourcePos.unknown.relativePath, "/home/u/proj") ==== "<unknown>"
 }

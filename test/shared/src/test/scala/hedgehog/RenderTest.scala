@@ -17,13 +17,22 @@ object RenderTest extends Properties {
     , example("renderExample joins ForAll and Info logs in order with ', '", testRenderExampleMixedLogs)
     , property("property test renderExample joins ForAll and Info logs in order with ', '", propertyTestRenderExampleMixedLogs)
     , example("renderCoverage renders each label's example logs separated by ', '", testRenderCoverageMultipleLogs)
-    , example("renderLog renders a SourceLocation as two lines, absolute URI then relative path", testRenderLogSourceLocation)
+    , example("renderLog renders a SourceLocation as the relative path and line", testRenderLogSourceLocation)
+    , example("renderFailureLog renders a SourceLocation as the relative path then a stack frame", testRenderFailureLogSourceLocation)
+    , example("renderFailureLog wraps any other log in a single line", testRenderFailureLogOtherLog)
     , property("property test renderCoverage renders each label's example logs separated by ', '", propertyTestRenderCoverageMultipleLogs)
     )
 
   def testRenderLogSourceLocation: Result =
-    Test.renderLog(SourceLocation(SourcePos("/a/b/Spec.scala", "b/Spec.scala", "Spec.scala", 17))) ====
-      "file:///a/b/Spec.scala:17\nb/Spec.scala:17"
+    Test.renderLog(SourceLocation(SourcePos("b/Spec.scala", "Spec.scala", 17))) ====
+      "b/Spec.scala:17"
+
+  def testRenderFailureLogSourceLocation: Result =
+    Test.renderFailureLog("pkg.Spec$.someTest", SourceLocation(SourcePos("b/Spec.scala", "Spec.scala", 17))) ====
+      List("b/Spec.scala:17", "at pkg.Spec$.someTest(Spec.scala:17)")
+
+  def testRenderFailureLogOtherLog: Result =
+    Test.renderFailureLog("pkg.Spec$.someTest", Info("hello")) ==== List("hello")
 
   def testRenderExampleNoLogs: Result =
     Result.all(List(

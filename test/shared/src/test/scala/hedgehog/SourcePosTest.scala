@@ -42,20 +42,14 @@ object SourcePosTest extends Properties {
     r.logs.collect { case SourceLocation(pos) => pos }
 
   /**
-   * Every location must name this file - by simple name, by absolute path, and by path relative
-   * to the build root.
+   * Every location must name this file - by simple name, and by path relative to the build root.
+   *
+   * No absolute path is stored at all, so there is nothing else to check.
    */
   def wellFormed(pos: SourcePos): Result =
     Result.all(List(
       pos.fileName ==== "SourcePosTest.scala"
-    , Result.assert(pos.filePath.startsWith("/")).log(s"not absolute: ${pos.filePath}")
-    , Result.assert(pos.filePath.endsWith("/" + pos.fileName)).log(s"path/name mismatch: ${pos.filePath}")
-      // No path in this repository contains a character which gets encoded, so the
-      // two representations differ only by the scheme.
-    , pos.fileUri ==== "file://" + pos.filePath
     , pos.relativePath ==== thisFileRelativePath
-    , Result.assert(pos.filePath.endsWith("/" + pos.relativePath))
-        .log(s"relative path is not a suffix of the absolute one: ${pos.filePath}")
     ))
 
   def onlyLocationAt(r: Result, expectedLine: Int): Result =
@@ -67,33 +61,33 @@ object SourcePosTest extends Properties {
     }
 
   def testEqualsEquals: Result = {
-    val r = 1 ==== 2 // line 70
-    onlyLocationAt(r, 70)
+    val r = 1 ==== 2 // line 64
+    onlyLocationAt(r, 64)
   }
 
   def testAssert: Result = {
-    val r = Result.assert(false) // line 75
-    onlyLocationAt(r, 75)
+    val r = Result.assert(false) // line 69
+    onlyLocationAt(r, 69)
   }
 
   def testDiff: Result = {
-    val r = Result.diff(1, 2)(_ == _) // line 80
-    onlyLocationAt(r, 80)
+    val r = Result.diff(1, 2)(_ == _) // line 74
+    onlyLocationAt(r, 74)
   }
 
   def testDiffNamed: Result = {
-    val r = Result.diffNamed("=== Nope ===", 1, 2)(_ == _) // line 85
-    onlyLocationAt(r, 85)
+    val r = Result.diffNamed("=== Nope ===", 1, 2)(_ == _) // line 79
+    onlyLocationAt(r, 79)
   }
 
   def testFailure: Result = {
-    val r = Result.failure // line 90
-    onlyLocationAt(r, 90)
+    val r = Result.failure // line 84
+    onlyLocationAt(r, 84)
   }
 
   def testMatchPattern: Result = {
-    val r = "abc".matchPattern { case "xyz" => } // line 95
-    onlyLocationAt(r, 95)
+    val r = "abc".matchPattern { case "xyz" => } // line 89
+    onlyLocationAt(r, 89)
   }
 
   def testErrorHasNoLocation: Result = {
@@ -117,27 +111,27 @@ object SourcePosTest extends Properties {
     }
 
   def testEqualityIgnoresPosition: Result =
-    SourceLocation(SourcePos("/a/A.scala", "a/A.scala", "A.scala", 1)) ====
-      SourceLocation(SourcePos("/b/B.scala", "b/B.scala", "B.scala", 2))
+    SourceLocation(SourcePos("a/A.scala", "A.scala", 1)) ====
+      SourceLocation(SourcePos("b/B.scala", "B.scala", 2))
 
   def testChainedLogDoesNotMoveLine: Result = {
-    val r = (1 ==== 2) // line 124
+    val r = (1 ==== 2) // line 118
       .log("a should be equal to b")
-    onlyLocationAt(r, 124)
+    onlyLocationAt(r, 118)
   }
 
   def testChainedLogDoesNotMoveLineForAssert: Result = {
-    val r = Result.assert(1 == 2) // line 130
+    val r = Result.assert(1 == 2) // line 124
       .log("a should be equal to b")
-    onlyLocationAt(r, 130)
+    onlyLocationAt(r, 124)
   }
 
   def testAllRecordsEachElement: Result = {
     val r = Result.all(List(
       1 ==== 1 // passes, contributes nothing
-    , 2 ==== 3 // line 138
-    , 4 ==== 5 // line 139
+    , 2 ==== 3 // line 132
+    , 4 ==== 5 // line 133
     ))
-    locations(r).map(_.line) ==== List(138, 139)
+    locations(r).map(_.line) ==== List(132, 133)
   }
 }

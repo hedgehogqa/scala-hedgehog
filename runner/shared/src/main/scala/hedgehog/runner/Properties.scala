@@ -50,29 +50,34 @@ object Test {
     }
 
   def renderReport(className: String, t: Test, report: Report, ansiCodesSupported: Boolean): String = {
+    val qualifiedName = className + "." + t.name
+
     def render(ok: Boolean, msg: String, extraS: List[String]): String = {
-      val name = className + "." + t.name
       val sym = if (ok) "+" else "-"
       val colour = if (ok) Console.GREEN else Console.RED
-      /* Split on newlines so that a log entry which renders as more than one line - a stack trace,
-       * or a source location in both of its forms - has every line prefixed rather than only its
-       * first. `-1` keeps trailing empty segments, so an entry which renders as "" still produces
-       * a "> " line, exactly as it did before.
+      /* Split on newlines so that a log entry which renders as more than one line - an `Error`'s
+       * stack trace - has every line prefixed rather than only its first. `-1` keeps trailing
+       * empty segments, so an entry which renders as "" still produces a "> " line, exactly as it
+       * did before.
        */
       val extra =
         if (extraS.isEmpty) ""
         else "\n" + extraS.flatMap(_.split("\n", -1).toList).map(s => "> " + s).mkString("\n")
       if(ansiCodesSupported) {
-        s"$colour$sym${Console.RESET} $name: $msg$extra"
+        s"$colour$sym${Console.RESET} $qualifiedName: $msg$extra"
       } else {
-        s"$sym $name: $msg$extra"
+        s"$sym $qualifiedName: $msg$extra"
       }
     }
 
     val coverage = renderCoverage(report.coverage, report.tests, report.examples)
     report.status match {
       case Failed(shrinks, log) =>
-        render(false, s"Falsified after ${report.tests.value} passed tests", log.map(renderLog) ++ coverage)
+        render(
+          false
+        , s"Falsified after ${report.tests.value} passed tests"
+        , log.flatMap(l => renderFailureLog(qualifiedName, l)) ++ coverage
+        )
       case GaveUp =>
         render(false, s"Gave up after only ${report.tests.value} passed test. " +
           s"${report.discards.value} were discarded", coverage)
@@ -90,19 +95,43 @@ object Test {
       /* A type pattern rather than `SourceLocation(pos)`: the exhaustivity checker
        * cannot see through a hand-written `unapply`.
        *
-       * Two lines on purpose. The first is the absolute path as a `file://` URI, which is what
-       * terminals and editors linkify. The second is the path relative to the directory the
-       * compiler ran in, which is what a build cache can share. Both are printed so the two can be
-       * compared before one of them is dropped - see
-       * https://github.com/hedgehogqa/scala-hedgehog/pull/326#discussion_r4017303422
+       * The location on its own, without the navigation frame which a failure report also carries.
+       * See `renderFailureLog` for that form.
        */
       case l: SourceLocation =>
-        l.pos.fileUri + ":" + l.pos.line.toString + "\n" +
-          l.pos.relativePath + ":" + l.pos.line.toString
+        l.pos.relativePath + ":" + l.pos.line.toString
       case Error(e) =>
         val sw = new java.io.StringWriter()
         e.printStackTrace(new java.io.PrintWriter(sw))
         sw.toString
+    }
+
+  /**
+   * The lines a single log entry contributes to a failure report.
+   *
+   * A `SourceLocation` becomes two: the location as `renderLog` renders it, then a line shaped like
+   * a stack frame. That second line is not a real frame - it is synthesised from the same captured
+   * location - but IntelliJ IDEA's `ExceptionFilter` recognises the shape and resolves the file
+   * through the project index rather than the filesystem, which is what makes the failure navigable
+   * there. The first line is what iTerm2 linkifies, and the build-root-relative path is not
+   * linkified by the sbt shell at all, so both are needed to cover both tools.
+   *
+   * `qualifiedTestName` is the suite's class name joined to the test's name. It is the suite's, so
+   * an assertion written in a shared helper file pairs this suite's class name with that helper's
+   * file name. IntelliJ resolves the file by name, so the link still lands.
+   *
+   * Any other log entry becomes the one line `renderLog` gives it.
+   */
+  def renderFailureLog(qualifiedTestName: String, log: Log): List[String] =
+    log match {
+      /* A type pattern, and a default case, for the same reason as in `renderLog`. */
+      case l: SourceLocation =>
+        List(
+          renderLog(l)
+        , "at " + qualifiedTestName + "(" + l.pos.fileName + ":" + l.pos.line.toString + ")"
+        )
+      case _ =>
+        List(renderLog(log))
     }
 
   def renderCoverage(coverage: Coverage[CoverCount], tests: SuccessCount, examples: Examples): List[String] =
