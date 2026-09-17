@@ -95,6 +95,7 @@ Check it!
 - Spec$.property: Falsified after 8 passed tests
 > -1
 > file:///home/username/proj/src/test/scala/Spec.scala:4
+> src/test/scala/Spec.scala:4
 > === Not Equal ===
 > --- lhs ---
 > 1.0
@@ -181,11 +182,12 @@ def testAdd: Result =
 ```
 Spec$.add: Falsified after 1 passed tests
 > file:///home/username/proj/src/test/scala/Spec.scala:2
+> src/test/scala/Spec.scala:2
 ```
 
-At least we are told where to look. That location line is the absolute path and
-line number of the assertion that failed, so most terminals and editors will turn
-it into a link you can click straight through to. See
+At least we are told where to look. Those two lines are the absolute path and the
+build-root-relative path of the assertion that failed, each with its line number. Most terminals
+and editors will turn the first into a link you can click straight through to. See
 [Failure locations](#failure-locations) below.
 
 It still doesn't tell us what the values actually were, though.
@@ -200,6 +202,7 @@ def testAdd: Result =
 ```
 Spec$.testAdd: Falsified after 1 passed tests
 > file:///home/username/proj/src/test/scala/Spec.scala:2
+> src/test/scala/Spec.scala:2
 > === Not Equal ===
 > --- lhs ---
 > 3
@@ -222,6 +225,7 @@ def testAdd: Result =
 ```
 Spec$.testAdd: Falsified after 1 passed tests
 > file:///home/username/proj/src/test/scala/Spec.scala:2
+> src/test/scala/Spec.scala:2
 > === Failed ===
 > --- lhs ---
 > 3
@@ -237,6 +241,7 @@ def a1GtA2: Result =
 ```
 Spec$.a1GtA2: Falsified after 0 passed tests
 > file:///home/username/proj/src/test/scala/Spec.scala:2
+> src/test/scala/Spec.scala:2
 > === Failed ===
 > --- lhs ---
 > 3
@@ -254,6 +259,7 @@ Result.diffNamed("=== Not Equal ===", 1 + 2, 3 + 4)(_ == _)
 ```
 Spec$.testAdd: Falsified after 1 passed tests
 > file:///home/username/proj/src/test/scala/Spec.scala:1
+> src/test/scala/Spec.scala:1
 > === Not Equal ===
 > --- lhs ---
 > 3
@@ -265,14 +271,15 @@ In fact, `====` internally uses the `diffNamed` method.
 
 #### Failure locations
 
-Every failure log opens with the location of the assertion which produced it:
+Every failure log opens with the location of the assertion which produced it, written twice:
 
 ```
 > file:///home/username/proj/src/test/scala/Spec.scala:17
+> src/test/scala/Spec.scala:17
 ```
 
-It is written as a `file://` URI because that is the form editors and terminals
-both recognise. In iTerm2 it is cmd-clickable once
+The first line is the absolute path as a `file://` URI, because that is the form editors and
+terminals both recognise. In iTerm2 it is cmd-clickable once
 [semantic history](https://alexn.org/blog/2021/07/18/iterm-open-file-cmd-click-ide-semantic-history/)
 is configured, and in IntelliJ IDEA clicking it navigates to the exact line. The
 sbt test framework attaches the same locations to the failure it reports, so an
@@ -285,6 +292,16 @@ Japanese or accented characters stay readable rather than turning into a wall of
 
 On Windows the form is `file:///C:/...`, with the separators flipped. That form
 follows the file URI specification but has not been tested on Windows.
+
+The second line is the same location relative to the directory the compiler was run from, which
+under sbt is the build root. An absolute path is baked into the compiled class file as a string
+constant, so the same source compiled from two different checkout directories produces two
+different class files and a build cache cannot share them. A relative path can. Both forms are
+printed for now so that the two can be compared on real terminals and editors before one of them
+is dropped.
+
+When the source file does not sit under the compiler's working directory, the second line falls
+back to the path as captured, so the two lines then differ only by the URI scheme.
 
 The location points at the assertion itself rather than at the test declaration,
 and there is one for each failing assertion. A few details worth knowing:
@@ -358,6 +375,7 @@ val complexProp: Property =
 > m: 0
 > n: 0
 > file:///home/username/proj/src/test/scala/Spec.scala:10
+> src/test/scala/Spec.scala:10
 > result not sum
 ```
 
@@ -393,8 +411,10 @@ When we check the property, Hedgehog tells us the following:
 > n: 1
 > n: 1
 > file:///home/username/proj/src/test/scala/Spec.scala:11
+> src/test/scala/Spec.scala:11
 > lt1
 > file:///home/username/proj/src/test/scala/Spec.scala:12
+> src/test/scala/Spec.scala:12
 > lt2
 > evidence = 1
 ```
@@ -660,6 +680,7 @@ Now, run the tests:
 - Spec$.example: Falsified after 5 passed tests
 > l: List(0,0)
 > file:///home/username/proj/src/test/scala/Spec.scala:4
+> src/test/scala/Spec.scala:4
 > === Not Equal ===
 > --- lhs ---
 > List(0,0)
