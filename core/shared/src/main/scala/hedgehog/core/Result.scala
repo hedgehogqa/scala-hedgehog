@@ -112,7 +112,8 @@ object Result {
     *   val a2 = "xyz"
     *   Result.diff(a1, a2)(_ == _)
     *   // Result.failure
-    *   > file:///home/username/proj/src/test/scala/MySpec.scala:12
+    *   > src/test/scala/MySpec.scala:12
+    *   > at MySpec.myTest(MySpec.scala:12)
     *   > === Failed ===
     *   > --- lhs ---
     *   > abc
@@ -121,7 +122,8 @@ object Result {
     *
     *   Result.diff(123, 123)(_ != _).log("It must be different.")
     *   // Result.failure
-    *   > file:///home/username/proj/src/test/scala/MySpec.scala:18
+    *   > src/test/scala/MySpec.scala:18
+    *   > at MySpec.myTest(MySpec.scala:18)
     *   > === Failed ===
     *   > --- lhs ---
     *   > 123
@@ -133,7 +135,8 @@ object Result {
     *   val y = 100
     *   Result.diff(x, y)((x, y) => y < 87 && x <= 'r')
     *   // Result.failure
-    *   > file:///home/username/proj/src/test/scala/MySpec.scala:27
+    *   > src/test/scala/MySpec.scala:27
+    *   > at MySpec.myTest(MySpec.scala:27)
     *   > === Failed ===
     *   > --- lhs ---
     *   > z

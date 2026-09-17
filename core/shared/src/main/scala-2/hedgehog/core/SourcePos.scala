@@ -9,22 +9,19 @@ import scala.reflect.macros.blackbox
  * so a `Result` constructor which takes one implicitly reports the caller's
  * location rather than a location inside Hedgehog itself.
  *
- * @param filePath the path of the source file exactly as the compiler was given it, which under
- *                 sbt is absolute
- * @param relativePath `filePath` with the compiler's working directory stripped, or `filePath`
- *                     unchanged when it does not sit underneath that directory
+ * No absolute path is stored. An absolute path is baked into the compiled class file as a string
+ * constant, so the same source compiled from two checkout directories produces two different class
+ * files. That defeats a shared build cache, which would otherwise hand one machine another
+ * machine's paths on a legitimate cache hit, and it defeats distributed test execution and
+ * reproducible builds. It also leaks the publisher's filesystem into a published artefact.
+ *
+ * @param relativePath the path of the source file with the compiler's working directory stripped,
+ *                     which under sbt is the build root, and the path exactly as captured when it
+ *                     does not sit underneath that directory
  * @param fileName the simple name of the source file
  * @param line the 1-based line number
  */
-final case class SourcePos(filePath: String, relativePath: String, fileName: String, line: Int) {
-
-  /**
-   * `filePath` rendered as a `file://` URI, which terminals and editors turn
-   * into a link. Returns `filePath` unchanged when it is not an absolute path.
-   */
-  def fileUri: String =
-    FileUri.fromPath(filePath)
-}
+final case class SourcePos(relativePath: String, fileName: String, line: Int)
 
 object SourcePos {
 
@@ -35,7 +32,7 @@ object SourcePos {
    * This is deliberately not implicit.
    */
   val unknown: SourcePos =
-    SourcePos("<unknown>", "<unknown>", "<unknown>", 0)
+    SourcePos("<unknown>", "<unknown>", 0)
 
   implicit def here: SourcePos =
     macro SourcePosMacro.hereImpl
@@ -60,6 +57,6 @@ object SourcePosMacro {
     val fileName = pos.source.file.name
     val line = pos.line
     c.Expr[SourcePos](
-      q"_root_.hedgehog.core.SourcePos($filePath, $relativePath, $fileName, $line)")
+      q"_root_.hedgehog.core.SourcePos($relativePath, $fileName, $line)")
   }
 }
