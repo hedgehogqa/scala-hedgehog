@@ -22,7 +22,7 @@ trait PropertyTOps extends PropertyTReporting {
   def info(log: String): PropertyT[Unit] =
     writeLog(Info(log))
 
-  def discard: PropertyT[Unit] =
+  def discard[A]: PropertyT[A] =
     fromGen(Gen.discard)
 
   def failure: PropertyT[Unit] =
