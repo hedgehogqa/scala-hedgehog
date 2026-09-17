@@ -75,5 +75,5 @@ object FileUriTest extends Properties {
     FileUri.fromPath("\\\\server\\share\\Spec.scala") ==== "\\\\server\\share\\Spec.scala"
 
   def testSourcePosDelegates: Result =
-    SourcePos("/a/b/Spec.scala", "Spec.scala", 17).fileUri ==== "file:///a/b/Spec.scala"
+    SourcePos("/a/b/Spec.scala", "b/Spec.scala", "Spec.scala", 17).fileUri ==== "file:///a/b/Spec.scala"
 }

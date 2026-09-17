@@ -54,7 +54,14 @@ object Test {
       val name = className + "." + t.name
       val sym = if (ok) "+" else "-"
       val colour = if (ok) Console.GREEN else Console.RED
-      val extra = if (extraS.isEmpty) "" else "\n" + extraS.map(s => "> " + s).mkString("\n")
+      /* Split on newlines so that a log entry which renders as more than one line - a stack trace,
+       * or a source location in both of its forms - has every line prefixed rather than only its
+       * first. `-1` keeps trailing empty segments, so an entry which renders as "" still produces
+       * a "> " line, exactly as it did before.
+       */
+      val extra =
+        if (extraS.isEmpty) ""
+        else "\n" + extraS.flatMap(_.split("\n", -1).toList).map(s => "> " + s).mkString("\n")
       if(ansiCodesSupported) {
         s"$colour$sym${Console.RESET} $name: $msg$extra"
       } else {
@@ -82,9 +89,16 @@ object Test {
         value
       /* A type pattern rather than `SourceLocation(pos)`: the exhaustivity checker
        * cannot see through a hand-written `unapply`.
+       *
+       * Two lines on purpose. The first is the absolute path as a `file://` URI, which is what
+       * terminals and editors linkify. The second is the path relative to the directory the
+       * compiler ran in, which is what a build cache can share. Both are printed so the two can be
+       * compared before one of them is dropped - see
+       * https://github.com/hedgehogqa/scala-hedgehog/pull/326#discussion_r4017303422
        */
       case l: SourceLocation =>
-        l.pos.fileUri + ":" + l.pos.line.toString
+        l.pos.fileUri + ":" + l.pos.line.toString + "\n" +
+          l.pos.relativePath + ":" + l.pos.line.toString
       case Error(e) =>
         val sw = new java.io.StringWriter()
         e.printStackTrace(new java.io.PrintWriter(sw))
