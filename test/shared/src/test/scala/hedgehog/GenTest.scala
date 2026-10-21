@@ -19,6 +19,10 @@ object GenTest extends Properties {
     , example("applicative", testApplicative)
     , example("monad", testMonad)
     , example("withFilter is lazy", testWithFilterIsLazy)
+    , example("list is stack safe", testListStackSafe)
+    , example("string is stack safe", testStringStackSafe)
+    , example("bytes is stack safe", testBytesStackSafe)
+    , property("list matches replicateM", testListMatchesReplicateM).withTests(200)
     )
 
   def testLong: Property = {
@@ -116,4 +120,36 @@ object GenTest extends Properties {
     }
     Result.success
   }
+
+  def testListStackSafe: Result = {
+    val n = 100000
+    val r = Gen.list(Gen.int(Range.linear(0, 100)), Range.singleton(n)).run(Size(100), Seed.fromLong(0))
+    r.value._2.map(_.length) ==== Some(n)
+  }
+
+  def testStringStackSafe: Result = {
+    val n = 100000
+    val r = Gen.string(Gen.alpha, Range.singleton(n)).run(Size(100), Seed.fromLong(0))
+    r.value._2.map(_.length) ==== Some(n)
+  }
+
+  def testBytesStackSafe: Result = {
+    val n = 100000
+    val r = Gen.bytes(Range.singleton(n)).run(Size(100), Seed.fromLong(0))
+    r.value._2.map(_.length) ==== Some(n)
+  }
+
+  def testListMatchesReplicateM: Property =
+    for {
+      n <- Gen.int(Range.linear(0, 6)).log("n")
+      seed <- Gen.long(Range.linearFrom(0, Long.MinValue, Long.MaxValue)).log("seed")
+      size <- Gen.int(Range.linear(1, 100)).log("size")
+    } yield {
+      val g = Gen.int(Range.linear(0, 5)).ensure(_ != 3)
+      def flatten(t: Tree[(Seed, Option[List[Int]])]) =
+        TTree.fromTree(4, 20, t)
+      val expected = predef.replicateM[GenT, Int](n, g).run(Size(size), Seed.fromLong(seed))
+      val actual = GenT.replicate(n, g).run(Size(size), Seed.fromLong(seed))
+      flatten(actual) ==== flatten(expected)
+    }
 }

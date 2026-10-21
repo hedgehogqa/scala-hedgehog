@@ -189,6 +189,24 @@ abstract class GenImplicits2 extends GenImplicits1 {
 
 object GenT extends GenImplicits2 {
 
+  /** Stack-safe `replicateM(n, gen)`. */
+  def replicate[A](n: Int, gen: GenT[A]): GenT[List[A]] =
+    GenT((size, seed0) => {
+      val trees = Vector.newBuilder[Tree[(Seed, Option[A])]]
+      var seed = seed0
+      var i = 0
+      while (i < n) {
+        val t = gen.run(size, seed)
+        trees += t
+        seed = t.value._1
+        i += 1
+      }
+      Tree.zipAll(trees.result()).map(xs => (seed, sequenceOption(xs.map(_._2))))
+    })
+
+  private def sequenceOption[A](xs: List[Option[A]]): Option[List[A]] =
+    if (xs.forall(_.isDefined)) Some(xs.map(_.get)) else None
+
   implicit val GenMonad: Monad[GenT] =
     new Monad[GenT] {
 

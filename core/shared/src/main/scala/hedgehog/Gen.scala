@@ -8,6 +8,18 @@ trait GenTOps extends MonadGenOps[Gen] {
   /**********************************************************************/
   // Combinators
 
+  /** Generates a list using a 'Range' to determine the length. */
+  override def list[A](gen: GenT[A], range: Range[Int])(implicit F: Monad[GenT], G: MonadGen[GenT]): GenT[List[A]] =
+    sized(size =>
+      ensure(
+        G.shrink(
+          F.bind(integral_(range, _.toInt))(k => GenT.replicate(k, gen))
+        , Shrink.list
+        )
+      , Range.atLeast(range.lowerBound(size), _)
+      )
+    )
+
   /**********************************************************************/
   // Combinators - Integral
 
