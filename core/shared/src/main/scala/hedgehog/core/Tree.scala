@@ -21,8 +21,11 @@ case class Tree[A](value: A, children: Identity[LazyList[Tree[A]]]) {
     Tree.TreeMonad.bind(this)(f)
 
   def expand(f: A => List[A]): Tree[A] =
+    expandLazy(a => LazyList.fromList(f(a)))
+
+  private[hedgehog] def expandLazy(f: A => LazyList[A]): Tree[A] =
     Tree(
-      this.value, this.children.map(_.map(_.expand(f)) ++ Tree.unfoldForest(identity[A], f, this.value))
+      this.value, this.children.map(_.map(_.expandLazy(f)) ++ Tree.unfoldForestLazy(f, this.value))
     )
 
   def prune: Tree[A] =
@@ -105,5 +108,8 @@ object Tree extends TreeImplicits2 {
 
   def unfoldForest[A, B](f: B => A, g: B => List[B], x: B): LazyList[Tree[A]] =
     LazyList.fromList(g(x).map(y => unfoldTree(f, g, y)))
+
+  private def unfoldForestLazy[A](g: A => LazyList[A], x: A): LazyList[Tree[A]] =
+    g(x).map(y => Tree(y, Identity(unfoldForestLazy(g, y))))
 }
 

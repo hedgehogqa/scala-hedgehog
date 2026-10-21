@@ -3,6 +3,7 @@ package hedgehog
 import hedgehog.core._
 import hedgehog.runner._
 
+import scala.annotation.tailrec
 import scala.util.Try
 
 object GenTest extends Properties {
@@ -23,6 +24,7 @@ object GenTest extends Properties {
     , example("string is stack safe", testStringStackSafe)
     , example("bytes is stack safe", testBytesStackSafe)
     , property("list matches replicateM", testListMatchesReplicateM).withTests(200)
+    , example("list shrinking of a large list", testListShrinkLarge)
     )
 
   def testLong: Property = {
@@ -152,4 +154,20 @@ object GenTest extends Properties {
       val actual = GenT.replicate(n, g).run(Size(size), Seed.fromLong(seed))
       flatten(actual) ==== flatten(expected)
     }
+
+  def testListShrinkLarge: Result = {
+    val t = Gen.list(Gen.constant(0), Range.constant(0, 100000)).run(Size(100), Seed.fromLong(0))
+    // Greedy shrink, as the property runner does: take the first child that still fails.
+    def fails(x: (Seed, Option[List[Int]])): Boolean =
+      x._2.exists(_.length >= 1000)
+    @tailrec
+    def shrink(t: Tree[(Seed, Option[List[Int]])]): Tree[(Seed, Option[List[Int]])] =
+      predef.findMap(t.children.value)(c => if (fails(c.value)) Some(c) else None) match {
+        case None => t
+        case Some(c) => shrink(c)
+      }
+    val start = t.value._2.map(_.length).getOrElse(0)
+    Result.assert(start > 10000).log("start: " + start) and
+      shrink(t).value._2.map(_.length) ==== Some(1000)
+  }
 }

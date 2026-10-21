@@ -12,10 +12,8 @@ trait GenTOps extends MonadGenOps[Gen] {
   override def list[A](gen: GenT[A], range: Range[Int])(implicit F: Monad[GenT], G: MonadGen[GenT]): GenT[List[A]] =
     sized(size =>
       ensure(
-        G.shrink(
-          F.bind(integral_(range, _.toInt))(k => GenT.replicate(k, gen))
-        , Shrink.list
-        )
+        F.bind(integral_(range, _.toInt))(k => GenT.replicate(k, gen))
+          .shrinkLazy(Shrink.listLazy)
       , Range.atLeast(range.lowerBound(size), _)
       )
     )

@@ -62,8 +62,11 @@ case class GenT[A](run: (Size, Seed) => Tree[(Seed, Option[A])]) {
    * Apply a shrinking function to a generator.
    */
   def shrink(f: A => List[A]): GenT[A] =
-    mapTree(_.expand(x =>
-      x._2.fold(List.empty[(Seed, Option[A])])(a => f(a).map(y => (x._1, Some(y))))
+    shrinkLazy(a => LazyList.fromList(f(a)))
+
+  private[hedgehog] def shrinkLazy(f: A => LazyList[A]): GenT[A] =
+    mapTree(_.expandLazy(x =>
+      x._2.fold(LazyList.nil[(Seed, Option[A])])(a => f(a).map(y => (x._1, Some(y))))
     ))
 
   /**
