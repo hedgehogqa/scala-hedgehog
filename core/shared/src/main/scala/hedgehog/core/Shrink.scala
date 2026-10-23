@@ -1,5 +1,7 @@
 package hedgehog.core
 
+import hedgehog.predef.LazyList
+
 object Shrink extends XCompat {
 
   /**
@@ -69,9 +71,23 @@ object Shrink extends XCompat {
    * ''Note we always try the empty list first, as that is the optimal shrink.''
    */
   def list[A](xs: List[A]): List[List[A]] =
-    halves(xs.length)
-      // FIX: predef foldMap
-      .foldLeft(List.empty[List[A]])((lla, k) => lla ++ removes(k, xs))
+    halves(xs.length).flatMap(removes(_, xs))
+
+  /** Lazy `list`: each candidate is only built when it is tried. */
+  private[hedgehog] def listLazy[A](xs: List[A]): LazyList[List[A]] = {
+    val n = xs.length
+    def go(ks: List[Int], i: Int): LazyList[List[A]] =
+      ks match {
+        case Nil =>
+          LazyList.nil
+        case k :: rest =>
+          if (!canRemove(k, i, n))
+            go(rest, 0)
+          else
+            LazyList.cons(remove(k, i, xs), go(ks, i + 1))
+      }
+    go(halves(n), 0)
+  }
 
   /**
    * Produce all permutations of removing 'k' elements from a list.
@@ -81,18 +97,18 @@ object Shrink extends XCompat {
    * List("cdef", "abef", "abcd")
    * }}}
    */
-  def removes[A](k0: Int, xs0: List[A]): List[List[A]] = {
-    def loop(k: Int, n: Int, xs: List[A]): List[List[A]] = {
-      val (hd, tl) = xs.splitAt(k)
-      if (k > n)
-        Nil
-      else if (tl.isEmpty)
-        List(Nil)
-      else
-        tl :: loop(k, n - k, tl).map(hd ++ _)
-    }
-    loop(k0, xs0.length, xs0)
+  def removes[A](k: Int, xs: List[A]): List[List[A]] = {
+    val n = xs.length
+    List.tabulate(if (k <= 0) 0 else n / k)(remove(k, _, xs))
   }
+
+  /** Whether chunk `i` of size `k` fits in a list of length `n`. */
+  private def canRemove(k: Int, i: Int, n: Int): Boolean =
+    k > 0 && i < n / k
+
+  /** Removes chunk `i` of size `k`. */
+  private def remove[A](k: Int, i: Int, xs: List[A]): List[A] =
+    xs.take(i * k) ++ xs.drop((i + 1) * k)
 
   /**
    * Produce a list containing the progressive halving of an integral.

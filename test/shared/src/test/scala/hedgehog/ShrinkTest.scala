@@ -10,6 +10,9 @@ object ShrinkTest extends Properties {
       example("test that shrinking only 'runs' the test once per shrink", testLazy)
     , property("testTowardsFloat is always in range", testTowardsFloatShrinkingRange.property)
     , example("testTowardsFloat is always in range", testTowardsFloatShrinkingRange.test((Double.MinPositiveValue, 0.1)))
+    , example("list", testList)
+    , example("removes", testRemoves)
+    , property("listLazy matches list", testListLazyMatchesList)
     )
 
   // https://github.com/hedgehogqa/scala-hedgehog/issues/66
@@ -54,4 +57,17 @@ object ShrinkTest extends Properties {
       ))
     }
   }
+
+  def testList: Result =
+    Shrink.list(List(1, 2, 3)) ==== List(List(), List(2, 3), List(1, 3), List(1, 2)) and
+      Shrink.list("abcd".toList).map(_.mkString) ==== List("", "cd", "ab", "bcd", "acd", "abd", "abc")
+
+  def testRemoves: Result =
+    Shrink.removes(2, "abcdef".toList).map(_.mkString) ==== List("cdef", "abef", "abcd") and
+      Shrink.removes(2, "abcde".toList).map(_.mkString) ==== List("cde", "abe")
+
+  def testListLazyMatchesList: Property =
+    for {
+      xs <- Gen.int(Range.linear(0, 100)).list(Range.linear(0, 50)).forAll
+    } yield Shrink.listLazy(xs).toList(Int.MaxValue) ==== Shrink.list(xs)
 }

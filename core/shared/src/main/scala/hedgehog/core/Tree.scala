@@ -2,6 +2,8 @@ package hedgehog.core
 
 import hedgehog.predef._
 
+import scala.annotation.tailrec
+
 /**
  * NOTE: This differs from the Haskell version by not having an effect on the `Node` for performance reasons.
  * See `haskell-difference.md` for more information.
@@ -19,8 +21,11 @@ case class Tree[A](value: A, children: Identity[LazyList[Tree[A]]]) {
     Tree.TreeMonad.bind(this)(f)
 
   def expand(f: A => List[A]): Tree[A] =
+    expandLazy(a => LazyList.fromList(f(a)))
+
+  private[hedgehog] def expandLazy(f: A => LazyList[A]): Tree[A] =
     Tree(
-      this.value, this.children.map(_.map(_.expand(f)) ++ Tree.unfoldForest(identity[A], f, this.value))
+      this.value, this.children.map(_.map(_.expandLazy(f)) ++ Tree.unfoldForestLazy(f, this.value))
     )
 
   def prune: Tree[A] =
@@ -71,10 +76,40 @@ object Tree extends TreeImplicits2 {
       }
     }
 
+  /** Stack-safe `sequence` with `TreeApplicative`. */
+  def zipAll[A](ts: Vector[Tree[A]]): Tree[List[A]] =
+    Tree(ts.iterator.map(_.value).toList, Identity(zipAllChildren(ts, 0)))
+
+  private def zipAllChildren[A](ts: Vector[Tree[A]], from: Int): LazyList[Tree[List[A]]] = {
+    @tailrec
+    def loop(i: Int): LazyList[Tree[List[A]]] =
+      if (i >= ts.length)
+        LazyList.nil
+      else
+        ts(i).children.value match {
+          case LazyList.Nil() =>
+            loop(i + 1)
+          case cs =>
+            zipAllReplace(ts, i, cs)
+        }
+    loop(from)
+  }
+
+  private def zipAllReplace[A](ts: Vector[Tree[A]], i: Int, cs: LazyList[Tree[A]]): LazyList[Tree[List[A]]] =
+    cs match {
+      case LazyList.Nil() =>
+        zipAllChildren(ts, i + 1)
+      case LazyList.Cons(h, t) =>
+        LazyList.Cons(() => zipAll(ts.updated(i, h())), () => zipAllReplace(ts, i, t()))
+    }
+
   def unfoldTree[A, B](f: B => A, g: B => List[B], x: B): Tree[A] =
     Tree(f(x), Identity(unfoldForest(f, g, x)))
 
   def unfoldForest[A, B](f: B => A, g: B => List[B], x: B): LazyList[Tree[A]] =
     LazyList.fromList(g(x).map(y => unfoldTree(f, g, y)))
+
+  private def unfoldForestLazy[A](g: A => LazyList[A], x: A): LazyList[Tree[A]] =
+    g(x).map(y => Tree(y, Identity(unfoldForestLazy(g, y))))
 }
 
