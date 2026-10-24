@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hegehog.scalatest
+package hedgehog.scalatest
 
 import hedgehog.Property
 import hedgehog.core._

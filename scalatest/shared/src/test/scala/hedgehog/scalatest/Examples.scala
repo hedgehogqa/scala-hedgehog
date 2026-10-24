@@ -2,7 +2,6 @@ package hedgehog.scalatest
 
 import hedgehog.Gen
 import hedgehog.core.PropertyConfig
-import hegehog.scalatest.HedgehogDrivenPropertyChecks
 import org.scalatest.DoNotDiscover
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers

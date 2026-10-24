@@ -17,7 +17,6 @@ package hedgehog.scalatest
 
 import hedgehog.Gen
 import hedgehog.core.{DiscardCount, PropertyConfig}
-import hegehog.scalatest.HedgehogDrivenPropertyChecks
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
