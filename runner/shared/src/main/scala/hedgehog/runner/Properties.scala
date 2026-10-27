@@ -51,10 +51,30 @@ object Test {
 
   def renderReport(className: String, t: Test, report: Report, ansiCodesSupported: Boolean): String = {
     val qualifiedName = className + "." + t.name
+    val ok = report.status match {
+      case OK => true
+      case Failed(_, _) | GaveUp => false
+    }
+    val sym = if (ok) "+" else "-"
+    val colour = if (ok) Console.GREEN else Console.RED
+    val body = renderReportBody(report, qualifiedName)
+    if(ansiCodesSupported) {
+      s"$colour$sym${Console.RESET} $qualifiedName: $body"
+    } else {
+      s"$sym $qualifiedName: $body"
+    }
+  }
 
-    def render(ok: Boolean, msg: String, extraS: List[String]): String = {
-      val sym = if (ok) "+" else "-"
-      val colour = if (ok) Console.GREEN else Console.RED
+  /**
+   * The report without the leading status symbol and test name, for test frameworks which print
+   * the test name themselves.
+   *
+   * `qualifiedTestName` is only used for the stack-frame-shaped line of a failure (see
+   * `renderFailureLog`).
+   */
+  def renderReportBody(report: Report, qualifiedTestName: String): String = {
+
+    def render(msg: String, extraS: List[String]): String = {
       /* Split on newlines so that a log entry which renders as more than one line - an `Error`'s
        * stack trace - has every line prefixed rather than only its first. `-1` keeps trailing
        * empty segments, so an entry which renders as "" still produces a "> " line, exactly as it
@@ -63,26 +83,21 @@ object Test {
       val extra =
         if (extraS.isEmpty) ""
         else "\n" + extraS.flatMap(_.split("\n", -1).toList).map(s => "> " + s).mkString("\n")
-      if(ansiCodesSupported) {
-        s"$colour$sym${Console.RESET} $qualifiedName: $msg$extra"
-      } else {
-        s"$sym $qualifiedName: $msg$extra"
-      }
+      s"$msg$extra"
     }
 
     val coverage = renderCoverage(report.coverage, report.tests, report.examples)
     report.status match {
       case Failed(shrinks, log) =>
         render(
-          false
-        , s"Falsified after ${report.tests.value} passed tests"
-        , log.flatMap(l => renderFailureLog(qualifiedName, l)) ++ coverage
+          s"Falsified after ${report.tests.value} passed tests"
+          , log.flatMap(l => renderFailureLog(qualifiedTestName, l)) ++ coverage
         )
       case GaveUp =>
-        render(false, s"Gave up after only ${report.tests.value} passed test. " +
+        render(s"Gave up after only ${report.tests.value} passed test. " +
           s"${report.discards.value} were discarded", coverage)
       case OK =>
-        render(true, s"OK, passed ${report.tests.value} tests", coverage)
+        render(s"OK, passed ${report.tests.value} tests", coverage)
     }
   }
 

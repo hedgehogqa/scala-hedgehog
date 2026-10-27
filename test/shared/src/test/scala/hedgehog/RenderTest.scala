@@ -21,6 +21,35 @@ object RenderTest extends Properties {
     , example("renderFailureLog renders a SourceLocation as the relative path then a stack frame", testRenderFailureLogSourceLocation)
     , example("renderFailureLog wraps any other log in a single line", testRenderFailureLogOtherLog)
     , property("property test renderCoverage renders each label's example logs separated by ', '", propertyTestRenderCoverageMultipleLogs)
+    , example("renderLog renders a ForAll as 'name: value'", testRenderLogForAll)
+    , property("property test renderLog renders a ForAll as 'name: value'", propertyTestRenderLogForAll)
+    , example("renderLog renders an Info as its value", testRenderLogInfo)
+    , property("property test renderLog renders an Info as its value", propertyTestRenderLogInfo)
+    , example("renderLog renders an Error as its stack trace", testRenderLogError)
+    , example("renderReportBody renders OK with the number of passed tests", testRenderReportBodyOk)
+    , property("property test renderReportBody renders OK with the number of passed tests", propertyTestRenderReportBodyOk)
+    , example("renderReportBody renders OK with the coverage", testRenderReportBodyOkWithCoverage)
+    , example("renderReportBody renders GaveUp with the passed and discarded tests", testRenderReportBodyGaveUp)
+    , property("property test renderReportBody renders GaveUp with the passed and discarded tests", propertyTestRenderReportBodyGaveUp)
+    , example("renderReportBody renders Failed with each log on its own prefixed line", testRenderReportBodyFailed)
+    , example("renderReportBody renders Failed with the logs then the coverage", testRenderReportBodyFailedWithCoverage)
+    , example("renderReportBody prefixes every line of an Error's stack trace", testRenderReportBodyFailedError)
+    , example("renderReportBody renders an empty log as a '> ' line", testRenderReportBodyFailedEmptyLog)
+    , example("renderReport renders OK with '+' and no ANSI codes", testRenderReportOkNoAnsi)
+    , example("renderReport renders OK with a green '+' and ANSI codes", testRenderReportOkAnsi)
+    , example("renderReport renders Failed with '-' and no ANSI codes", testRenderReportFailedNoAnsi)
+    , example("renderReport renders Failed with a red '-' and ANSI codes", testRenderReportFailedAnsi)
+    , example("renderReport renders GaveUp with '-' and no ANSI codes", testRenderReportGaveUpNoAnsi)
+    , example("renderReport renders GaveUp with a red '-' and ANSI codes", testRenderReportGaveUpAnsi)
+    , property("property test renderReport uses the class name and the test name as the qualified name", propertyTestRenderReportQualifiedName)
+    , example("Test.apply keeps the name and the default config", testTestApply)
+    , example("Test.apply turns an exception thrown by the property into an error", testTestApplyException)
+    , example("Test.config applies to the default config", testTestConfig)
+    , example("Test.config applies in the order it is called", testTestConfigOrder)
+    , property("property test Test.withTests sets the test limit", propertyTestTestWithTests)
+    , example("Test.withTests sets the number of tests that run", testTestWithTestsRun)
+    , example("Test.noShrinking sets the shrink limit to 0", testTestNoShrinking)
+    , example("Properties.main prints the seed and then the report of each test", testPropertiesMain)
     )
 
   def testRenderLogSourceLocation: Result =
@@ -149,5 +178,243 @@ object RenderTest extends Properties {
     val actual = Test.renderCoverage(coverage, SuccessCount(100), examples)
 
     actual ==== expected
+  }
+
+  def testRenderLogForAll: Result =
+    Test.renderLog(ForAll(Name("n"), "23")) ==== "n: 23"
+
+  def propertyTestRenderLogForAll: Property = for {
+    name <- Gen.string(Gen.alphaNum, Range.linear(1, 10)).log("name")
+    value <- Gen.string(Gen.alphaNum, Range.linear(0, 10)).log("value")
+  } yield {
+    Test.renderLog(ForAll(Name(name), value)) ==== s"$name: $value"
+  }
+
+  def testRenderLogInfo: Result =
+    Test.renderLog(Info("hello")) ==== "hello"
+
+  def propertyTestRenderLogInfo: Property = for {
+    value <- Gen.string(Gen.unicode, Range.linear(0, 20)).log("value")
+  } yield {
+    Test.renderLog(Info(value)) ==== value
+  }
+
+  def testRenderLogError: Result = {
+    val e = new RuntimeException("boom")
+    val lines = Test.renderLog(Error(e)).split("\n", -1).toList
+    Result.all(List(
+      lines.headOption.map(_.trim) ==== Some(e.toString)
+    , Result.assert(lines.length > 1).log(Info(s"Expected the stack frames after the first line, got $lines"))
+    ))
+  }
+
+  def okReport(tests: Int, coverage: Coverage[CoverCount]): Report =
+    Report(SuccessCount(tests), DiscardCount(0), coverage, Examples.empty, OK)
+
+  def failedReport(tests: Int, logs: List[Log], coverage: Coverage[CoverCount]): Report =
+    Report(SuccessCount(tests), DiscardCount(0), coverage, Examples.empty, Failed(ShrinkCount(0), logs))
+
+  def gaveUpReport(tests: Int, discards: Int): Report =
+    Report(SuccessCount(tests), DiscardCount(discards), Coverage.empty, Examples.empty, GaveUp)
+
+  val largeNumberCoverage: Coverage[CoverCount] =
+    Coverage(Map(
+      LabelName("large number") -> Label(LabelName("large number"), CoverPercentage(0), CoverCount(55))
+    ))
+
+  def testRenderReportBodyOk: Result =
+    Test.renderReportBody(okReport(100, Coverage.empty), "pkg.Spec.someTest") ====
+      "OK, passed 100 tests"
+
+  def propertyTestRenderReportBodyOk: Property = for {
+    tests <- Gen.int(Range.linear(0, 1000)).log("tests")
+  } yield {
+    Test.renderReportBody(okReport(tests, Coverage.empty), "pkg.Spec.someTest") ====
+      s"OK, passed $tests tests"
+  }
+
+  def testRenderReportBodyOkWithCoverage: Result =
+    Test.renderReportBody(okReport(100, largeNumberCoverage), "pkg.Spec.someTest") ====
+      "OK, passed 100 tests\n> 55% large number"
+
+  def testRenderReportBodyGaveUp: Result =
+    Test.renderReportBody(gaveUpReport(3, 100), "pkg.Spec.someTest") ====
+      "Gave up after only 3 passed test. 100 were discarded"
+
+  def propertyTestRenderReportBodyGaveUp: Property = for {
+    tests <- Gen.int(Range.linear(0, 1000)).log("tests")
+    discards <- Gen.int(Range.linear(0, 1000)).log("discards")
+  } yield {
+    Test.renderReportBody(gaveUpReport(tests, discards), "pkg.Spec.someTest") ====
+      s"Gave up after only $tests passed test. $discards were discarded"
+  }
+
+  def testRenderReportBodyFailed: Result = {
+    val logs = List(
+      ForAll(Name("n"), "23")
+    , Info("hello")
+    , SourceLocation(SourcePos("b/Spec.scala", "Spec.scala", 17))
+    )
+    Test.renderReportBody(failedReport(5, logs, Coverage.empty), "pkg.Spec$.someTest") ====
+      List(
+        "Falsified after 5 passed tests"
+      , "> n: 23"
+      , "> hello"
+      , "> b/Spec.scala:17"
+      , "> at pkg.Spec$.someTest(Spec.scala:17)"
+      ).mkString("\n")
+  }
+
+  def testRenderReportBodyFailedWithCoverage: Result =
+    Test.renderReportBody(failedReport(100, List(Info("hello")), largeNumberCoverage), "pkg.Spec.someTest") ====
+      "Falsified after 100 passed tests\n> hello\n> 55% large number"
+
+  def testRenderReportBodyFailedError: Result = {
+    val e = new RuntimeException("boom")
+    val expected =
+      "Falsified after 0 passed tests" :: Test.renderLog(Error(e)).split("\n", -1).toList.map("> " + _)
+    Test.renderReportBody(failedReport(0, List(Error(e)), Coverage.empty), "pkg.Spec.someTest")
+      .split("\n", -1).toList ==== expected
+  }
+
+  def testRenderReportBodyFailedEmptyLog: Result =
+    Test.renderReportBody(failedReport(0, List(Info("")), Coverage.empty), "pkg.Spec.someTest") ====
+      "Falsified after 0 passed tests\n> "
+
+  val someTest: Test =
+    example("someTest", Result.success)
+
+  def testRenderReportOkNoAnsi: Result =
+    Test.renderReport("pkg.Spec", someTest, okReport(100, Coverage.empty), ansiCodesSupported = false) ====
+      "+ pkg.Spec.someTest: OK, passed 100 tests"
+
+  def testRenderReportOkAnsi: Result =
+    Test.renderReport("pkg.Spec", someTest, okReport(100, Coverage.empty), ansiCodesSupported = true) ====
+      s"${Console.GREEN}+${Console.RESET} pkg.Spec.someTest: OK, passed 100 tests"
+
+  def testRenderReportFailedNoAnsi: Result =
+    Test.renderReport(
+      "pkg.Spec"
+    , someTest
+    , failedReport(5, List(SourceLocation(SourcePos("b/Spec.scala", "Spec.scala", 17))), Coverage.empty)
+    , ansiCodesSupported = false
+    ) ====
+      "- pkg.Spec.someTest: Falsified after 5 passed tests\n> b/Spec.scala:17\n> at pkg.Spec.someTest(Spec.scala:17)"
+
+  def testRenderReportFailedAnsi: Result =
+    Test.renderReport("pkg.Spec", someTest, failedReport(5, List(Info("hello")), Coverage.empty), ansiCodesSupported = true) ====
+      s"${Console.RED}-${Console.RESET} pkg.Spec.someTest: Falsified after 5 passed tests\n> hello"
+
+  def testRenderReportGaveUpNoAnsi: Result =
+    Test.renderReport("pkg.Spec", someTest, gaveUpReport(3, 100), ansiCodesSupported = false) ====
+      "- pkg.Spec.someTest: Gave up after only 3 passed test. 100 were discarded"
+
+  def testRenderReportGaveUpAnsi: Result =
+    Test.renderReport("pkg.Spec", someTest, gaveUpReport(3, 100), ansiCodesSupported = true) ====
+      s"${Console.RED}-${Console.RESET} pkg.Spec.someTest: Gave up after only 3 passed test. 100 were discarded"
+
+  def propertyTestRenderReportQualifiedName: Property = for {
+    className <- Gen.string(Gen.alphaNum, Range.linear(1, 10)).log("className")
+    testName <- Gen.string(Gen.alphaNum, Range.linear(1, 10)).log("testName")
+    line <- Gen.int(Range.linear(1, 1000)).log("line")
+  } yield {
+    val t = example(testName, Result.success)
+    val report = failedReport(0, List(SourceLocation(SourcePos("b/Spec.scala", "Spec.scala", line))), Coverage.empty)
+    Test.renderReport(className, t, report, ansiCodesSupported = false) ====
+      s"- $className.$testName: Falsified after 0 passed tests\n> b/Spec.scala:$line\n> at $className.$testName(Spec.scala:$line)"
+  }
+
+  def testTestApply: Result = {
+    val t = Test("someTest", Property.point(Result.success))
+    Result.all(List(
+      t.name ==== "someTest"
+    , t.withConfig(PropertyConfig.default) ==== PropertyConfig.default
+    ))
+  }
+
+  def testTestApplyException: Result = {
+    val e = new RuntimeException("boom")
+    val t = Test("someTest", throw e)
+    val report = Property.check(t.withConfig(PropertyConfig.default), t.result, Seed.fromLong(0))
+    Result.all(List(
+      t.name ==== "someTest"
+    , report.status match {
+        case Failed(_, List(Error(actual))) =>
+          Result.assert(actual eq e).log(Info(s"Expected the thrown exception, got $actual"))
+        case other =>
+          Result.failure.log(Info(s"Expected Failed with only the Error log, got $other"))
+      }
+    ))
+  }
+
+  def testTestConfig: Result =
+    Test("someTest", Property.point(Result.success))
+      .config(_.copy(testLimit = SuccessCount(5)))
+      .config(_.copy(discardLimit = DiscardCount(7)))
+      .withConfig(PropertyConfig.default) ====
+      PropertyConfig(SuccessCount(5), DiscardCount(7), ShrinkLimit(1000))
+
+  def testTestConfigOrder: Result =
+    Test("someTest", Property.point(Result.success))
+      .withTests(SuccessCount(5))
+      .withTests(SuccessCount(9))
+      .withConfig(PropertyConfig.default) ====
+      PropertyConfig.default.copy(testLimit = SuccessCount(9))
+
+  def propertyTestTestWithTests: Property = for {
+    count <- Gen.int(Range.linear(0, 1000)).log("count")
+  } yield {
+    Test("someTest", Property.point(Result.success))
+      .withTests(SuccessCount(count))
+      .withConfig(PropertyConfig.default) ====
+      PropertyConfig.default.copy(testLimit = SuccessCount(count))
+  }
+
+  def testTestWithTestsRun: Result = {
+    val t = Test("someTest", Gen.int(Range.linear(0, 100)).forAll.map(_ => Result.success)).withTests(SuccessCount(7))
+    val report = Property.check(t.withConfig(PropertyConfig.default), t.result, Seed.fromLong(0))
+    Result.all(List(
+      report.status ==== OK
+    , report.tests ==== SuccessCount(7)
+    ))
+  }
+
+  def testTestNoShrinking: Result =
+    Test("someTest", Property.point(Result.success))
+      .noShrinking
+      .withConfig(PropertyConfig.default) ====
+      PropertyConfig.default.copy(shrinkLimit = ShrinkLimit(0))
+
+  def testPropertiesMain: Result = {
+    /* Anonymous, so the test framework does not find it and run it as a suite. */
+    val props = new Properties {
+      override def tests: List[Test] =
+        List(
+          example("pass", Result.success)
+        , example("fail", Result.Failure(List(Info("nope"))))
+        )
+    }
+    val out = new java.io.ByteArrayOutputStream()
+    Console.withOut(new java.io.PrintStream(out, true, "UTF-8")) {
+      props.main(Array.empty[String])
+    }
+    val lines = out.toString("UTF-8").split("\r?\n").toList
+    val className = props.getClass.getName
+    lines match {
+      case seedLine :: rest =>
+        Result.all(List(
+          Result.assert(
+            seedLine.startsWith("Using random seed: ") ||
+              seedLine.startsWith("Using seed from environment variable HEDGEHOG_SEED: ")
+          ).log(Info(s"Unexpected seed line: $seedLine"))
+        , rest ==== List(
+            s"${Console.GREEN}+${Console.RESET} $className.pass: OK, passed 1 tests"
+          , s"${Console.RED}-${Console.RESET} $className.fail: Falsified after 0 passed tests"
+          , "> nope"
+          )
+        ))
+      case Nil =>
+        Result.failure.log(Info("Properties.main printed nothing"))
+    }
   }
 }
