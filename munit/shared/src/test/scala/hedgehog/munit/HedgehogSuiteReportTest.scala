@@ -22,7 +22,9 @@ class HedgehogSuiteReportTest extends _root_.munit.FunSuite {
     "Using (random seed|seed from environment variable HEDGEHOG_SEED): -?\\d+".r
 
   /** munit puts the location and the source lines of the `property` call in
-    * front of the message, so only the end of the message is checked.
+    * front of the message when it can read the source file, so only the end of
+    * the message is checked. The report must start on its own line, so that
+    * nothing, such as a status symbol or the test name, is in front of it.
     */
   private def assertFailureMessage(
       suite: HedgehogSuite,
@@ -32,7 +34,9 @@ class HedgehogSuiteReportTest extends _root_.munit.FunSuite {
       val lastNewline = message.lastIndexOf('\n')
       val report = message.substring(0, lastNewline)
       val seedLine = message.substring(lastNewline + 1)
+      val beforeReport = report.dropRight(expectedReport.length)
       assertEquals(report.takeRight(expectedReport.length), expectedReport)
+      assert(beforeReport.isEmpty || beforeReport.endsWith("\n"), beforeReport)
       assert(seedLog.pattern.matcher(seedLine).matches(), seedLine)
     }
 
@@ -63,7 +67,7 @@ class HedgehogSuiteReportTest extends _root_.munit.FunSuite {
     val qualifiedName = suite.getClass.getName + ".fails"
     assertFailureMessage(
       suite,
-      s"${Console.RED}-${Console.RESET} $qualifiedName: Falsified after 0 passed tests\n" +
+      "Falsified after 0 passed tests\n" +
         "> x/Spec.scala:7\n" +
         s"> at $qualifiedName(Spec.scala:7)\n" +
         "> boom"
@@ -76,10 +80,9 @@ class HedgehogSuiteReportTest extends _root_.munit.FunSuite {
         Property.discard.map(_ => Result.success)
       }
     }
-    val qualifiedName = suite.getClass.getName + ".gives up"
     assertFailureMessage(
       suite,
-      s"${Console.RED}-${Console.RESET} $qualifiedName: Gave up after only 0 passed test. 3 were discarded"
+      "Gave up after only 0 passed test. 3 were discarded"
     )
   }
 

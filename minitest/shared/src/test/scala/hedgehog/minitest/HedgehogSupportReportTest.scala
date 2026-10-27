@@ -53,7 +53,7 @@ object HedgehogSupportReportTest extends SimpleTestSuite {
     val qualifiedName = suite.getClass.getName + ".fails"
     assertFailureMessage(
       suite,
-      s"${Console.RED}-${Console.RESET} $qualifiedName: Falsified after 0 passed tests\n" +
+      "Falsified after 0 passed tests\n" +
         "> x/Spec.scala:7\n" +
         s"> at $qualifiedName(Spec.scala:7)\n" +
         "> boom"
@@ -71,7 +71,7 @@ object HedgehogSupportReportTest extends SimpleTestSuite {
     val qualifiedName = suite.getClass.getName + ".fails"
     assertFailureMessage(
       suite,
-      s"${Console.RED}-${Console.RESET} $qualifiedName: Falsified after 0 passed tests\n" +
+      "Falsified after 0 passed tests\n" +
         "> x/Spec.scala:7\n" +
         s"> at $qualifiedName(Spec.scala:7)\n" +
         "> boom"
@@ -84,10 +84,9 @@ object HedgehogSupportReportTest extends SimpleTestSuite {
         Property.discard.map(_ => Result.success)
       }
     }
-    val qualifiedName = suite.getClass.getName + ".gives up"
     assertFailureMessage(
       suite,
-      s"${Console.RED}-${Console.RESET} $qualifiedName: Gave up after only 0 passed test. 3 were discarded"
+      "Gave up after only 0 passed test. 3 were discarded"
     )
   }
 

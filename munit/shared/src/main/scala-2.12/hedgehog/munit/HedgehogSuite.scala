@@ -41,11 +41,9 @@ abstract class HedgehogSuite extends FunSuite with HedgehogAssertions {
   ): Any = {
     val report = Property.check(test.withConfig(config), test.result, seed)
     if (report.status != Status.ok) {
-      val reason = hr.Test.renderReport(
-        this.getClass.getName,
-        test,
+      val reason = hr.Test.renderReportBody(
         report,
-        ansiCodesSupported = true
+        this.getClass.getName + "." + test.name
       )
       withMunitAssertions(assertions =>
         assertions.fail(s"$reason\n${seedSource.renderLog}")
