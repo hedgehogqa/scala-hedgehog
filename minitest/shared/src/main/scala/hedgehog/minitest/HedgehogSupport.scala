@@ -26,11 +26,9 @@ trait HedgehogSupport { self: SimpleTestSuite =>
   private def check(test: Test, config: PropertyConfig): Unit = {
     val report = Property.check(test.withConfig(config), test.result, seed)
     if (report.status != Status.ok) {
-      val reason = Test.renderReport(
-        this.getClass.getName,
-        test,
+      val reason = Test.renderReportBody(
         report,
-        ansiCodesSupported = true
+        this.getClass.getName + "." + test.name
       )
       val reasonWithSeed = s"$reason\n${seedSource.renderLog}"
       fail(reasonWithSeed)
