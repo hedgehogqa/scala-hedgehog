@@ -81,7 +81,7 @@ object HedgehogSupportReportTest extends SimpleTestSuite {
   testAsync("a property which gave up fails with the report and the seed") {
     val suite = new SimpleTestSuite with HedgehogSupport {
       property("gives up", _.copy(discardLimit = DiscardCount(3))) {
-        Property.discard.map(_ => Result.success)
+        Property.discard
       }
     }
     assertFailureMessage(
